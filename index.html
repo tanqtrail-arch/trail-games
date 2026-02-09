@@ -2,8 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TRAIL 探究ゲームランド</title>
+<meta name="description" content="探究教室TRAILの学習ゲームポータル。思考力・理科・社会・算数・創造力を遊びながら学べるゲームが集まっています。">
+<meta property="og:title" content="TRAIL 探究ゲームランド">
+<meta property="og:description" content="あそんで まなんで 発見しよう！探究教室TRAILの学習ゲームポータル。">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ja_JP">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌲</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -25,6 +31,8 @@
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* === Sky & Decorations === */
   .bg-sky {
     position: fixed; top: 0; left: 0; right: 0; height: 300px;
     background: linear-gradient(180deg, #b8e4f9 0%, #ddf2ff 40%, #fef9ef 100%);
@@ -47,6 +55,8 @@
   .leaf-2 { top: 350px; right: 3%; transform: rotate(20deg); font-size: 20px; }
   .leaf-3 { top: 600px; left: 8%; transform: rotate(45deg); font-size: 18px; }
   .leaf-4 { top: 900px; right: 6%; transform: rotate(-15deg); }
+
+  /* === Header === */
   .header {
     position: sticky; top: 0; z-index: 100;
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -60,13 +70,28 @@
   .header-title { font-size: 19px; font-weight: 900; color: var(--text-dark); }
   .header-title span { color: var(--trail-green); }
   .header-sub { font-size: 10px; color: var(--text-mid); letter-spacing: 1px; margin-top: 1px; }
-  .category-bar {
+
+  /* === Category Bar === */
+  .category-bar-wrap {
     position: sticky; top: 72px; z-index: 99;
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     background: rgba(255,255,255,0.8);
+    border-bottom: 1px solid rgba(45,154,78,0.08);
+  }
+  .category-bar {
+    max-width: 480px; margin: 0 auto;
     padding: 10px 14px; display: flex; gap: 7px;
     overflow-x: auto; scrollbar-width: none;
-    border-bottom: 1px solid rgba(45,154,78,0.08);
+    -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+    mask-image: linear-gradient(to right, black 90%, transparent 100%);
+  }
+  .category-bar.scrolled-end {
+    -webkit-mask-image: linear-gradient(to left, black 90%, transparent 100%);
+    mask-image: linear-gradient(to left, black 90%, transparent 100%);
+  }
+  .category-bar.scrolled-mid {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
   }
   .category-bar::-webkit-scrollbar { display: none; }
   .cat-btn {
@@ -79,21 +104,44 @@
     background: var(--trail-green); color: white;
     border-color: var(--trail-green); box-shadow: 0 3px 12px rgba(45,154,78,0.3);
   }
+  .cat-btn:not(.active):hover { background: #e0f0e3; }
   .cat-btn:not(.active):active { transform: scale(0.95); }
+
+  /* === Game Count === */
   .game-count { text-align: center; padding: 18px 16px 6px; position: relative; z-index: 1; }
   .game-count .num { font-family: 'Fredoka', sans-serif; font-size: 40px; font-weight: 700; color: var(--trail-green); }
   .game-count small { display: block; font-size: 12px; color: var(--text-mid); margin-top: -2px; font-weight: 700; }
-  .game-list { padding: 14px 16px 60px; display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1; }
+
+  /* === Game List === */
+  .game-list {
+    max-width: 480px; margin: 0 auto;
+    padding: 14px 16px 60px; display: flex; flex-direction: column; gap: 16px;
+    position: relative; z-index: 1;
+  }
+
+  /* === Empty State === */
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    color: var(--text-mid); font-size: 14px; font-weight: 700;
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state .empty-text { line-height: 1.8; }
+
+  /* === Game Card === */
   .game-card {
     position: relative; border-radius: 22px; overflow: hidden;
     background: var(--card-white);
     box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
     cursor: pointer; transition: transform 0.25s ease, box-shadow 0.25s ease;
     animation: cardPop 0.45s ease both;
+    outline: none;
   }
+  .game-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06); }
   .game-card:active { transform: scale(0.97); box-shadow: 0 1px 8px rgba(0,0,0,0.08); }
+  .game-card:focus-visible { outline: 3px solid var(--trail-green); outline-offset: 2px; }
   @keyframes cardPop { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
   .game-card:nth-child(1){animation-delay:.05s}.game-card:nth-child(2){animation-delay:.1s}.game-card:nth-child(3){animation-delay:.15s}.game-card:nth-child(4){animation-delay:.2s}.game-card:nth-child(5){animation-delay:.25s}.game-card:nth-child(6){animation-delay:.3s}
+
   .card-visual { position: relative; height: 130px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .card-visual .emoji-icon { font-size: 54px; position: relative; z-index: 2; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15)); animation: iconBounce 3s ease-in-out infinite; }
   @keyframes iconBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
@@ -101,7 +149,8 @@
   .deco-wave { position: absolute; bottom: -2px; left: 0; right: 0; height: 20px; background: var(--card-white); border-radius: 20px 20px 0 0; }
   .deco-trees { position: absolute; bottom: 0; left: 0; right: 0; font-size: 20px; text-align: center; opacity: 0.2; letter-spacing: 8px; line-height: 1; padding-bottom: 6px; }
   .deco-dots { position: absolute; width: 100%; height: 100%; opacity: 0.3; }
-  .deco-dots::before { content: '· · · · · · · · ·'; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 14px; letter-spacing: 4px; color: rgba(255,255,255,0.6); white-space: nowrap; }
+  .deco-dots::before { content: '\00B7 \00B7 \00B7 \00B7 \00B7 \00B7 \00B7 \00B7 \00B7'; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 14px; letter-spacing: 4px; color: rgba(255,255,255,0.6); white-space: nowrap; }
+
   .card-body { padding: 14px 16px 16px; }
   .card-tags { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
   .tag { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 10px; letter-spacing: 0.3px; }
@@ -112,7 +161,7 @@
   .card-difficulty .label { font-size: 10px; color: var(--text-mid); margin-right: 4px; font-weight: 700; }
   .trail-marker { width: 12px; height: 12px; border-radius: 3px; background: #e8ede9; position: relative; }
   .trail-marker.filled { background: var(--sun-yellow); box-shadow: 0 1px 4px rgba(255,210,63,0.4); }
-  .trail-marker.filled::after { content: '⭐'; font-size: 8px; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+  .trail-marker.filled::after { content: '\2B50'; font-size: 8px; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
   .play-btn {
     display: flex; align-items: center; gap: 5px; padding: 9px 20px;
     border-radius: 14px; border: none; font-family: 'Zen Maru Gothic', sans-serif;
@@ -120,6 +169,8 @@
     transition: all 0.2s ease; box-shadow: 0 3px 10px rgba(0,0,0,0.12); letter-spacing: 0.5px;
   }
   .play-btn:active { transform: scale(0.93); }
+
+  /* === Badges === */
   .badge-new {
     position: absolute; top: 10px; right: 10px; z-index: 5;
     font-family: 'Fredoka', sans-serif; font-size: 11px; font-weight: 700;
@@ -127,6 +178,13 @@
     box-shadow: 0 2px 8px rgba(255,107,138,0.4); animation: badgePop 2s ease-in-out infinite;
   }
   @keyframes badgePop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  .coming-soon-badge {
+    position: absolute; top: 10px; right: 10px; z-index: 5;
+    font-family: 'Fredoka', sans-serif; font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 10px; background: #a0a8a2; color: white;
+  }
+
+  /* === Themes === */
   .theme-forest .card-visual { background: linear-gradient(135deg, #c8f0d4, #a8e6b8, #8dd99c); }
   .theme-forest .tag { background: #d4f5de; color: #1a7a3a; }
   .theme-forest .play-btn { background: linear-gradient(135deg, #2d9a4e, #3ab85c); }
@@ -151,6 +209,17 @@
   .theme-earth .tag { background: #f5ecd6; color: #8b6914; }
   .theme-earth .play-btn { background: linear-gradient(135deg, #b08a30, #c4a35a); }
   .theme-earth .card-title { color: #6a5010; }
+
+  /* === Coming Soon State === */
+  .game-card.coming-soon { opacity: 0.5; }
+  .game-card.coming-soon:hover { transform: translateY(-1px); opacity: 0.6; }
+  .game-card.coming-soon .play-btn { background: #bbb !important; box-shadow: none; }
+  .game-card.coming-soon .emoji-icon { animation: none !important; }
+
+  /* === Hidden === */
+  .game-card.hidden { display: none; }
+
+  /* === Footer === */
   .footer { text-align: center; padding: 30px 20px 50px; position: relative; z-index: 1; }
   .footer-trail { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 14px; }
   .footer-trail .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--trail-green); opacity: 0.3; }
@@ -158,16 +227,8 @@
   .footer p { font-size: 11px; color: var(--text-mid); line-height: 1.8; }
   .footer .brand { font-weight: 900; color: var(--trail-green); }
   .footer .motto { display: inline-block; margin-top: 6px; padding: 4px 14px; background: #edf7f0; border-radius: 12px; font-size: 11px; color: var(--trail-green); font-weight: 700; }
-  .game-card.hidden { display: none; }
-  .game-card.coming-soon { opacity: 0.5; }
-  .game-card.coming-soon .play-btn { background: #bbb !important; box-shadow: none; }
-  .game-card.coming-soon .emoji-icon { animation: none !important; }
-  .coming-soon-badge {
-    position: absolute; top: 10px; right: 10px; z-index: 5;
-    font-family: 'Fredoka', sans-serif; font-size: 11px; font-weight: 700;
-    padding: 4px 12px; border-radius: 10px; background: #a0a8a2; color: white;
-  }
-  ::-webkit-scrollbar { width: 0; }
+
+  /* === Toast === */
   .toast-msg {
     position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
     background: white; color: var(--text-dark); padding: 14px 26px; border-radius: 18px;
@@ -178,6 +239,8 @@
   }
   @keyframes toastUp { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
   @keyframes toastDown { from{opacity:1} to{opacity:0;transform:translateX(-50%) translateY(16px)} }
+
+  ::-webkit-scrollbar { width: 0; }
 </style>
 </head>
 <body>
@@ -202,124 +265,23 @@
   <div class="header-sub">あそんで まなんで 発見しよう！</div>
 </header>
 
-<nav class="category-bar">
-  <button class="cat-btn active" data-cat="all">🎮 すべて</button>
-  <button class="cat-btn" data-cat="thinking">🧠 思考力</button>
-  <button class="cat-btn" data-cat="science">🔬 理科</button>
-  <button class="cat-btn" data-cat="social">🌍 社会</button>
-  <button class="cat-btn" data-cat="math">🔢 算数</button>
-  <button class="cat-btn" data-cat="creative">🎨 創造力</button>
-</nav>
+<div class="category-bar-wrap">
+  <nav class="category-bar" id="categoryBar" aria-label="ゲームカテゴリ">
+    <button class="cat-btn active" data-cat="all">🎮 すべて</button>
+    <button class="cat-btn" data-cat="thinking">🧠 思考力</button>
+    <button class="cat-btn" data-cat="science">🔬 理科</button>
+    <button class="cat-btn" data-cat="social">🌍 社会</button>
+    <button class="cat-btn" data-cat="math">🔢 算数</button>
+    <button class="cat-btn" data-cat="creative">🎨 創造力</button>
+  </nav>
+</div>
 
 <div class="game-count">
-  <div class="num" id="visibleCount">1</div>
-  <small>つのゲームであそべるよ！🚩（+5つ準備中）</small>
+  <div class="num" id="visibleCount">0</div>
+  <small id="countLabel"></small>
 </div>
 
-<div class="game-list" id="gameList">
-  <div class="game-card theme-forest" data-cat="thinking" onclick="launchGame('maze-attack')">
-    <div class="badge-new">NEW!</div>
-    <div class="card-visual">
-      <div class="bg-deco"><div class="deco-trees">🌲🌳🌲🌳🌲</div></div>
-      <div class="deco-wave"></div>
-      <div class="emoji-icon">🏰</div>
-    </div>
-    <div class="card-body">
-      <div class="card-tags"><span class="tag">🧠 思考力</span><span class="tag">⚔️ 対戦</span></div>
-      <div class="card-title">迷路アタック</div>
-      <div class="card-desc">AIと対決！カードのちからを使って迷路をクリアしよう。きみの作戦でゴールをめざせ！</div>
-      <div class="card-footer">
-        <div class="card-difficulty"><span class="label">むずかしさ</span><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker"></div><div class="trail-marker"></div></div>
-        <button class="play-btn">▶ あそぶ！🔒 準備中</button>
-      </div>
-    </div>
-  </div>
-  <div class="game-card theme-ocean coming-soon" data-cat="science">
-    <div class="coming-soon-badge">準備中</div>
-    <div class="card-visual">
-      <div class="bg-deco"><div class="deco-dots"></div></div>
-      <div class="deco-wave"></div>
-      <div class="emoji-icon">⚗️</div>
-    </div>
-    <div class="card-body">
-      <div class="card-tags"><span class="tag">🔬 理科</span><span class="tag">❓ クイズ</span></div>
-      <div class="card-title">元素クエスト</div>
-      <div class="card-desc">ヒントから元素をあてよう！周期表のひみつを冒険しながら、化学はかせをめざすクイズ。</div>
-      <div class="card-footer">
-        <div class="card-difficulty"><span class="label">むずかしさ</span><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker"></div><div class="trail-marker"></div><div class="trail-marker"></div></div>
-        <button class="play-btn">🔒 準備中</button>
-      </div>
-    </div>
-  </div>
-  <div class="game-card theme-sunset coming-soon" data-cat="math">
-    <div class="coming-soon-badge">準備中</div>
-    <div class="card-visual">
-      <div class="bg-deco"><div class="deco-dots"></div></div>
-      <div class="deco-wave"></div>
-      <div class="emoji-icon">🧩</div>
-    </div>
-    <div class="card-body">
-      <div class="card-tags"><span class="tag">🔢 算数</span><span class="tag">🧩 パズル</span></div>
-      <div class="card-title">ナンバーブレイク</div>
-      <div class="card-desc">数のルールを見つけてパズルをとこう！パターンを見ぬく力がためされるゲーム。</div>
-      <div class="card-footer">
-        <div class="card-difficulty"><span class="label">むずかしさ</span><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker"></div></div>
-        <button class="play-btn">🔒 準備中</button>
-      </div>
-    </div>
-  </div>
-  <div class="game-card theme-earth coming-soon" data-cat="social">
-    <div class="coming-soon-badge">準備中</div>
-    <div class="card-visual">
-      <div class="bg-deco"><div class="deco-trees">🏔️🌄🏔️🌄🏔️</div></div>
-      <div class="deco-wave"></div>
-      <div class="emoji-icon">🗺️</div>
-    </div>
-    <div class="card-body">
-      <div class="card-tags"><span class="tag">🌍 社会</span><span class="tag">🧭 探検</span></div>
-      <div class="card-title">マップ探検隊</div>
-      <div class="card-desc">ヒントをたよりに世界の都市をあてよう！地理と文化のものしりになれる探検クイズ。</div>
-      <div class="card-footer">
-        <div class="card-difficulty"><span class="label">むずかしさ</span><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker"></div><div class="trail-marker"></div><div class="trail-marker"></div></div>
-        <button class="play-btn">🔒 準備中</button>
-      </div>
-    </div>
-  </div>
-  <div class="game-card theme-lavender coming-soon" data-cat="creative">
-    <div class="coming-soon-badge">準備中</div>
-    <div class="card-visual">
-      <div class="bg-deco"><div class="deco-dots"></div></div>
-      <div class="deco-wave"></div>
-      <div class="emoji-icon">📖</div>
-    </div>
-    <div class="card-body">
-      <div class="card-tags"><span class="tag">🎨 創造力</span><span class="tag">📝 物語</span></div>
-      <div class="card-title">ストーリービルダー</div>
-      <div class="card-desc">ランダムなキーワードからお話をつくろう！きみだけのオリジナルストーリーに挑戦。</div>
-      <div class="card-footer">
-        <div class="card-difficulty"><span class="label">むずかしさ</span><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker"></div><div class="trail-marker"></div></div>
-        <button class="play-btn">🔒 準備中</button>
-      </div>
-    </div>
-  </div>
-  <div class="game-card theme-berry coming-soon" data-cat="thinking">
-    <div class="coming-soon-badge">準備中</div>
-    <div class="card-visual">
-      <div class="bg-deco"><div class="deco-dots"></div></div>
-      <div class="deco-wave"></div>
-      <div class="emoji-icon">🗼</div>
-    </div>
-    <div class="card-body">
-      <div class="card-tags"><span class="tag">🧠 思考力</span><span class="tag">🔍 論理</span></div>
-      <div class="card-title">ロジックタワー</div>
-      <div class="card-desc">ぜんぶの条件をみたす答えを見つけろ！レベルが上がるほどむずかしくなる頭のたいそう。</div>
-      <div class="card-footer">
-        <div class="card-difficulty"><span class="label">むずかしさ</span><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker filled"></div><div class="trail-marker filled"></div></div>
-        <button class="play-btn">🔒 準備中</button>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="game-list" id="gameList"></div>
 
 <footer class="footer">
   <div class="footer-trail">
@@ -335,44 +297,278 @@
 </footer>
 
 <script>
-  const catBtns = document.querySelectorAll('.cat-btn');
-  const cards = document.querySelectorAll('.game-card');
-  const countEl = document.getElementById('visibleCount');
-  catBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      catBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const cat = btn.dataset.cat;
-      let visible = 0;
-      cards.forEach(card => {
-        if (cat === 'all' || card.dataset.cat === cat) { card.classList.remove('hidden'); visible++; }
-        else { card.classList.add('hidden'); }
+  // === Game Data ===
+  var games = [
+    {
+      id: 'maze-attack',
+      title: '迷路アタック',
+      desc: 'AIと対決！カードのちからを使って迷路をクリアしよう。きみの作戦でゴールをめざせ！',
+      emoji: '🏰',
+      theme: 'forest',
+      category: 'thinking',
+      tags: ['🧠 思考力', '⚔️ 対戦'],
+      difficulty: 3,
+      isNew: true,
+      comingSoon: false,
+      url: null,
+      decoType: 'trees',
+      decoContent: '🌲🌳🌲🌳🌲'
+    },
+    {
+      id: 'element-quiz',
+      title: '元素クエスト',
+      desc: 'ヒントから元素をあてよう！周期表のひみつを冒険しながら、化学はかせをめざすクイズ。',
+      emoji: '⚗️',
+      theme: 'ocean',
+      category: 'science',
+      tags: ['🔬 理科', '❓ クイズ'],
+      difficulty: 2,
+      isNew: false,
+      comingSoon: true,
+      url: null,
+      decoType: 'dots'
+    },
+    {
+      id: 'number-puzzle',
+      title: 'ナンバーブレイク',
+      desc: '数のルールを見つけてパズルをとこう！パターンを見ぬく力がためされるゲーム。',
+      emoji: '🧩',
+      theme: 'sunset',
+      category: 'math',
+      tags: ['🔢 算数', '🧩 パズル'],
+      difficulty: 4,
+      isNew: false,
+      comingSoon: true,
+      url: null,
+      decoType: 'dots'
+    },
+    {
+      id: 'map-explorer',
+      title: 'マップ探検隊',
+      desc: 'ヒントをたよりに世界の都市をあてよう！地理と文化のものしりになれる探検クイズ。',
+      emoji: '🗺️',
+      theme: 'earth',
+      category: 'social',
+      tags: ['🌍 社会', '🧭 探検'],
+      difficulty: 2,
+      isNew: false,
+      comingSoon: true,
+      url: null,
+      decoType: 'trees',
+      decoContent: '🏔️🌄🏔️🌄🏔️'
+    },
+    {
+      id: 'story-builder',
+      title: 'ストーリービルダー',
+      desc: 'ランダムなキーワードからお話をつくろう！きみだけのオリジナルストーリーに挑戦。',
+      emoji: '📖',
+      theme: 'lavender',
+      category: 'creative',
+      tags: ['🎨 創造力', '📝 物語'],
+      difficulty: 3,
+      isNew: false,
+      comingSoon: true,
+      url: null,
+      decoType: 'dots'
+    },
+    {
+      id: 'logic-tower',
+      title: 'ロジックタワー',
+      desc: 'ぜんぶの条件をみたす答えを見つけろ！レベルが上がるほどむずかしくなる頭のたいそう。',
+      emoji: '🗼',
+      theme: 'berry',
+      category: 'thinking',
+      tags: ['🧠 思考力', '🔍 論理'],
+      difficulty: 5,
+      isNew: false,
+      comingSoon: true,
+      url: null,
+      decoType: 'dots'
+    }
+  ];
+
+  // === DOM References ===
+  var gameList = document.getElementById('gameList');
+  var countEl = document.getElementById('visibleCount');
+  var countLabel = document.getElementById('countLabel');
+  var categoryBar = document.getElementById('categoryBar');
+  var catBtns = document.querySelectorAll('.cat-btn');
+
+  // === Render Cards ===
+  function renderCards() {
+    gameList.innerHTML = '';
+    games.forEach(function(game) {
+      var card = document.createElement('div');
+      card.className = 'game-card theme-' + game.theme + (game.comingSoon ? ' coming-soon' : '');
+      card.dataset.cat = game.category;
+      card.dataset.id = game.id;
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('role', 'link');
+      card.setAttribute('aria-label', game.title + (game.comingSoon ? '（準備中）' : ''));
+
+      // Badge
+      var badge = '';
+      if (game.isNew && !game.comingSoon) {
+        badge = '<div class="badge-new">NEW!</div>';
+      } else if (game.comingSoon) {
+        badge = '<div class="coming-soon-badge">準備中</div>';
+      }
+
+      // Deco
+      var deco = '';
+      if (game.decoType === 'trees') {
+        deco = '<div class="deco-trees">' + (game.decoContent || '') + '</div>';
+      } else {
+        deco = '<div class="deco-dots"></div>';
+      }
+
+      // Difficulty markers
+      var markers = '';
+      for (var i = 1; i <= 5; i++) {
+        markers += '<div class="trail-marker' + (i <= game.difficulty ? ' filled' : '') + '"></div>';
+      }
+
+      // Tags
+      var tagsHtml = game.tags.map(function(t) { return '<span class="tag">' + t + '</span>'; }).join('');
+
+      // Play button
+      var btnText = game.comingSoon ? '🔒 準備中' : '▶ あそぶ！';
+
+      card.innerHTML =
+        badge +
+        '<div class="card-visual">' +
+          '<div class="bg-deco">' + deco + '</div>' +
+          '<div class="deco-wave"></div>' +
+          '<div class="emoji-icon">' + game.emoji + '</div>' +
+        '</div>' +
+        '<div class="card-body">' +
+          '<div class="card-tags">' + tagsHtml + '</div>' +
+          '<div class="card-title">' + game.title + '</div>' +
+          '<div class="card-desc">' + game.desc + '</div>' +
+          '<div class="card-footer">' +
+            '<div class="card-difficulty"><span class="label">むずかしさ</span>' + markers + '</div>' +
+            '<button class="play-btn">' + btnText + '</button>' +
+          '</div>' +
+        '</div>';
+
+      // Click handler
+      card.addEventListener('click', function() { launchGame(game); });
+      card.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          launchGame(game);
+        }
       });
-      countEl.textContent = visible;
+
+      gameList.appendChild(card);
+    });
+  }
+
+  // === Launch Game ===
+  function launchGame(game) {
+    if (game.url) {
+      window.location.href = game.url;
+    } else if (game.comingSoon) {
+      showToast('🌱 「' + game.title + '」は準備中だよ！おたのしみに！');
+    } else {
+      showToast('🌱 「' + game.title + '」はまもなく公開！');
+    }
+  }
+
+  // === Filter ===
+  function filterCards(cat) {
+    var cards = document.querySelectorAll('.game-card');
+    var playable = 0;
+    var comingSoonCount = 0;
+    var totalVisible = 0;
+
+    cards.forEach(function(card) {
+      if (cat === 'all' || card.dataset.cat === cat) {
+        card.classList.remove('hidden');
+        totalVisible++;
+        var game = games.find(function(g) { return g.id === card.dataset.id; });
+        if (game && !game.comingSoon) { playable++; }
+        else { comingSoonCount++; }
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    countEl.textContent = totalVisible;
+
+    if (totalVisible === 0) {
+      countLabel.textContent = '';
+      showEmptyState(cat);
+    } else {
+      removeEmptyState();
+      if (comingSoonCount > 0 && playable > 0) {
+        countLabel.textContent = 'つのゲーム！（' + playable + 'つあそべる・' + comingSoonCount + 'つ準備中）';
+      } else if (playable === 0) {
+        countLabel.textContent = 'つのゲームが準備中 🚧';
+      } else {
+        countLabel.textContent = 'つのゲームであそべるよ！🚩';
+      }
+    }
+  }
+
+  // === Empty State ===
+  function showEmptyState(cat) {
+    removeEmptyState();
+    var el = document.createElement('div');
+    el.className = 'empty-state';
+    el.id = 'emptyState';
+    el.innerHTML =
+      '<div class="empty-icon">🌿</div>' +
+      '<div class="empty-text">このカテゴリのゲームは<br>まだないよ。おたのしみに！</div>';
+    gameList.appendChild(el);
+  }
+
+  function removeEmptyState() {
+    var el = document.getElementById('emptyState');
+    if (el) el.remove();
+  }
+
+  // === Category Buttons ===
+  catBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      catBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      filterCards(btn.dataset.cat);
     });
   });
-  function launchGame(gameId) {
-    const gameUrls = {
-      'maze-attack': null,
-      'element-quiz': null,
-      'number-puzzle': null,
-      'map-explorer': null,
-      'story-builder': null,
-      'logic-tower': null,
-    };
-    const url = gameUrls[gameId];
-    if (url) { window.location.href = url; }
-    else { showToast('🌱 このゲームは準備中だよ！'); }
+
+  // === Category Bar Scroll Hint ===
+  function updateScrollHint() {
+    var el = categoryBar;
+    var scrollLeft = el.scrollLeft;
+    var maxScroll = el.scrollWidth - el.clientWidth;
+
+    el.classList.remove('scrolled-end', 'scrolled-mid');
+    if (maxScroll <= 2) return; // no scroll needed
+    if (scrollLeft <= 2) return; // at start, default mask
+    if (scrollLeft >= maxScroll - 2) {
+      el.classList.add('scrolled-end');
+    } else {
+      el.classList.add('scrolled-mid');
+    }
   }
+  categoryBar.addEventListener('scroll', updateScrollHint);
+
+  // === Toast ===
   function showToast(msg) {
-    const old = document.querySelector('.toast-msg');
+    var old = document.querySelector('.toast-msg');
     if (old) old.remove();
-    const t = document.createElement('div');
+    var t = document.createElement('div');
     t.className = 'toast-msg';
     t.textContent = msg;
     document.body.appendChild(t);
-    setTimeout(() => t.remove(), 2500);
+    setTimeout(function() { t.remove(); }, 2500);
   }
+
+  // === Init ===
+  renderCards();
+  filterCards('all');
+  updateScrollHint();
 </script>
 </body>
 </html>
