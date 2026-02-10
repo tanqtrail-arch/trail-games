@@ -209,6 +209,10 @@
   .theme-earth .tag { background: #f5ecd6; color: #8b6914; }
   .theme-earth .play-btn { background: linear-gradient(135deg, #b08a30, #c4a35a); }
   .theme-earth .card-title { color: #6a5010; }
+  .theme-gallery .card-visual { background: linear-gradient(135deg, #f5e6c8, #e8d4a8, #d4c090); }
+  .theme-gallery .tag { background: #f7ecd8; color: #8a6520; }
+  .theme-gallery .play-btn { background: linear-gradient(135deg, #b8860b, #d4a030); }
+  .theme-gallery .card-title { color: #6b4c0a; }
 
   /* === Coming Soon State === */
   .game-card.coming-soon { opacity: 0.5; }
@@ -273,6 +277,7 @@
     <button class="cat-btn" data-cat="social">🌍 社会</button>
     <button class="cat-btn" data-cat="math">🔢 算数</button>
     <button class="cat-btn" data-cat="creative">🎨 創造力</button>
+    <button class="cat-btn" data-cat="art">🖼️ 美術</button>
   </nav>
 </div>
 
@@ -313,6 +318,21 @@
       url: 'https://tanqtrail-arch.github.io/Meiro-atakku/',
       decoType: 'trees',
       decoContent: '🌲🌳🌲🌳🌲'
+    },
+    {
+      id: 'shingan',
+      title: '真贋ShinGan',
+      desc: '本物の絵と偽物の絵をくらべて、どっちがホンモノか見ぬけ！きみの目はごまかせない？',
+      emoji: '🖼️',
+      theme: 'gallery',
+      category: 'art',
+      tags: ['🖼️ 美術', '👁️ 観察力'],
+      difficulty: 2,
+      isNew: true,
+      comingSoon: false,
+      url: null,
+      decoType: 'trees',
+      decoContent: '🎨🖼️🎨🖼️🎨'
     },
     {
       id: 'element-quiz',
