@@ -3,484 +3,159 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>分数パズル - TRAIL 探究ゲームランド</title>
-<meta name="description" content="分数の□にあてはまる数を見つけよう！分数の関係がわかるパズルゲーム。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<title>分数カードパズル 🃏</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-  :root {
-    --bg: #f0fff0;
-    --accent: #27ae60;
-    --accent-light: #5ec97a;
-    --accent-glow: rgba(39,174,96,0.2);
-    --red: #e74c3c;
-    --gold: #f39c12;
-    --text: #1a3a1a;
-    --text-mid: #4a6a4a;
-    --card: #ffffff;
-  }
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Zen Maru Gothic', sans-serif;
-    background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden;
-  }
-  .game-header {
-    background: linear-gradient(135deg, #1a6b35, #27ae60, #5ec97a);
-    color: white; text-align: center; padding: 16px 16px 20px; position: relative;
-  }
-  .game-header::after {
-    content: ''; position: absolute; bottom: -8px; left: 0; right: 0; height: 16px;
-    background: var(--bg); border-radius: 16px 16px 0 0;
-  }
-  .back-btn {
-    position: absolute; top: 12px; left: 12px;
-    background: rgba(255,255,255,0.15); border: none; color: white;
-    font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    font-family: 'Zen Maru Gothic', sans-serif;
-  }
-  .back-btn:hover { background: rgba(255,255,255,0.25); }
-  .header-emoji { font-size: 32px; }
-  .header-title { font-size: 22px; font-weight: 900; }
-  .header-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
-
-  .container { max-width: 480px; margin: 0 auto; padding: 0 16px 60px; }
-  .screen { display: none; }
-  .screen.active { display: block; }
-
-  .start-area { text-align: center; padding-top: 30px; }
-  .start-icon { font-size: 72px; margin-bottom: 12px; animation: bounce 2s ease-in-out infinite; }
-  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-  .start-title { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
-  .start-desc { font-size: 14px; color: var(--text-mid); line-height: 1.8; margin-bottom: 20px; }
-  .rules-box {
-    background: var(--card); border-radius: 16px; padding: 18px 20px;
-    text-align: left; margin-bottom: 28px; border: 2px solid #c0e8c0;
-  }
-  .rules-box h3 { font-size: 14px; font-weight: 900; margin-bottom: 10px; }
-  .rules-box ul { list-style: none; font-size: 13px; color: var(--text-mid); line-height: 2.2; }
-  .rules-box li::before { content: '🧩 '; }
-  .start-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 16px 40px; border-radius: 16px; border: none;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    color: white; font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 18px; font-weight: 900; cursor: pointer;
-    box-shadow: 0 4px 16px var(--accent-glow);
-  }
-  .start-btn:active { transform: scale(0.96); }
-
-  .hud {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 0 10px; font-size: 13px; font-weight: 700;
-  }
-  .hud-item { display: flex; align-items: center; gap: 4px; }
-  .hud-score { font-family: 'Fredoka', sans-serif; color: var(--accent); font-size: 15px; }
-  .hud-round { color: var(--text-mid); }
-  .hud-level { font-family: 'Fredoka', sans-serif; color: var(--gold); font-size: 13px; }
-
-  .puzzle-card {
-    background: var(--card); border-radius: 20px; padding: 24px 20px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 2px solid #c0e8c0;
-    text-align: center; animation: slideIn 0.4s ease;
-  }
-  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-
-  .puzzle-type-label {
-    display: inline-block; padding: 4px 14px; border-radius: 10px;
-    background: #e0f8e0; color: var(--accent); font-size: 12px; font-weight: 900;
-    margin-bottom: 14px;
-  }
-
-  .equation {
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-    margin-bottom: 20px; flex-wrap: wrap;
-  }
-  .eq-frac {
-    display: inline-flex; flex-direction: column; align-items: center;
-    min-width: 56px;
-  }
-  .eq-frac .en, .eq-frac .ed {
-    font-family: 'Fredoka', sans-serif; font-size: 30px; font-weight: 700; color: var(--text); line-height: 1.1;
-  }
-  .eq-frac .el { width: 44px; height: 3px; background: var(--text); border-radius: 2px; }
-  .eq-frac .blank {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 46px; height: 40px; border: 3px dashed var(--accent); border-radius: 10px;
-    background: #f0fff0; font-family: 'Fredoka', sans-serif; font-size: 28px;
-    font-weight: 700; color: var(--accent);
-  }
-  .eq-sign {
-    font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; color: var(--accent);
-  }
-
-  .hint-area {
-    background: #f8fdf8; border-radius: 12px; padding: 10px 14px;
-    font-size: 12px; color: var(--text-mid); font-weight: 700;
-    margin-bottom: 16px; border: 1px solid #d0e8d0;
-  }
-
-  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .choice-btn {
-    padding: 14px 10px; border-radius: 14px;
-    border: 2px solid #c0e8c0; background: white;
-    font-family: 'Fredoka', sans-serif;
-    font-size: 24px; font-weight: 700; color: var(--text);
-    cursor: pointer; transition: all 0.2s; text-align: center;
-  }
-  .choice-btn:hover { border-color: var(--accent); background: #f0fff0; transform: scale(1.04); }
-  .choice-btn:active { transform: scale(0.96); }
-  .choice-btn.correct { border-color: var(--accent); background: #e0f8e0; color: var(--accent); }
-  .choice-btn.wrong { border-color: var(--red); background: #fde8e8; color: var(--red); }
-  .choice-btn.disabled { pointer-events: none; }
-  .choice-btn.dim { opacity: 0.3; }
-
-  .feedback {
-    margin-top: 14px; padding: 12px 16px; border-radius: 12px;
-    font-size: 14px; font-weight: 900; animation: fadeIn 0.3s ease;
-  }
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  .feedback.ok { background: #e0f8e0; color: var(--accent); }
-  .feedback.ng { background: #fde8e8; color: var(--red); }
-  .feedback .explain { font-size: 12px; font-weight: 700; color: var(--text-mid); margin-top: 6px; line-height: 1.7; }
-
-  .next-btn {
-    display: block; width: 100%; margin-top: 14px; padding: 14px;
-    border-radius: 14px; border: none;
-    background: linear-gradient(135deg, #1a6b35, var(--accent));
-    color: white; font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 15px; font-weight: 900; cursor: pointer;
-  }
-  .next-btn:active { transform: scale(0.97); }
-
-  .final-area { text-align: center; padding-top: 30px; }
-  .final-icon { font-size: 64px; margin-bottom: 10px; }
-  .final-title { font-size: 22px; font-weight: 900; margin-bottom: 16px; }
-  .score-card {
-    background: var(--card); border-radius: 20px; padding: 24px;
-    border: 2px solid #c0e8c0; margin-bottom: 20px;
-  }
-  .score-big { font-family: 'Fredoka', sans-serif; font-size: 56px; font-weight: 700; color: var(--accent); }
-  .score-sub { font-size: 14px; color: var(--text-mid); font-weight: 700; }
-  .rank-badge {
-    display: inline-block; margin-top: 12px; padding: 8px 24px;
-    border-radius: 12px; font-size: 16px; font-weight: 900;
-  }
-  .rank-s { background: linear-gradient(135deg, #ffd700, #ffec8b); color: #8b6914; }
-  .rank-a { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #555; }
-  .rank-b { background: linear-gradient(135deg, #cd7f32, #daa06d); color: #4a2800; }
-  .rank-c { background: #e0f0e0; color: var(--text-mid); }
-  .retry-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 14px 36px; border-radius: 14px; border: none;
-    background: linear-gradient(135deg, var(--accent), var(--accent-light));
-    color: white; font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 16px; font-weight: 900; cursor: pointer;
-    box-shadow: 0 4px 16px var(--accent-glow); margin-bottom: 12px;
-  }
-  .retry-btn:active { transform: scale(0.96); }
-  .home-link {
-    display: block; font-size: 13px; color: var(--text-mid);
-    text-decoration: none; font-weight: 700; margin-top: 8px;
-  }
-  .home-link:hover { color: var(--accent); }
+  html, body, #root { width: 100%; height: 100%; }
+  body { overflow-x: hidden; }
 </style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useCallback, useRef, useEffect } = React;
 
-<header class="game-header">
-  <a class="back-btn" href="../" aria-label="もどる">←</a>
-  <div class="header-emoji">🧩</div>
-  <div class="header-title">分数パズル</div>
-  <div class="header-sub">□にあてはまる数を見つけよう！</div>
-</header>
+const ROWS = 6, BOARD_W = 380, ROW_H = 56;
+const DIFF_FRACS = {
+  easy: [{n:1,d:2},{n:1,d:3},{n:2,d:3},{n:1,d:4},{n:3,d:4}],
+  normal: [{n:1,d:2},{n:1,d:3},{n:2,d:3},{n:1,d:4},{n:3,d:4},{n:1,d:6},{n:5,d:6},{n:1,d:5},{n:2,d:5},{n:3,d:5}],
+  hard: [{n:1,d:2},{n:1,d:3},{n:2,d:3},{n:1,d:4},{n:3,d:4},{n:1,d:6},{n:5,d:6},{n:1,d:5},{n:2,d:5},{n:3,d:5},{n:4,d:5},{n:1,d:8},{n:3,d:8},{n:5,d:8},{n:7,d:8},{n:1,d:10},{n:3,d:10},{n:7,d:10},{n:9,d:10},{n:1,d:12},{n:5,d:12},{n:7,d:12},{n:11,d:12}],
+};
+const DM = {
+  easy:{label:"\u3084\u3055\u3057\u3044",emoji:"\u{1f60a}",color:"#4ECDC4",desc:"\u5206\u6bcd2\u301c4 / \u624b\u672d4\u679a",copies:5,skips:4,hs:4},
+  normal:{label:"\u3075\u3064\u3046",emoji:"\u{1f9e9}",color:"#FFE66D",desc:"\u5206\u6bcd2\u301c6 / \u624b\u672d4\u679a",copies:4,skips:3,hs:4},
+  hard:{label:"\u3080\u305a\u304b\u3057\u3044",emoji:"\u{1f525}",color:"#FF6B6B",desc:"\u5206\u6bcd2\u301c12 / \u624b\u672d6\u679a",copies:3,skips:2,hs:6},
+};
+const CC={2:{bg:"#FF6B6B",gw:"#ff4444",lt:"#ff9999",tx:"#fff"},3:{bg:"#4ECDC4",gw:"#2dbdb4",lt:"#7eded8",tx:"#fff"},4:{bg:"#FFE66D",gw:"#ffd700",lt:"#fff0a0",tx:"#555"},5:{bg:"#A78BFA",gw:"#8b5cf6",lt:"#c4b5fd",tx:"#fff"},6:{bg:"#F97316",gw:"#ea580c",lt:"#fb923c",tx:"#fff"},8:{bg:"#ec4899",gw:"#db2777",lt:"#f9a8d4",tx:"#fff"},10:{bg:"#14b8a6",gw:"#0d9488",lt:"#5eead4",tx:"#fff"},12:{bg:"#6366f1",gw:"#4f46e5",lt:"#a5b4fc",tx:"#fff"},sp:{bg:"#38bdf8",gw:"#0ea5e9",lt:"#7dd3fc",tx:"#fff"}};
+const fv=f=>f.n/f.d, gcd=(a,b)=>b===0?a:gcd(b,a%b);
+function simp(n,d){const g=gcd(Math.abs(n),Math.abs(d));return{n:n/g,d:d/g};}
+function rSum(bl){return bl.filter(b=>!b.type).reduce((s,b)=>s+fv(b),0);}
+function rRem(bl){if(!bl.length)return{n:1,d:1};let tN=0,tD=1;for(const b of bl){if(b.type)continue;const g=gcd(tD,b.d),l=(tD*b.d)/g;tN=tN*(l/tD)+b.n*(l/b.d);tD=l;}const r=tD-tN;return r<=0?null:simp(r,tD);}
+function bEq(bl){return bl.filter(b=>!b.type).map(b=>b.n+"/"+b.d).join(" + ")+" = 1";}
+function getRedOpts(f){if(f.type)return[];const o=[],s=simp(f.n,f.d);if(s.n!==f.n||s.d!==f.d)o.push({...s,label:"\u7d04\u5206"});for(const m of[2,3,4,5,6]){const nn=f.n*m,nd=f.d*m;if(nd<=12&&!(nn===f.n&&nd===f.d))o.push({n:nn,d:nd,label:"\u00d7"+m});}return o;}
+function getEqOpts(f){if(f.type)return[];const v=fv(f),o=[];for(let d=2;d<=12;d++){const n=Math.round(v*d);if(n>0&&n<d&&Math.abs(n/d-v)<0.001&&!(n===f.n&&d===f.d)){const s=simp(n,d);if(s.n===n&&s.d===d)o.push({n,d});}}return o;}
+const MSN=[{id:"two",desc:"2\u679a\u3067\u30af\u30ea\u30a2",ck:b=>b.filter(x=>!x.type).length===2,pts:300},{id:"three",desc:"3\u679a\u3067\u30af\u30ea\u30a2",ck:b=>b.filter(x=>!x.type).length===3,pts:200},{id:"sixth",desc:"1/6\u3092\u4f7f\u3063\u3066\u30af\u30ea\u30a2",ck:b=>b.some(x=>x.n===1&&x.d===6),pts:200},{id:"fifth",desc:"\u5206\u6bcd5\u3067\u30af\u30ea\u30a2",ck:b=>b.some(x=>x.d===5),pts:250},{id:"samed",desc:"\u540c\u3058\u5206\u6bcd\u3060\u3051\u3067\u30af\u30ea\u30a2",ck:b=>{const d=b.filter(x=>!x.type).map(x=>x.d);return d.length>1&&d.every(x=>x===d[0]);},pts:350},{id:"four",desc:"4\u679a\u4ee5\u4e0a\u3067\u30af\u30ea\u30a2",ck:b=>b.filter(x=>!x.type).length>=4,pts:250}];
+function pickM(dn){const a=MSN.filter(m=>!dn.includes(m.id));const p=a.length?a:MSN;return p[Math.floor(Math.random()*p.length)];}
+function gRank(s,t,c){const e=t>0?s/t:0;if(e>=300&&c>=6)return{r:"S",c:"#FFE66D",m:"\u5206\u6570\u30de\u30b9\u30bf\u30fc\uff01\u{1f31f}"};if(e>=200&&c>=4)return{r:"A",c:"#4ECDC4",m:"\u3059\u3054\u3044\uff01\u2728"};if(e>=120&&c>=3)return{r:"B",c:"#A78BFA",m:"\u306a\u304b\u306a\u304b\uff01\u{1f44f}"};if(c>=2)return{r:"C",c:"#F97316",m:"\u304c\u3093\u3070\u3063\u305f\uff01\u{1f4aa}"};return{r:"D",c:"#94a3b8",m:"\u3082\u3046\u4e00\u56de\u30c1\u30e3\u30ec\u30f3\u30b8\uff01\u{1f504}"};}
+function Pie({f,sz}){const r=sz/2-1,cx=sz/2,cy=sz/2,co=CC[f.d]?.lt||"#ccc",sl=[];for(let i=0;i<f.n;i++){const sa=(i/f.d)*360-90,ea=((i+1)/f.d)*360-90,sr=sa*Math.PI/180,er=ea*Math.PI/180;sl.push(<path key={i} d={"M"+cx+","+cy+" L"+(cx+r*Math.cos(sr))+","+(cy+r*Math.sin(sr))+" A"+r+","+r+" 0 "+(1/f.d>0.5?1:0)+",1 "+(cx+r*Math.cos(er))+","+(cy+r*Math.sin(er))+" Z"} fill={co} opacity={0.9}/>);}return(<svg width={sz} height={sz}><circle cx={cx} cy={cy} r={r} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.2)" strokeWidth={0.5}/>{sl}</svg>);}
+function Blk({f,w,h,clr,nw,gl}){const c=CC[f.d]||CC[2];return(<div className={clr?"bc":nw?"bn":""} style={{width:w-3,height:h-3,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:"linear-gradient(145deg,"+c.lt+"ee,"+c.bg+")",boxShadow:gl?"0 0 12px "+c.gw+"66,0 2px 6px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.3)":"0 2px 6px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.3)",color:c.tx,fontFamily:"'Fredoka',sans-serif",fontWeight:600,fontSize:w>90?17:w>55?14:11}}><Pie f={f} sz={w>70?20:14}/><span>{f.n}<span style={{opacity:0.5,fontSize:"0.8em"}}>/</span>{f.d}</span></div>);}
 
-<div class="container">
-  <div class="screen active" id="startScreen">
-    <div class="start-area">
-      <div class="start-icon">🧩</div>
-      <div class="start-title">□を うめよう！</div>
-      <div class="start-desc">
-        分数の式に□があるよ。<br>
-        あてはまる数字を見つけて<br>
-        パズルを完成させよう！
+function App(){
+  const[df,sDf]=useState(null);const[rows,sRows]=useState(()=>Array.from({length:ROWS},()=>[]));
+  const[hand,sHand]=useState([]);const[deck,sDeck]=useState([]);const[sel,sSel]=useState(null);
+  const[sc,sSc]=useState(0);const[trn,sTrn]=useState(0);const[tc,sTc]=useState(0);
+  const[gs,sGs]=useState("menu");const[clrR,sClrR]=useState([]);const[nwB,sNwB]=useState([]);
+  const[shk,sShk]=useState(false);const[msg,sMsg]=useState(null);const[eq,sEq]=useState(null);
+  const[skp,sSkp]=useState(3);const[hov,sHov]=useState(null);const[cmb,sCmb]=useState(0);
+  const[chn,sChn]=useState(0);const[msn,sMsn]=useState(null);const[mD,sMD]=useState([]);
+  const[mF,sMF]=useState(false);const[exI,sExI]=useState(null);const[spM,sSpM]=useState(null);
+  const[hSz,sHSz]=useState(4);const[rT,sRT]=useState(null);const[mA,sMA]=useState(null);
+  const spR=useRef(null);
+  function bDeck(d){const fr=DIFF_FRACS[d],m=DM[d],dk=[];for(let i=0;i<m.copies;i++)for(const f of fr)dk.push({...f});const sp=Math.floor(dk.length/10);for(let i=0;i<sp;i++){const r=Math.random();dk.push({type:r<0.33?"x2":r<0.66?"half":"third",n:0,d:1});}for(let i=dk.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[dk[i],dk[j]]=[dk[j],dk[i]];}return dk;}
+  function drw(dk,n){return{drawn:dk.slice(0,n),rest:dk.slice(n)};}
+  function aMerge(rs,ri){let row=rs[ri].map(b=>({...b})),mg=false,eqn=null,ch=true;while(ch){ch=false;for(let i=0;i<row.length-1;i++){const a=row[i],b=row[i+1];if(a.type||b.type)continue;if(a.d===b.d){const sn=a.n+b.n;if(sn>=a.d)continue;const s=simp(sn,a.d);if(!eqn)eqn=a.n+"/"+a.d+" + "+b.n+"/"+b.d+" = "+s.n+"/"+s.d;row.splice(i,2,{n:s.n,d:s.d,x:0});mg=true;ch=true;break;}}}if(!mg)return{rows:rs,mg:false};let x=0;for(let i=0;i<row.length;i++){row[i]={...row[i],x:Math.round(x*1000)/1000};x+=fv(row[i]);}const nr=rs.map((r,i)=>i===ri?row:r.map(b=>({...b})));if(eqn){sMA({row:ri,eq:eqn});sShk(true);setTimeout(()=>{sShk(false);sMA(null);},1200);}return{rows:nr,mg:true};}
+  const pClr=useCallback((rs,cc,fH,fD,cb)=>{const fi=[];for(let i=0;i<ROWS;i++)if(rs[i].length>0&&Math.abs(rSum(rs[i])-1)<0.001)fi.push(i);if(!fi.length){sRows(rs);if(cc>1){sMsg(cc+"\u9023\u7d9a\u30af\u30ea\u30a2\uff01+"+(cc*200)+"\u{1f525}");setTimeout(()=>sMsg(null),1200);}sCmb(cc);sChn(0);cb&&cb(rs,fH,fD);return;}sEq(bEq(rs[fi[0]]));setTimeout(()=>sEq(null),1800);if(msn&&!mD.includes(msn.id)){for(const idx of fi){if(msn.ck(rs[idx])){sSc(s=>s+msn.pts);sMD(d=>[...d,msn.id]);sMF(true);setTimeout(()=>{sMF(false);sMsn(pickM([...mD,msn.id]));},1500);break;}}}for(const idx of fi){const cnt=rs[idx].filter(b=>!b.type).length;if(cnt===2){sSc(s=>s+500);sMsg("\u30d1\u30fc\u30d5\u30a7\u30af\u30c8\uff01+500\u{1f31f}");setTimeout(()=>sMsg(null),1500);}else if(cnt===3)sSc(s=>s+200);}sClrR(fi);sRows(rs);sShk(true);setTimeout(()=>sShk(false),200);const nc=cc+1;sChn(nc);const pts=fi.reduce((s,i)=>s+rs[i].length,0)*100+fi.length*300+(nc>1?nc*200:0);sSc(s=>s+Math.floor(pts));sTc(t=>t+fi.length);setTimeout(()=>{const c2=rs.map((r,i)=>fi.includes(i)?[]:[...r]);const ne=c2.filter(r=>r.length>0);const st=[...Array.from({length:ROWS-ne.length},()=>[]),...ne];sClrR([]);pClr(st,nc,fH,fD,cb);},400);},[msn,mD]);
+  function startG(d){const dd=d||df||"normal";sDf(dd);const m=DM[dd];sHSz(m.hs);const dk=bDeck(dd),{drawn,rest}=drw(dk,m.hs);sDeck(rest);sHand(drawn);sRows(Array.from({length:ROWS},()=>[]));sSc(0);sTrn(0);sTc(0);sClrR([]);sNwB([]);sSel(null);sSkp(m.skips);sCmb(0);sChn(0);sMsn(pickM([]));sMD([]);sMF(false);sExI(null);sSpM(null);sRT(null);sMA(null);sGs("playing");}
+  const cFit=useCallback((f,rb)=>!f.type&&rSum(rb)+fv(f)<=1.001,[]);
+  const cAny=useCallback((h,rs)=>{for(const c of h){if(c.type){for(const r of rs)if(r.length>0)return true;}else{for(const r of rs)if(cFit(c,r))return true;}}return false;},[cFit]);
+  function refill(h,dk){const n=hSz-h.length;if(n>0&&dk.length>0){const t=Math.min(n,dk.length);return{h:[...h,...dk.slice(0,t)],d:dk.slice(t)};}return{h,d:dk};}
+  const place=useCallback((ri)=>{if(sel===null||gs!=="playing")return;const card=hand[sel];if(card.type){sSpM(card.type);spR.current=sel;return;}if(!cFit(card,rows[ri]))return;let nr=rows.map((r,i)=>{if(i!==ri)return[...r];const a=[...r];a.push({...card,x:Math.round(rSum(a)*1000)/1000});return a;});const mr=aMerge(nr,ri);if(mr.mg)nr=mr.rows;else{sNwB([{row:ri,idx:nr[ri].length-1}]);setTimeout(()=>sNwB([]),250);}const nh=hand.filter((_,i)=>i!==sel);sSel(null);sTrn(t=>t+1);const rf=refill(nh,deck);sDeck(rf.d);sHand(rf.h);pClr(nr,0,rf.h,rf.d,(s)=>{sRows(s);});},[sel,hand,rows,gs,deck,cFit,pClr,hSz]);
+  const applySp=useCallback((ri,bi)=>{if(!spM||spR.current===null)return;const nr=rows.map(r=>r.map(b=>({...b})));const t=nr[ri][bi];if(!t||t.type)return;if(spM==="x2"){const nn=t.n*2;if(nn>=t.d){sMsg("\u3053\u308c\u4ee5\u4e0a\u5927\u304d\u304f\u3067\u304d\u306a\u3044\uff01");setTimeout(()=>sMsg(null),800);return;}const s=simp(nn,t.d);nr[ri][bi]={...t,n:s.n,d:s.d};}else if(spM==="half"){const s=simp(t.n,t.d*2);nr[ri][bi]={...t,n:s.n,d:s.d};}else if(spM==="third"){const s=simp(t.n,t.d*3);nr[ri][bi]={...t,n:s.n,d:s.d};}let x=0;for(let i=0;i<nr[ri].length;i++){nr[ri][i].x=Math.round(x*1000)/1000;x+=fv(nr[ri][i]);}if(x>1.001){sMsg("\u884c\u304b\u3089\u306f\u307f\u51fa\u3059\uff01");setTimeout(()=>sMsg(null),800);return;}const nh=hand.filter((_,i)=>i!==spR.current);sSpM(null);spR.current=null;sSel(null);sTrn(t=>t+1);const mr=aMerge(nr,ri);const fr=mr.mg?mr.rows:nr;const rf=refill(nh,deck);sDeck(rf.d);sHand(rf.h);pClr(fr,0,rf.h,rf.d,(s)=>{sRows(s);});},[spM,rows,hand,deck,pClr,hSz]);
+  const appRed=useCallback((ri,bi,nf)=>{const nr=rows.map(r=>r.map(b=>({...b})));const old=nr[ri][bi];if(Math.abs(fv(old)-fv(nf))>0.001)return;nr[ri][bi]={...old,n:nf.n,d:nf.d};let x=0;for(let i=0;i<nr[ri].length;i++){nr[ri][i].x=Math.round(x*1000)/1000;x+=fv(nr[ri][i]);}const mr=aMerge(nr,ri);const fr=mr.mg?mr.rows:nr;sRows(fr);sRT(null);if(!mr.mg){sMsg("\u{1f504} "+old.n+"/"+old.d+" \u2192 "+nf.n+"/"+nf.d);setTimeout(()=>sMsg(null),800);}if(Math.abs(rSum(fr[ri])-1)<0.001)setTimeout(()=>pClr(fr,0,hand,deck,(s)=>{sRows(s);}),300);},[rows,hand,deck,pClr]);
+  const doEx=useCallback((hi,nf)=>{const nh=[...hand];const o=nh[hi];nh[hi]={...nf};sHand(nh);sExI(null);sMsg("\u{1f504} "+o.n+"/"+o.d+" \u2192 "+nf.n+"/"+nf.d);setTimeout(()=>sMsg(null),800);},[hand]);
+  const hBlk=useCallback((r,bi)=>{if(spM){applySp(r,bi);return;}if(sel!==null)return;const b=rows[r][bi];if(!b||b.type)return;if(rT&&rT.row===r&&rT.idx===bi)sRT(null);else sRT({row:r,idx:bi});},[spM,sel,rows,rT,applySp]);
+  function skip(){if(skp<=0||gs!=="playing")return;sSkp(s=>s-1);if(deck.length>=hSz){const{drawn,rest}=drw(deck,hSz);sHand(drawn);sDeck(rest);}else if(deck.length>0){sHand([...deck]);sDeck([]);}sSel(null);sTrn(t=>t+1);sExI(null);sSpM(null);}
+  useEffect(()=>{if(gs!=="playing")return;if(hand.length===0&&deck.length===0)setTimeout(()=>sGs("gameover"),300);else if(hand.length>0&&!cAny(hand,rows)&&skp<=0&&deck.length===0)setTimeout(()=>sGs("gameover"),500);},[hand,deck,rows,gs,cAny,skp]);
+  const bH=ROWS*ROW_H,ri=gRank(sc,trn,tc);
+  return(<div style={{minHeight:"100vh",background:"linear-gradient(150deg,#0f172a,#1e1b4b 50%,#1a1333)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Fredoka',sans-serif",color:"#fff",padding:10,userSelect:"none"}}>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <h1 style={{fontSize:24,fontWeight:700,margin:"0 0 1px",background:"linear-gradient(90deg,#FF6B6B,#4ECDC4,#FFE66D,#A78BFA)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:2}}>{"\u{1f0cf} \u5206\u6570\u30ab\u30fc\u30c9\u30d1\u30ba\u30eb"}</h1>
+    <p style={{margin:"0 0 8px",opacity:0.4,fontSize:11}}>{"\u624b\u672d\u304b\u3089\u9078\u3093\u3067\u884c\u306b\u914d\u7f6e\u3002\u3074\u3063\u305f\u308a1\u3092\u4f5c\u308d\u3046\uff01"}</p>
+    {gs==="menu"&&(<div className="fi" style={{textAlign:"center",background:"rgba(255,255,255,0.04)",borderRadius:20,padding:"22px 28px",maxWidth:460,backdropFilter:"blur(12px)",border:"1px solid rgba(255,255,255,0.08)"}}>
+      <div style={{fontSize:14,marginBottom:10,lineHeight:2,opacity:0.9}}><p style={{margin:0}}>{"\u{1f0cf} \u624b\u672d\u304b\u3089\u5206\u6570\u30ab\u30fc\u30c9\u3092\u9078\u3093\u3067\u597d\u304d\u306a\u884c\u306b\u914d\u7f6e"}</p><p style={{margin:0}}>{"\u5408\u8a08 "}<strong style={{color:"#FFE66D",fontSize:18}}>{"\u3061\u3087\u3046\u30691"}</strong>{" \u306b\u306a\u3063\u305f\u3089\u30af\u30ea\u30a2\uff01"}</p></div>
+      <div style={{fontSize:13,fontWeight:600,opacity:0.7,marginBottom:8}}>{"\u96e3\u6613\u5ea6\u3092\u3048\u3089\u307c\u3046"}</div>
+      <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:14}}>
+        {["easy","normal","hard"].map(d=>{const m=DM[d],dens=[...new Set(DIFF_FRACS[d].map(f=>f.d))].sort((a,b)=>a-b);return(<button key={d} onClick={()=>startG(d)} className="bs dc" style={{flex:1,maxWidth:140,padding:"14px 8px",borderRadius:14,background:"rgba(255,255,255,0.04)",border:"2px solid "+m.color+"44",color:"#fff",cursor:"pointer",fontFamily:"'Fredoka',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",gap:6,transition:"all 0.15s"}}><span style={{fontSize:28}}>{m.emoji}</span><div style={{fontSize:15,fontWeight:700,color:m.color}}>{m.label}</div><div style={{fontSize:10,opacity:0.5,lineHeight:1.5}}>{m.desc}</div><div style={{display:"flex",gap:2,flexWrap:"wrap",justifyContent:"center",marginTop:4}}>{dens.map(dn=>{const co=CC[dn]||CC[2];return(<div key={dn} style={{padding:"1px 5px",borderRadius:4,fontSize:9,fontWeight:600,background:co.bg+"44",color:co.lt,border:"1px solid "+co.bg+"66"}}>/{dn}</div>);})}</div></button>);})}
       </div>
-      <div class="rules-box">
-        <h3>📋 あそびかた</h3>
-        <ul>
-          <li>□にあてはまる数を4つからえらぼう</li>
-          <li>等しい分数・足し算・かけ算が出るよ</li>
-          <li>全10問！だんだんむずかしくなるよ</li>
-          <li>正解するとポイントゲット！</li>
-        </ul>
+      <div style={{fontSize:10,opacity:0.4,lineHeight:1.8}}>{"\u{1f31f}\u30d1\u30fc\u30d5\u30a7\u30af\u30c8 / \u{1f381}\u30df\u30c3\u30b7\u30e7\u30f3 / \u2716\ufe0f\u00d72 / \u2797\u00f72 / \u{1f539}\u00f73 / \u{1f504}\u901a\u5206\u3067\u81ea\u52d5\u5408\u4f53 / \u{1f4d6}\u5f0f\u8868\u793a"}</div>
+    </div>)}
+    {(gs==="playing"||gs==="gameover")&&(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+      <div style={{display:"flex",gap:14,alignItems:"center",flexWrap:"wrap",justifyContent:"center"}}>
+        {[{l:"\u30b9\u30b3\u30a2",v:sc,c:"#FFE66D"},{l:"\u30bf\u30fc\u30f3",v:trn,c:"#4ECDC4"},{l:"\u30af\u30ea\u30a2",v:tc,c:"#A78BFA"},{l:"\u6b8b\u308a",v:deck.length,c:"#F97316"}].map(({l,v,c})=>(<div key={l} style={{textAlign:"center"}}><div style={{fontSize:9,opacity:0.4}}>{l}</div><div className="sp" key={l+v} style={{fontSize:17,fontWeight:700,color:c}}>{v}</div></div>))}
       </div>
-      <button class="start-btn" id="startBtn">🧩 スタート！</button>
-    </div>
-  </div>
+      {msn&&gs==="playing"&&(<div className={mF?"md":""} style={{background:mF?"rgba(78,205,196,0.15)":"rgba(255,255,255,0.04)",borderRadius:10,padding:"5px 16px",border:mF?"1.5px solid #4ECDC4":"1px solid rgba(255,255,255,0.06)",fontSize:12,textAlign:"center"}}>{"\u{1f381} \u30df\u30c3\u30b7\u30e7\u30f3\uff1a"}<span style={{color:"#FFE66D",fontWeight:600}}>{msn.desc}</span><span style={{opacity:0.5,marginLeft:6}}>+{msn.pts}</span></div>)}
+      <div style={{position:"relative"}}><div className={shk?"bsh":""} style={{width:BOARD_W,height:bH,background:"rgba(0,0,0,0.3)",borderRadius:14,border:"1.5px solid rgba(255,255,255,0.08)",overflow:"hidden",position:"relative",boxShadow:"0 0 50px rgba(0,0,0,0.3),inset 0 0 30px rgba(0,0,0,0.15)"}}>
+        {chn>0&&<div style={{position:"absolute",inset:0,background:chn>2?"rgba(255,107,107,0.08)":chn>1?"rgba(255,230,109,0.05)":"transparent",pointerEvents:"none",transition:"background 0.3s"}}/>}
+        {Array.from({length:ROWS-1},(_,i)=><div key={"h"+i} style={{position:"absolute",top:(i+1)*ROW_H,left:0,width:"100%",height:1,background:"rgba(255,255,255,0.04)"}}/>)}
+        {[1/6,2/6,3/6,4/6,5/6].map((x,i)=><div key={"v"+i} style={{position:"absolute",left:x*BOARD_W,top:0,width:1,height:"100%",background:x===0.5?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.025)"}}/>)}
+        {rows.map((rb,r)=>{const ok=sel!==null&&hand[sel]&&!hand[sel].type&&cFit(hand[sel],rb),ih=hov===r&&ok;return(<div key={"rz"+r} onPointerEnter={()=>sHov(r)} onPointerLeave={()=>sHov(null)} onClick={()=>{if(ok)place(r);}} style={{position:"absolute",top:r*ROW_H,left:0,width:BOARD_W,height:ROW_H,background:ih?"rgba(255,255,255,0.06)":ok?"rgba(255,255,255,0.02)":"transparent",cursor:ok?"pointer":"default",transition:"background 0.12s",zIndex:1}}/>);})}
+        {rows.map((rb,r)=>rb.map((b,bi)=>{if(b.type)return null;const isR=rT&&rT.row===r&&rT.idx===bi;const isM=mA&&mA.row===r;return(<div key={r+"-"+bi} onClick={()=>hBlk(r,bi)} style={{position:"absolute",top:r*ROW_H+1.5,left:b.x*BOARD_W+1.5,transition:"top 0.15s cubic-bezier(0.34,1.56,0.64,1),left 0.3s ease-out",zIndex:isR?5:2,cursor:(spM||sel===null)?"pointer":"default"}}>
+          <Blk f={b} w={fv(b)*BOARD_W} h={ROW_H} clr={clrR.includes(r)} nw={nwB.some(nb=>nb.row===r&&nb.idx===bi)||isM} gl={!!spM||isR}/>
+          {spM&&!b.type&&<div style={{position:"absolute",inset:0,borderRadius:10,border:"2px solid rgba(56,189,248,0.5)",background:"rgba(56,189,248,0.08)",pointerEvents:"none"}}/>}
+          {isR&&!spM&&(()=>{const opts=getRedOpts(b);return(<div className="fi" style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",marginBottom:4,background:"rgba(30,27,75,0.97)",borderRadius:10,padding:"8px 6px",border:"1px solid rgba(255,255,255,0.12)",display:"flex",flexDirection:"column",gap:3,zIndex:20,minWidth:70,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+            <div style={{fontSize:9,opacity:0.5,textAlign:"center"}}>{"\u{1f504} \u901a\u5206\u30fb\u7d04\u5206"}</div>
+            {opts.length>0?opts.map((o,oi)=>{const oc=CC[o.d]||CC[2];return(<button key={oi} onClick={e=>{e.stopPropagation();appRed(r,bi,o);}} className="bs" style={{padding:"4px 8px",borderRadius:6,fontSize:13,fontWeight:600,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:oc.lt,cursor:"pointer",fontFamily:"'Fredoka',sans-serif",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><span>{o.n}/{o.d}</span><span style={{fontSize:8,opacity:0.4}}>{o.label}</span></button>);}):<div style={{fontSize:10,opacity:0.5,padding:"2px 4px"}}>{"\u5909\u63db\u306a\u3057"}</div>}
+            <div style={{fontSize:8,opacity:0.35,textAlign:"center",marginTop:2}}>{"\u{1f4a1} \u540c\u3058\u5206\u6bcd\u306b\u3059\u308b\u3068\u81ea\u52d5\u5408\u4f53\uff01"}</div>
+          </div>);})()}
+        </div>);}))}
+        {mA&&<div className="mep" style={{position:"absolute",top:mA.row*ROW_H+ROW_H*0.2,left:"50%",zIndex:15,pointerEvents:"none"}}>{"\u{1f517} "+mA.eq}</div>}
+        {sel!==null&&hand[sel]&&!hand[sel].type&&hov!==null&&cFit(hand[sel],rows[hov])&&(<div style={{position:"absolute",top:hov*ROW_H+1.5,left:rSum(rows[hov])*BOARD_W+1.5,zIndex:3,pointerEvents:"none",opacity:0.4}}><Blk f={hand[sel]} w={fv(hand[sel])*BOARD_W} h={ROW_H}/></div>)}
+        {rows.map((rb,r)=>{if(!rb.length||clrR.includes(r))return null;const rem=rRem(rb);if(!rem||rem.n<=0)return null;return(<div key={"rm"+r} style={{position:"absolute",top:r*ROW_H,right:-72,height:ROW_H,display:"flex",alignItems:"center",zIndex:4}}><div className="rt" style={{background:"rgba(255,255,255,0.06)",borderRadius:8,padding:"3px 7px",fontSize:11,fontWeight:600,color:"#FFE66D",whiteSpace:"nowrap",border:"1px solid rgba(255,230,109,0.15)"}}>{"\u3042\u3068 "}<span style={{fontSize:13}}>{rem.n}/{rem.d}</span></div></div>);})}
+        {rows.map((rb,r)=>{if(!rb.length)return null;const s=rSum(rb);return(<div key={"fb"+r} style={{position:"absolute",top:(r+1)*ROW_H-2.5,left:0,width:BOARD_W,height:2.5,background:"rgba(255,255,255,0.03)",zIndex:2,pointerEvents:"none"}}><div style={{width:Math.min(s,1)*100+"%",height:"100%",background:s>0.99?"#4ECDC4":"rgba(255,255,255,0.12)",borderRadius:2,transition:"width 0.2s"}}/></div>);})}
+        {eq&&<div className="eqp" style={{position:"absolute",bottom:12,left:"50%",zIndex:10,pointerEvents:"none"}}>{eq}</div>}
+        {msg&&<div className="mp" style={{position:"absolute",top:"35%",left:"50%",pointerEvents:"none",zIndex:10}}>{msg}</div>}
+        {spM&&(<div style={{position:"absolute",top:-32,left:0,width:BOARD_W,textAlign:"center",fontSize:13,fontWeight:600,color:"#7dd3fc",zIndex:10}}>{"\u{1f446} "+(spM==="x2"?"2\u500d\u306b\u3059\u308b":spM==="half"?"\u534a\u5206\u306b\u3059\u308b":"3\u5206\u306e1\u306b\u3059\u308b")+"\u30d6\u30ed\u30c3\u30af\u3092\u30bf\u30c3\u30d7"}<button onClick={()=>{sSpM(null);spR.current=null;sSel(null);}} className="bs" style={{marginLeft:8,fontSize:10,padding:"2px 8px",borderRadius:6,background:"transparent",border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontFamily:"'Fredoka',sans-serif"}}>{"\u30ad\u30e3\u30f3\u30bb\u30eb"}</button></div>)}
+        {gs==="gameover"&&(<div className="fi" style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",backdropFilter:"blur(6px)",borderRadius:12,zIndex:20}}>
+          <div style={{fontSize:22,fontWeight:700,marginBottom:4}}>{"\u304a\u3064\u304b\u308c\u3055\u307e\uff01"}</div>
+          {df&&<div style={{fontSize:11,opacity:0.5,marginBottom:6}}>{DM[df].emoji+" "+DM[df].label}</div>}
+          <div style={{fontSize:52,fontWeight:700,color:ri.c,textShadow:"0 0 20px "+ri.c+"66",marginBottom:2,lineHeight:1}}>{ri.r}</div>
+          <div style={{fontSize:13,color:ri.c,marginBottom:10,fontWeight:600}}>{ri.m}</div>
+          <div style={{fontSize:14,opacity:0.8,marginBottom:2}}>{"\u30b9\u30b3\u30a2: "}<span style={{color:"#FFE66D",fontWeight:700,fontSize:20}}>{sc}</span></div>
+          <div style={{fontSize:12,opacity:0.5,marginBottom:4}}>{trn+"\u30bf\u30fc\u30f3 / "+tc+"\u884c\u30af\u30ea\u30a2"}</div>
+          {trn>0&&<div style={{fontSize:12,opacity:0.5,marginBottom:14}}>{"\u52b9\u7387: "}<span style={{color:"#4ECDC4",fontWeight:600}}>{(sc/Math.max(trn,1)).toFixed(0)}</span>{" \u70b9/\u30bf\u30fc\u30f3"}</div>}
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>startG(df)} className="bs" style={{padding:"10px 24px",fontSize:15,fontWeight:700,fontFamily:"'Fredoka',sans-serif",background:"linear-gradient(135deg,#A78BFA,#8b5cf6)",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",boxShadow:"0 4px 16px rgba(139,92,246,0.35)"}}>{"\u3082\u3046\u4e00\u56de\uff01"}</button>
+            <button onClick={()=>{sGs("menu");sDf(null);}} className="bs" style={{padding:"10px 20px",fontSize:13,fontWeight:600,fontFamily:"'Fredoka',sans-serif",background:"rgba(255,255,255,0.06)",color:"#fff",border:"1px solid rgba(255,255,255,0.12)",borderRadius:12,cursor:"pointer"}}>{"\u96e3\u6613\u5ea6\u3092\u5909\u3048\u308b"}</button>
+          </div>
+        </div>)}
+      </div></div>
+      {spM?null:sel!==null?(<div className="fi" style={{fontSize:13,opacity:0.7,color:"#FFE66D"}}>{hand[sel]?.type?"\u{1f446} \u4f7f\u3044\u305f\u3044\u30d6\u30ed\u30c3\u30af\u3092\u30bf\u30c3\u30d7\uff01":"\u{1f446} \u7f6e\u304d\u305f\u3044\u884c\u3092\u30bf\u30c3\u30d7\uff01"}</div>):gs==="playing"?(<div style={{fontSize:11,opacity:0.35,textAlign:"center",lineHeight:1.6}}>{"\u{1f447} \u624b\u672d\u304b\u3089\u30ab\u30fc\u30c9\u3092\u9078\u3076 \uff0f \u30d6\u30ed\u30c3\u30af\u30bf\u30c3\u30d7\u3067\u901a\u5206\uff08\u540c\u3058\u5206\u6bcd\u306f\u81ea\u52d5\u5408\u4f53\uff01\uff09"}</div>):null}
+      {gs==="playing"&&(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+        <div style={{display:"flex",gap:7,justifyContent:"center",alignItems:"flex-end",flexWrap:"wrap"}}>
+          {hand.map((card,i)=>{const isSp=!!card.type,ok=isSp?rows.some(r=>r.length>0):rows.some(r=>cFit(card,r)),co=isSp?CC.sp:(CC[card.d]||CC[2]),eo=isSp?[]:getEqOpts(card),cw=hSz>4?66:76;return(<div key={i+"-"+card.n+"-"+card.d+"-"+(card.type||"")} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            <button onClick={()=>{sRT(null);sExI(null);if(sel===i){sSel(null);sSpM(null);}else if(ok){sSel(i);if(isSp){sSpM(card.type);spR.current=i;}else sSpM(null);}}} className="cb" style={{width:cw,padding:"8px 4px",borderRadius:14,display:"flex",flexDirection:"column",alignItems:"center",gap:5,background:sel===i?"linear-gradient(145deg,"+co.lt+","+co.bg+")":"rgba(255,255,255,0.06)",border:sel===i?"2.5px solid "+co.lt:ok?"1.5px solid rgba(255,255,255,0.12)":"1.5px solid rgba(255,255,255,0.05)",color:sel===i?co.tx:"#fff",cursor:(ok||sel===i)?"pointer":"default",opacity:(ok||sel===i)?1:0.35,fontFamily:"'Fredoka',sans-serif",transform:sel===i?"translateY(-6px) scale(1.05)":"none",boxShadow:sel===i?"0 8px 24px "+co.gw+"44":"none",transition:"transform 0.15s,box-shadow 0.15s,opacity 0.15s",outline:"none"}}>
+              {isSp?(<><span style={{fontSize:20}}>{card.type==="x2"?"\u2716\ufe0f":card.type==="half"?"\u2797":"\u{1f539}"}</span><div style={{fontSize:11,fontWeight:700}}>{card.type==="x2"?"\u00d72":card.type==="half"?"\u00f72":"\u00f73"}</div><div style={{fontSize:8,opacity:0.6,lineHeight:1.2}}>{card.type==="x2"?"2\u500d":card.type==="half"?"\u534a\u5206":"1/3"}</div></>):(<><Pie f={card} sz={hSz>4?22:28}/><div style={{fontSize:hSz>4?15:17,fontWeight:700}}>{card.n}<span style={{opacity:0.5,fontSize:hSz>4?11:13}}>/</span>{card.d}</div><div style={{width:hSz>4?46:56,height:5,borderRadius:3,background:"rgba(255,255,255,0.1)",overflow:"hidden"}}><div style={{width:fv(card)*100+"%",height:"100%",borderRadius:3,background:sel===i?co.lt:co.bg+"88",transition:"width 0.2s"}}/></div></>)}
+            </button>
+            {!isSp&&eo.length>0&&ok&&(<button onClick={e=>{e.stopPropagation();sExI(exI===i?null:i);}} className="bs" style={{fontSize:9,padding:"2px 6px",borderRadius:6,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontFamily:"'Fredoka',sans-serif"}}>{"\u{1f504}\u5909\u63db"}</button>)}
+            {exI===i&&!isSp&&(<div className="fi" style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",marginBottom:6,background:"rgba(30,27,75,0.95)",borderRadius:10,padding:"8px 6px",border:"1px solid rgba(255,255,255,0.12)",display:"flex",flexDirection:"column",gap:4,zIndex:30,minWidth:70,boxShadow:"0 8px 24px rgba(0,0,0,0.4)"}}><div style={{fontSize:9,opacity:0.5,textAlign:"center"}}>{"\u{1f504} \u5909\u63db\u5148"}</div>{eo.map((o,oi)=>(<button key={oi} onClick={e=>{e.stopPropagation();doEx(i,o);}} className="bs" style={{padding:"5px 8px",borderRadius:7,fontSize:14,fontWeight:600,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:(CC[o.d]||CC[2]).lt,cursor:"pointer",fontFamily:"'Fredoka',sans-serif",textAlign:"center"}}>{o.n}/{o.d}</button>))}</div>)}
+          </div>);})}
+        </div>
+        <button onClick={skip} disabled={skp<=0} className="bs" style={{padding:"6px 18px",fontSize:11,fontWeight:600,fontFamily:"'Fredoka',sans-serif",background:skp>0?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.02)",color:skp>0?"#fff":"rgba(255,255,255,0.3)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,cursor:skp>0?"pointer":"default"}}>{"\u{1f504} \u624b\u672d\u30c1\u30a7\u30f3\u30b8\uff08\u6b8b\u308a"+skp+"\u56de\uff09"}</button>
+      </div>)}
+    </div>)}
+    <style>{[
+      "@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.fi{animation:fi .25s ease-out}",
+      "@keyframes bc{0%{transform:scale(1);opacity:1}40%{transform:scaleX(1.15) scaleY(.85);opacity:.7}100%{transform:scaleY(0) scaleX(1.3);opacity:0}}.bc{animation:bc .3s cubic-bezier(.34,1.56,.64,1) forwards}",
+      "@keyframes bn{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.05);opacity:1}100%{transform:scale(1)}}.bn{animation:bn .2s ease-out}",
+      "@keyframes bsh{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px) translateY(1px)}50%{transform:translateX(2px)}75%{transform:translateX(-1px)}}.bsh{animation:bsh .18s ease-out}",
+      "@keyframes sp{0%{transform:scale(1.3)}100%{transform:scale(1)}}.sp{animation:sp .15s cubic-bezier(.34,1.56,.64,1)}",
+      "@keyframes mp{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}20%{transform:translate(-50%,-50%) scale(1.1);opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}.mp{animation:mp 1.4s cubic-bezier(.34,1.56,.64,1) forwards;font-size:18px;font-weight:700;color:#FFE66D;text-shadow:0 0 12px rgba(255,230,109,.6);white-space:nowrap}",
+      "@keyframes eqp{0%{transform:translateX(-50%) translateY(10px);opacity:0}15%{transform:translateX(-50%);opacity:1}80%{transform:translateX(-50%);opacity:1}100%{transform:translateX(-50%) translateY(-10px);opacity:0}}.eqp{animation:eqp 1.8s ease-out forwards;font-size:15px;font-weight:700;color:#4ECDC4;text-shadow:0 0 10px rgba(78,205,196,.5);white-space:nowrap;background:rgba(0,0,0,.6);padding:6px 14px;border-radius:10px}",
+      "@keyframes mep{0%{transform:translate(-50%,0) scale(.6);opacity:0}15%{transform:translate(-50%,0) scale(1.1);opacity:1}70%{transform:translate(-50%,0);opacity:1}100%{transform:translate(-50%,-12px) scale(.95);opacity:0}}.mep{animation:mep 1.2s cubic-bezier(.34,1.56,.64,1) forwards;font-size:15px;font-weight:700;color:#4ECDC4;text-shadow:0 0 12px rgba(78,205,196,.5);white-space:nowrap;background:rgba(0,0,0,.7);padding:5px 14px;border-radius:10px;border:1px solid rgba(78,205,196,.3)}",
+      "@keyframes rt{0%,100%{opacity:.7}50%{opacity:1}}.rt{animation:rt 2s ease-in-out infinite}",
+      "@keyframes md{0%{transform:scale(1)}30%{transform:scale(1.05)}60%{background:rgba(78,205,196,.25)}100%{transform:scale(1)}}.md{animation:md 1.5s ease-out}",
+      ".bs{transition:transform .08s}.bs:active{transform:scale(.94)}",
+      ".cb{outline:none}.cb:hover{filter:brightness(1.05)}",
+      ".dc:hover{transform:translateY(-4px) scale(1.03)!important;border-color:rgba(255,255,255,.3)!important;background:rgba(255,255,255,.08)!important}"
+    ].join("\n")}</style>
+  </div>);
+}
 
-  <div class="screen" id="gameScreen">
-    <div class="hud">
-      <div class="hud-item"><span>⭐</span><span class="hud-score" id="hudScore">0</span></div>
-      <div class="hud-item hud-round" id="hudRound">第1問 / 10問</div>
-      <div class="hud-item"><span>📊</span><span class="hud-level" id="hudLevel">Lv.1</span></div>
-    </div>
-    <div id="questionArea"></div>
-  </div>
-
-  <div class="screen" id="finalScreen"></div>
-</div>
-
-<script>
-  function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = b; b = a % b; a = t; } return a; }
-  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-  function shuffle(arr) {
-    for (var i = arr.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-    }
-    return arr;
-  }
-
-  // Puzzle types
-  function makeEquivalent(level) {
-    // a/b = ?/d  or  a/b = c/?
-    var b = randInt(2, 3 + level);
-    var a = randInt(1, b - 1);
-    var g = gcd(a, b);
-    a = a / g; b = b / g;
-    var mult = randInt(2, 2 + Math.floor(level / 2));
-    var c = a * mult;
-    var d = b * mult;
-
-    // Random: hide c or d
-    if (Math.random() < 0.5) {
-      // hide numerator: a/b = ?/d
-      return {
-        type: '等しい分数',
-        hint: '両方の分数は同じ大きさだよ。分母を見くらべてみよう！',
-        left: { n: String(a), d: String(b) },
-        right: { n: '□', d: String(d) },
-        sign: '=',
-        answer: c,
-        explain: b + ' × ' + mult + ' = ' + d + ' だから、分子も ' + a + ' × ' + mult + ' = ' + c + ' だよ。'
-      };
-    } else {
-      // hide denominator: a/b = c/?
-      return {
-        type: '等しい分数',
-        hint: '両方の分数は同じ大きさだよ。分子を見くらべてみよう！',
-        left: { n: String(a), d: String(b) },
-        right: { n: String(c), d: '□' },
-        sign: '=',
-        answer: d,
-        explain: a + ' × ' + mult + ' = ' + c + ' だから、分母も ' + b + ' × ' + mult + ' = ' + d + ' だよ。'
-      };
-    }
-  }
-
-  function makeAddition(level) {
-    // a/d + ?/d = c/d  (same denominator)
-    var d = randInt(3, 4 + level);
-    var a = randInt(1, d - 2);
-    var blank = randInt(1, d - a);
-    var c = a + blank;
-
-    return {
-      type: '分数の足し算',
-      hint: '分母が同じ分数の足し算だよ。分子だけ足せばOK！',
-      left: { n: String(a), d: String(d) },
-      right: { n: '□', d: String(d) },
-      sign: '+',
-      resultFrac: { n: String(c), d: String(d) },
-      answer: blank,
-      explain: a + '/' + d + ' + □/' + d + ' = ' + c + '/' + d + ' だから、□ = ' + c + ' - ' + a + ' = ' + blank + ' だよ。'
-    };
-  }
-
-  function makeMultiply(level) {
-    // a/b × ?  = c/b  (multiply numerator by integer)
-    var b = randInt(2, 4 + Math.floor(level / 3));
-    var a = randInt(1, b);
-    var mult = randInt(2, 3 + Math.floor(level / 3));
-    var c = a * mult;
-
-    return {
-      type: '分数のかけ算',
-      hint: '分数に整数をかけると、分子だけに整数をかけるよ！',
-      left: { n: String(a), d: String(b) },
-      right: null,
-      multiplier: '□',
-      sign: '×',
-      resultFrac: { n: String(c), d: String(b) },
-      answer: mult,
-      explain: a + '/' + b + ' × □ = ' + c + '/' + b + ' だから、□ = ' + c + ' ÷ ' + a + ' = ' + mult + ' だよ。'
-    };
-  }
-
-  function makeQuestion(round) {
-    var level = Math.ceil(round / 2);
-    var q;
-    if (round <= 4) {
-      q = makeEquivalent(level);
-    } else if (round <= 7) {
-      q = Math.random() < 0.5 ? makeAddition(level) : makeEquivalent(level);
-    } else {
-      var r = Math.random();
-      if (r < 0.33) q = makeEquivalent(level);
-      else if (r < 0.66) q = makeAddition(level);
-      else q = makeMultiply(level);
-    }
-    q.level = level;
-
-    // Make choices
-    var wrongs = [];
-    var tries = 0;
-    while (wrongs.length < 3 && tries < 30) {
-      tries++;
-      var w = q.answer + randInt(-3, 3);
-      if (w <= 0 || w === q.answer) continue;
-      if (wrongs.indexOf(w) >= 0) continue;
-      wrongs.push(w);
-    }
-    while (wrongs.length < 3) {
-      wrongs.push(q.answer + wrongs.length + 1);
-    }
-    q.options = shuffle([q.answer].concat(wrongs));
-    return q;
-  }
-
-  // State
-  var TOTAL = 10;
-  var score = 0, round = 0, correctCount = 0;
-
-  var startScreen = document.getElementById('startScreen');
-  var gameScreen = document.getElementById('gameScreen');
-  var finalScreen = document.getElementById('finalScreen');
-  var questionArea = document.getElementById('questionArea');
-  var hudScore = document.getElementById('hudScore');
-  var hudRound = document.getElementById('hudRound');
-  var hudLevel = document.getElementById('hudLevel');
-
-  function showScreen(s) {
-    [startScreen, gameScreen, finalScreen].forEach(function(el) { el.classList.remove('active'); });
-    s.classList.add('active');
-  }
-
-  document.getElementById('startBtn').addEventListener('click', function() {
-    score = 0; round = 0; correctCount = 0;
-    showScreen(gameScreen);
-    nextQuestion();
-  });
-
-  function nextQuestion() {
-    round++;
-    if (round > TOTAL) { showFinal(); return; }
-    hudScore.textContent = score;
-    hudRound.textContent = '第' + round + '問 / ' + TOTAL + '問';
-    var q = makeQuestion(round);
-    hudLevel.textContent = 'Lv.' + q.level;
-    renderQuestion(q);
-  }
-
-  function fracHtml(frac) {
-    var nHtml = frac.n === '□' ? '<span class="blank">？</span>' : '<span class="en">' + frac.n + '</span>';
-    var dHtml = frac.d === '□' ? '<span class="blank">？</span>' : '<span class="ed">' + frac.d + '</span>';
-    return '<div class="eq-frac">' + nHtml + '<span class="el"></span>' + dHtml + '</div>';
-  }
-
-  function renderQuestion(q) {
-    var eqHtml = '';
-    eqHtml += fracHtml(q.left);
-    eqHtml += '<span class="eq-sign">' + q.sign + '</span>';
-
-    if (q.right) {
-      eqHtml += fracHtml(q.right);
-    } else if (q.multiplier) {
-      eqHtml += '<div class="eq-frac"><span class="blank">？</span></div>';
-    }
-
-    if (q.resultFrac) {
-      eqHtml += '<span class="eq-sign">=</span>';
-      eqHtml += fracHtml(q.resultFrac);
-    }
-
-    var choicesHtml = '';
-    for (var i = 0; i < q.options.length; i++) {
-      choicesHtml += '<button class="choice-btn" data-val="' + q.options[i] + '">' + q.options[i] + '</button>';
-    }
-
-    questionArea.innerHTML =
-      '<div class="puzzle-card">' +
-        '<div class="puzzle-type-label">' + q.type + '</div>' +
-        '<div class="equation">' + eqHtml + '</div>' +
-        '<div class="hint-area">💡 ヒント: ' + q.hint + '</div>' +
-        '<div class="choices" id="choices">' + choicesHtml + '</div>' +
-        '<div id="feedbackArea"></div>' +
-      '</div>';
-
-    var btns = document.querySelectorAll('.choice-btn');
-    btns.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        handleAnswer(q, parseInt(btn.dataset.val));
-      });
-    });
-  }
-
-  function handleAnswer(q, chosen) {
-    var isCorrect = chosen === q.answer;
-    var pts = isCorrect ? 10 + q.level * 2 : 0;
-    if (isCorrect) { score += pts; correctCount++; }
-    hudScore.textContent = score;
-
-    var btns = document.querySelectorAll('.choice-btn');
-    btns.forEach(function(btn) {
-      btn.classList.add('disabled');
-      var val = parseInt(btn.dataset.val);
-      if (val === q.answer) btn.classList.add('correct');
-      if (val === chosen && !isCorrect) btn.classList.add('wrong');
-      if (val !== q.answer && val !== chosen) btn.classList.add('dim');
-    });
-
-    var fb = document.getElementById('feedbackArea');
-    if (isCorrect) {
-      fb.innerHTML = '<div class="feedback ok">🎉 正解！ +' + pts + '点</div>';
-    } else {
-      fb.innerHTML = '<div class="feedback ng">❌ 残念！□ = ' + q.answer + ' だよ' +
-        '<div class="explain">' + q.explain + '</div></div>';
-    }
-
-    fb.innerHTML += '<button class="next-btn" id="nextBtn">' +
-      (round < TOTAL ? '次の問題へ ➜' : '結果を見る 🏆') + '</button>';
-    document.getElementById('nextBtn').addEventListener('click', nextQuestion);
-  }
-
-  function showFinal() {
-    var pct = Math.round(correctCount / TOTAL * 100);
-    var rank, rankClass, emoji, label;
-    if (pct >= 90) { rank = 'S'; rankClass = 'rank-s'; emoji = '👑'; label = 'パズル名人！'; }
-    else if (pct >= 70) { rank = 'A'; rankClass = 'rank-a'; emoji = '🎖️'; label = 'パズルはかせ！'; }
-    else if (pct >= 50) { rank = 'B'; rankClass = 'rank-b'; emoji = '🧩'; label = 'パズルチャレンジャー！'; }
-    else { rank = 'C'; rankClass = 'rank-c'; emoji = '🌱'; label = 'もっとれんしゅう！'; }
-
-    finalScreen.innerHTML =
-      '<div class="final-area">' +
-        '<div class="final-icon">' + emoji + '</div>' +
-        '<div class="final-title">ゲーム終了！</div>' +
-        '<div class="score-card">' +
-          '<div class="score-big">' + score + '</div>' +
-          '<div class="score-sub">' + correctCount + ' / ' + TOTAL + ' 問正解</div>' +
-          '<div class="rank-badge ' + rankClass + '">' + emoji + ' ランク ' + rank + '「' + label + '」</div>' +
-        '</div>' +
-        '<button class="retry-btn" id="retryBtn">🔄 もう一度あそぶ</button>' +
-        '<a class="home-link" href="../">🌲 ゲームランドに戻る</a>' +
-      '</div>';
-    showScreen(finalScreen);
-    document.getElementById('retryBtn').addEventListener('click', function() {
-      score = 0; round = 0; correctCount = 0;
-      showScreen(gameScreen);
-      nextQuestion();
-    });
-  }
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>
