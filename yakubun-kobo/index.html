@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>約分工房 - TRAIL 探究ゲームランド</title>
+<meta name="description" content="分数をいちばん小さいかたちにしよう！約分がたのしく身につくゲーム。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff5ee;
+    --accent: #e67e22;
+    --accent-light: #f0a050;
+    --accent-glow: rgba(230,126,34,0.2);
+    --green: #27ae60;
+    --red: #e74c3c;
+    --text: #3a2010;
+    --text-mid: #7a5a40;
+    --card: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden;
+  }
+  .game-header {
+    background: linear-gradient(135deg, #8B4513, #cd853f, #daa06d);
+    color: white; text-align: center; padding: 16px 16px 20px; position: relative;
+  }
+  .game-header::after {
+    content: ''; position: absolute; bottom: -8px; left: 0; right: 0; height: 16px;
+    background: var(--bg); border-radius: 16px 16px 0 0;
+  }
+  .back-btn {
+    position: absolute; top: 12px; left: 12px;
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-family: 'Zen Maru Gothic', sans-serif;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+  .header-emoji { font-size: 32px; }
+  .header-title { font-size: 22px; font-weight: 900; }
+  .header-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 0 16px 60px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .start-area { text-align: center; padding-top: 30px; }
+  .start-icon { font-size: 72px; margin-bottom: 12px; animation: spin 4s linear infinite; }
+  @keyframes spin { 0%{transform:rotate(0)} 25%{transform:rotate(10deg)} 50%{transform:rotate(0)} 75%{transform:rotate(-10deg)} 100%{transform:rotate(0)} }
+  .start-title { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+  .start-desc { font-size: 14px; color: var(--text-mid); line-height: 1.8; margin-bottom: 20px; }
+  .rules-box {
+    background: var(--card); border-radius: 16px; padding: 18px 20px;
+    text-align: left; margin-bottom: 28px; border: 2px solid #f0dcc8;
+  }
+  .rules-box h3 { font-size: 14px; font-weight: 900; margin-bottom: 10px; }
+  .rules-box ul { list-style: none; font-size: 13px; color: var(--text-mid); line-height: 2.2; }
+  .rules-box li::before { content: '🔧 '; }
+  .start-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 16px 40px; border-radius: 16px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white; font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 18px; font-weight: 900; cursor: pointer;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .start-btn:active { transform: scale(0.96); }
+
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 0 10px; font-size: 13px; font-weight: 700;
+  }
+  .hud-item { display: flex; align-items: center; gap: 4px; }
+  .hud-score { font-family: 'Fredoka', sans-serif; color: var(--accent); font-size: 15px; }
+  .hud-streak { font-family: 'Fredoka', sans-serif; color: var(--red); font-size: 15px; }
+  .hud-round { color: var(--text-mid); }
+
+  .workshop-card {
+    background: var(--card); border-radius: 20px; padding: 24px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 2px solid #f0dcc8;
+    text-align: center; animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .workshop-label { font-size: 14px; color: var(--text-mid); font-weight: 700; margin-bottom: 16px; }
+  .big-frac {
+    display: inline-flex; flex-direction: column; align-items: center;
+    margin-bottom: 20px;
+  }
+  .big-frac .bn, .big-frac .bd {
+    font-family: 'Fredoka', sans-serif; font-size: 52px; font-weight: 700; color: var(--accent); line-height: 1.1;
+  }
+  .big-frac .bl { width: 80px; height: 5px; background: var(--accent); border-radius: 3px; }
+
+  .arrow-down { font-size: 28px; color: var(--accent); margin-bottom: 14px; }
+
+  .answer-label { font-size: 13px; color: var(--text-mid); font-weight: 700; margin-bottom: 12px; }
+  .input-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 18px;
+  }
+  .frac-input {
+    width: 70px; text-align: center; padding: 10px;
+    font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700;
+    border: 3px solid #e0d0c0; border-radius: 12px; background: #fffaf5;
+    color: var(--text); outline: none;
+  }
+  .frac-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .input-line { width: 60px; height: 4px; background: var(--text); border-radius: 2px; }
+  .input-divider {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+
+  .submit-btn {
+    display: block; width: 100%; padding: 14px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white; font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 16px; font-weight: 900; cursor: pointer;
+  }
+  .submit-btn:active { transform: scale(0.97); }
+  .submit-btn:disabled { background: #ccc; cursor: default; }
+
+  .feedback {
+    margin-top: 14px; padding: 12px 16px; border-radius: 12px;
+    font-size: 14px; font-weight: 900; animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .feedback.ok { background: #e8f8f0; color: var(--green); }
+  .feedback.ng { background: #fde8e8; color: var(--red); }
+  .feedback .explain { font-size: 12px; font-weight: 700; color: var(--text-mid); margin-top: 6px; line-height: 1.7; }
+
+  .next-btn {
+    display: block; width: 100%; margin-top: 14px; padding: 14px;
+    border-radius: 14px; border: none;
+    background: linear-gradient(135deg, #8B4513, #a0522d);
+    color: white; font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 15px; font-weight: 900; cursor: pointer;
+  }
+  .next-btn:active { transform: scale(0.97); }
+
+  .final-area { text-align: center; padding-top: 30px; }
+  .final-icon { font-size: 64px; margin-bottom: 10px; }
+  .final-title { font-size: 22px; font-weight: 900; margin-bottom: 16px; }
+  .score-card {
+    background: var(--card); border-radius: 20px; padding: 24px;
+    border: 2px solid #f0dcc8; margin-bottom: 20px;
+  }
+  .score-big { font-family: 'Fredoka', sans-serif; font-size: 56px; font-weight: 700; color: var(--accent); }
+  .score-sub { font-size: 14px; color: var(--text-mid); font-weight: 700; }
+  .rank-badge {
+    display: inline-block; margin-top: 12px; padding: 8px 24px;
+    border-radius: 12px; font-size: 16px; font-weight: 900;
+  }
+  .rank-s { background: linear-gradient(135deg, #ffd700, #ffec8b); color: #8b6914; }
+  .rank-a { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #555; }
+  .rank-b { background: linear-gradient(135deg, #cd7f32, #daa06d); color: #4a2800; }
+  .rank-c { background: #f0e0d0; color: var(--text-mid); }
+  .streak-info {
+    margin-top: 10px; font-size: 13px; color: var(--text-mid); font-weight: 700;
+  }
+  .retry-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 36px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white; font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 16px; font-weight: 900; cursor: pointer;
+    box-shadow: 0 4px 16px var(--accent-glow); margin-bottom: 12px;
+  }
+  .retry-btn:active { transform: scale(0.96); }
+  .home-link {
+    display: block; font-size: 13px; color: var(--text-mid);
+    text-decoration: none; font-weight: 700; margin-top: 8px;
+  }
+  .home-link:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="game-header">
+  <a class="back-btn" href="../" aria-label="もどる">←</a>
+  <div class="header-emoji">🔧</div>
+  <div class="header-title">約分工房</div>
+  <div class="header-sub">分数をいちばん小さいかたちにしよう！</div>
+</header>
+
+<div class="container">
+  <div class="screen active" id="startScreen">
+    <div class="start-area">
+      <div class="start-icon">⚙️</div>
+      <div class="start-title">分数をみがこう！</div>
+      <div class="start-desc">
+        大きな分数を約分して<br>いちばんシンプルなかたちにしよう！<br>
+        分子と分母を入力してね。
+      </div>
+      <div class="rules-box">
+        <h3>📋 あそびかた</h3>
+        <ul>
+          <li>大きな分数が出てくるよ</li>
+          <li>約分した分子と分母を入力しよう</li>
+          <li>全10問チャレンジ！</li>
+          <li>連続正解でボーナス点ゲット！</li>
+        </ul>
+      </div>
+      <button class="start-btn" id="startBtn">⚙️ スタート！</button>
+    </div>
+  </div>
+
+  <div class="screen" id="gameScreen">
+    <div class="hud">
+      <div class="hud-item"><span>⭐</span><span class="hud-score" id="hudScore">0</span></div>
+      <div class="hud-item hud-round" id="hudRound">第1問 / 10問</div>
+      <div class="hud-item"><span>🔥</span><span class="hud-streak" id="hudStreak">0連続</span></div>
+    </div>
+    <div id="questionArea"></div>
+  </div>
+
+  <div class="screen" id="finalScreen"></div>
+</div>
+
+<script>
+  function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = b; b = a % b; a = t; } return a; }
+  function simplify(n, d) { var g = gcd(n, d); return [n / g, d / g]; }
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+  function makeQuestion(difficulty) {
+    // Generate a fraction that can be simplified
+    var simpleD, simpleN, multiplier;
+    if (difficulty <= 3) {
+      simpleD = randInt(2, 6);
+      simpleN = randInt(1, simpleD - 1);
+      multiplier = randInt(2, 4);
+    } else if (difficulty <= 7) {
+      simpleD = randInt(2, 9);
+      simpleN = randInt(1, simpleD - 1);
+      multiplier = randInt(2, 6);
+    } else {
+      simpleD = randInt(3, 12);
+      simpleN = randInt(1, simpleD - 1);
+      multiplier = randInt(3, 8);
+    }
+    // Ensure coprime
+    var g = gcd(simpleN, simpleD);
+    simpleN = simpleN / g;
+    simpleD = simpleD / g;
+    if (simpleN < 1) simpleN = 1;
+    if (simpleD < 2) simpleD = 2;
+
+    return {
+      origN: simpleN * multiplier,
+      origD: simpleD * multiplier,
+      ansN: simpleN,
+      ansD: simpleD,
+      divisor: multiplier
+    };
+  }
+
+  var TOTAL = 10;
+  var score = 0, round = 0, streak = 0, maxStreak = 0, correctCount = 0;
+
+  var startScreen = document.getElementById('startScreen');
+  var gameScreen = document.getElementById('gameScreen');
+  var finalScreen = document.getElementById('finalScreen');
+  var questionArea = document.getElementById('questionArea');
+  var hudScore = document.getElementById('hudScore');
+  var hudRound = document.getElementById('hudRound');
+  var hudStreak = document.getElementById('hudStreak');
+
+  function showScreen(s) {
+    [startScreen, gameScreen, finalScreen].forEach(function(el) { el.classList.remove('active'); });
+    s.classList.add('active');
+  }
+
+  document.getElementById('startBtn').addEventListener('click', function() {
+    score = 0; round = 0; streak = 0; maxStreak = 0; correctCount = 0;
+    showScreen(gameScreen);
+    nextQuestion();
+  });
+
+  function nextQuestion() {
+    round++;
+    if (round > TOTAL) { showFinal(); return; }
+    hudScore.textContent = score;
+    hudRound.textContent = '第' + round + '問 / ' + TOTAL + '問';
+    hudStreak.textContent = streak + '連続';
+
+    var q = makeQuestion(round);
+    renderQuestion(q);
+  }
+
+  function renderQuestion(q) {
+    questionArea.innerHTML =
+      '<div class="workshop-card">' +
+        '<div class="workshop-label">この分数を約分しよう！</div>' +
+        '<div class="big-frac">' +
+          '<span class="bn">' + q.origN + '</span>' +
+          '<span class="bl"></span>' +
+          '<span class="bd">' + q.origD + '</span>' +
+        '</div>' +
+        '<div class="arrow-down">⬇️</div>' +
+        '<div class="answer-label">約分した答えを入力してね</div>' +
+        '<div class="input-row">' +
+          '<div class="input-divider">' +
+            '<input class="frac-input" id="inputN" type="number" min="1" placeholder="?" autocomplete="off">' +
+            '<div class="input-line"></div>' +
+            '<input class="frac-input" id="inputD" type="number" min="1" placeholder="?" autocomplete="off">' +
+          '</div>' +
+        '</div>' +
+        '<button class="submit-btn" id="submitBtn">こたえあわせ！</button>' +
+        '<div id="feedbackArea"></div>' +
+      '</div>';
+
+    var inputN = document.getElementById('inputN');
+    var inputD = document.getElementById('inputD');
+    var submitBtn = document.getElementById('submitBtn');
+
+    inputN.focus();
+    inputN.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') inputD.focus();
+    });
+    inputD.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') submitBtn.click();
+    });
+
+    submitBtn.addEventListener('click', function() {
+      var n = parseInt(inputN.value);
+      var d = parseInt(inputD.value);
+      if (!n || !d || n < 1 || d < 1) return;
+      handleAnswer(q, n, d);
+    });
+  }
+
+  function handleAnswer(q, userN, userD) {
+    var submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    document.getElementById('inputN').disabled = true;
+    document.getElementById('inputD').disabled = true;
+
+    // Check if user's answer is fully simplified and equal to correct answer
+    var userSimp = simplify(userN, userD);
+    var isCorrect = userSimp[0] === q.ansN && userSimp[1] === q.ansD;
+    var isEquivalentButNotSimplified = !isCorrect &&
+      (userN * q.ansD === userD * q.ansN) && (userN !== q.ansN || userD !== q.ansD);
+
+    if (isCorrect) {
+      streak++;
+      if (streak > maxStreak) maxStreak = streak;
+      correctCount++;
+      var bonus = streak >= 3 ? streak * 2 : 0;
+      var pts = 10 + bonus;
+      score += pts;
+    } else {
+      streak = 0;
+    }
+    hudScore.textContent = score;
+    hudStreak.textContent = streak + '連続';
+
+    var fb = document.getElementById('feedbackArea');
+    if (isCorrect) {
+      var msg = '🎉 正解！ +' + (10 + (streak >= 3 ? streak * 2 : 0)) + '点';
+      if (streak >= 3) msg += '（🔥 ' + streak + '連続ボーナス！）';
+      fb.innerHTML = '<div class="feedback ok">' + msg + '</div>';
+    } else if (isEquivalentButNotSimplified) {
+      fb.innerHTML = '<div class="feedback ng">🤔 おしい！同じ値だけどもっと約分できるよ！' +
+        '<div class="explain">' + q.origN + '/' + q.origD + ' の最大公約数は ' + q.divisor + ' だから、' +
+        '分子と分母を ' + q.divisor + ' でわると ' + q.ansN + '/' + q.ansD + ' になるよ。</div></div>';
+    } else {
+      fb.innerHTML = '<div class="feedback ng">❌ 残念！答えは ' + q.ansN + '/' + q.ansD + ' だよ' +
+        '<div class="explain">' + q.origN + ' と ' + q.origD + ' の最大公約数は ' + q.divisor + ' だよ。' +
+        '分子と分母を ' + q.divisor + ' でわってみよう！</div></div>';
+    }
+
+    fb.innerHTML += '<button class="next-btn" id="nextBtn">' +
+      (round < TOTAL ? '次の問題へ ➜' : '結果を見る 🏆') + '</button>';
+    document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+  }
+
+  function showFinal() {
+    var pct = Math.round(correctCount / TOTAL * 100);
+    var rank, rankClass, emoji, label;
+    if (pct >= 90) { rank = 'S'; rankClass = 'rank-s'; emoji = '👑'; label = '約分マスター！'; }
+    else if (pct >= 70) { rank = 'A'; rankClass = 'rank-a'; emoji = '🎖️'; label = '約分はかせ！'; }
+    else if (pct >= 50) { rank = 'B'; rankClass = 'rank-b'; emoji = '🔧'; label = '約分チャレンジャー！'; }
+    else { rank = 'C'; rankClass = 'rank-c'; emoji = '🌱'; label = 'もっとれんしゅう！'; }
+
+    finalScreen.innerHTML =
+      '<div class="final-area">' +
+        '<div class="final-icon">' + emoji + '</div>' +
+        '<div class="final-title">ゲーム終了！</div>' +
+        '<div class="score-card">' +
+          '<div class="score-big">' + score + '</div>' +
+          '<div class="score-sub">' + correctCount + ' / ' + TOTAL + ' 問正解</div>' +
+          '<div class="rank-badge ' + rankClass + '">' + emoji + ' ランク ' + rank + '「' + label + '」</div>' +
+          '<div class="streak-info">🔥 最大連続正解: ' + maxStreak + '回</div>' +
+        '</div>' +
+        '<button class="retry-btn" id="retryBtn">🔄 もう一度あそぶ</button>' +
+        '<a class="home-link" href="../">🌲 ゲームランドに戻る</a>' +
+      '</div>';
+    showScreen(finalScreen);
+    document.getElementById('retryBtn').addEventListener('click', function() {
+      score = 0; round = 0; streak = 0; maxStreak = 0; correctCount = 0;
+      showScreen(gameScreen);
+      nextQuestion();
+    });
+  }
+</script>
+</body>
+</html>
