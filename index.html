@@ -245,6 +245,83 @@
   @keyframes toastDown { from{opacity:1} to{opacity:0;transform:translateX(-50%) translateY(16px)} }
 
   ::-webkit-scrollbar { width: 0; }
+
+  /* === Dashboard Toggle === */
+  .dashboard-toggle {
+    position: absolute; top: 50%; right: 14px; transform: translateY(-50%);
+    width: 36px; height: 36px; border-radius: 12px; border: 2px solid rgba(45,154,78,0.15);
+    background: #f0f7f1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; transition: all 0.25s ease; padding: 0;
+  }
+  .dashboard-toggle:hover { background: #e0f0e3; border-color: var(--trail-green); }
+  .dashboard-toggle.active { background: var(--trail-green); border-color: var(--trail-green); }
+  .dashboard-toggle.active span { filter: brightness(10); }
+
+  /* === Dashboard Panel === */
+  .dashboard {
+    display: none; max-width: 480px; margin: 0 auto;
+    padding: 20px 16px 60px; position: relative; z-index: 1;
+  }
+  .dashboard.visible { display: block; animation: cardPop 0.4s ease both; }
+
+  .dash-summary {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px;
+  }
+  .dash-stat {
+    background: var(--card-white); border-radius: 16px; padding: 16px 10px; text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+  .dash-stat .stat-icon { font-size: 24px; margin-bottom: 6px; }
+  .dash-stat .stat-num { font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; color: var(--trail-green); line-height: 1.1; }
+  .dash-stat .stat-label { font-size: 10px; color: var(--text-mid); font-weight: 700; margin-top: 2px; }
+
+  .dash-section { margin-bottom: 24px; }
+  .dash-section-title {
+    font-size: 14px; font-weight: 900; color: var(--text-dark); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Category progress */
+  .cat-progress-list { display: flex; flex-direction: column; gap: 10px; }
+  .cat-progress-item {
+    background: var(--card-white); border-radius: 14px; padding: 12px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .cat-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cat-progress-name { font-size: 13px; font-weight: 700; }
+  .cat-progress-count { font-family: 'Fredoka', sans-serif; font-size: 13px; font-weight: 600; color: var(--trail-green); }
+  .cat-progress-bar { height: 8px; background: #edf2ee; border-radius: 4px; overflow: hidden; }
+  .cat-progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; min-width: 0; }
+  .cat-progress-fill.fill-thinking { background: linear-gradient(90deg, #ff6b8a, #ff8fa8); }
+  .cat-progress-fill.fill-science { background: linear-gradient(90deg, #3a9fd5, #5cb8e6); }
+  .cat-progress-fill.fill-social { background: linear-gradient(90deg, #b08a30, #c4a35a); }
+  .cat-progress-fill.fill-math { background: linear-gradient(90deg, #ff8c42, #ffa86b); }
+  .cat-progress-fill.fill-creative { background: linear-gradient(90deg, #8b6fc0, #a78bfa); }
+  .cat-progress-fill.fill-art { background: linear-gradient(90deg, #b8860b, #d4a030); }
+  .cat-progress-fill.fill-language { background: linear-gradient(90deg, #3a9fd5, #5cb8e6); }
+
+  /* Play history */
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item {
+    background: var(--card-white); border-radius: 14px; padding: 12px 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .history-emoji { font-size: 28px; flex-shrink: 0; }
+  .history-info { flex: 1; min-width: 0; }
+  .history-title { font-size: 13px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-meta { font-size: 11px; color: var(--text-mid); margin-top: 2px; }
+  .history-count {
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
+    color: var(--trail-green); flex-shrink: 0; text-align: center; min-width: 32px;
+  }
+  .history-count small { display: block; font-size: 9px; color: var(--text-mid); font-family: 'Zen Maru Gothic', sans-serif; }
+
+  .dash-empty {
+    text-align: center; padding: 30px 20px; color: var(--text-mid);
+    font-size: 13px; font-weight: 700; line-height: 1.8;
+  }
+  .dash-empty .dash-empty-icon { font-size: 40px; margin-bottom: 8px; opacity: 0.5; }
 </style>
 </head>
 <body>
@@ -267,6 +344,7 @@
     <div class="header-icon">🌲</div>
   </div>
   <div class="header-sub">あそんで まなんで 発見しよう！</div>
+  <button class="dashboard-toggle" id="dashToggle" aria-label="ダッシュボードを開く" title="ダッシュボード"><span>📊</span></button>
 </header>
 
 <div class="category-bar-wrap">
@@ -288,6 +366,8 @@
 </div>
 
 <div class="game-list" id="gameList"></div>
+
+<div class="dashboard" id="dashboard"></div>
 
 <footer class="footer">
   <div class="footer-trail">
@@ -500,9 +580,29 @@
     });
   }
 
+  // === Play Stats (localStorage) ===
+  var STATS_KEY = 'trail_play_stats';
+
+  function getPlayStats() {
+    try {
+      return JSON.parse(localStorage.getItem(STATS_KEY)) || {};
+    } catch (e) { return {}; }
+  }
+
+  function recordPlay(gameId) {
+    var stats = getPlayStats();
+    if (!stats[gameId]) {
+      stats[gameId] = { count: 0, lastPlayed: null };
+    }
+    stats[gameId].count++;
+    stats[gameId].lastPlayed = new Date().toISOString();
+    try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+  }
+
   // === Launch Game ===
   function launchGame(game) {
     if (game.url) {
+      recordPlay(game.id);
       window.location.href = game.url;
     } else if (game.comingSoon) {
       showToast('🌱 「' + game.title + '」は準備中だよ！おたのしみに！');
@@ -600,6 +700,128 @@
     document.body.appendChild(t);
     setTimeout(function() { t.remove(); }, 2500);
   }
+
+  // === Dashboard ===
+  var dashToggle = document.getElementById('dashToggle');
+  var dashboardEl = document.getElementById('dashboard');
+  var dashboardOpen = false;
+
+  var categoryNames = {
+    thinking: '🧠 思考力',
+    science: '🔬 理科',
+    social: '🌍 社会',
+    math: '🔢 算数',
+    creative: '🎨 創造力',
+    art: '🖼️ 美術',
+    language: '🔤 英語'
+  };
+
+  function formatTimeAgo(isoStr) {
+    if (!isoStr) return '';
+    var diff = Date.now() - new Date(isoStr).getTime();
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'たった今';
+    if (mins < 60) return mins + '分前';
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + '時間前';
+    var days = Math.floor(hours / 24);
+    if (days < 30) return days + '日前';
+    return new Date(isoStr).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' });
+  }
+
+  function renderDashboard() {
+    var stats = getPlayStats();
+    var totalPlays = 0;
+    var gamesPlayed = 0;
+    var catCounts = {};
+
+    // Compute totals
+    games.forEach(function(game) {
+      var s = stats[game.id];
+      if (s && s.count > 0) {
+        totalPlays += s.count;
+        gamesPlayed++;
+        if (!catCounts[game.category]) catCounts[game.category] = 0;
+        catCounts[game.category] += s.count;
+      }
+    });
+
+    var totalGames = games.filter(function(g) { return !g.comingSoon; }).length;
+    var maxCatCount = 1;
+    Object.keys(catCounts).forEach(function(k) {
+      if (catCounts[k] > maxCatCount) maxCatCount = catCounts[k];
+    });
+
+    // Summary cards
+    var html = '<div class="dash-summary">' +
+      '<div class="dash-stat"><div class="stat-icon">🎮</div><div class="stat-num">' + totalPlays + '</div><div class="stat-label">そうプレイ回数</div></div>' +
+      '<div class="dash-stat"><div class="stat-icon">🏆</div><div class="stat-num">' + gamesPlayed + '/' + totalGames + '</div><div class="stat-label">あそんだゲーム</div></div>' +
+      '<div class="dash-stat"><div class="stat-icon">📂</div><div class="stat-num">' + Object.keys(catCounts).length + '/' + Object.keys(categoryNames).length + '</div><div class="stat-label">カテゴリ</div></div>' +
+    '</div>';
+
+    // Category progress
+    html += '<div class="dash-section"><div class="dash-section-title">📈 カテゴリべつプログレス</div>';
+    if (Object.keys(catCounts).length === 0) {
+      html += '<div class="dash-empty"><div class="dash-empty-icon">📈</div>まだデータがないよ。<br>ゲームをあそんでみよう！</div>';
+    } else {
+      html += '<div class="cat-progress-list">';
+      Object.keys(categoryNames).forEach(function(cat) {
+        var count = catCounts[cat] || 0;
+        if (count === 0) return;
+        var pct = Math.round((count / maxCatCount) * 100);
+        html += '<div class="cat-progress-item">' +
+          '<div class="cat-progress-header"><span class="cat-progress-name">' + categoryNames[cat] + '</span><span class="cat-progress-count">' + count + '回</span></div>' +
+          '<div class="cat-progress-bar"><div class="cat-progress-fill fill-' + cat + '" style="width:' + pct + '%"></div></div>' +
+        '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Play history
+    html += '<div class="dash-section"><div class="dash-section-title">🕹️ プレイ履歴</div>';
+    var played = games.filter(function(g) { return stats[g.id] && stats[g.id].count > 0; })
+      .sort(function(a, b) { return new Date(stats[b.id].lastPlayed) - new Date(stats[a.id].lastPlayed); });
+
+    if (played.length === 0) {
+      html += '<div class="dash-empty"><div class="dash-empty-icon">🕹️</div>まだゲームをあそんでいないよ。<br>ゲームをプレイすると記録されるよ！</div>';
+    } else {
+      html += '<div class="history-list">';
+      played.forEach(function(game) {
+        var s = stats[game.id];
+        html += '<div class="history-item">' +
+          '<div class="history-emoji">' + game.emoji + '</div>' +
+          '<div class="history-info"><div class="history-title">' + game.title + '</div><div class="history-meta">最後にあそんだ: ' + formatTimeAgo(s.lastPlayed) + '</div></div>' +
+          '<div class="history-count">' + s.count + '<small>回</small></div>' +
+        '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    dashboardEl.innerHTML = html;
+  }
+
+  function toggleDashboard() {
+    dashboardOpen = !dashboardOpen;
+    dashToggle.classList.toggle('active', dashboardOpen);
+    dashToggle.setAttribute('aria-label', dashboardOpen ? 'ゲーム一覧にもどる' : 'ダッシュボードを開く');
+
+    if (dashboardOpen) {
+      renderDashboard();
+      dashboardEl.classList.add('visible');
+      document.querySelector('.category-bar-wrap').style.display = 'none';
+      document.querySelector('.game-count').style.display = 'none';
+      gameList.style.display = 'none';
+    } else {
+      dashboardEl.classList.remove('visible');
+      document.querySelector('.category-bar-wrap').style.display = '';
+      document.querySelector('.game-count').style.display = '';
+      gameList.style.display = '';
+    }
+  }
+
+  dashToggle.addEventListener('click', toggleDashboard);
 
   // === Init ===
   renderCards();
