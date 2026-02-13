@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分数パズル - TRAIL 探究ゲームランド</title>
+<meta name="description" content="分数の□にあてはまる数を見つけよう！分数の関係がわかるパズルゲーム。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0fff0;
+    --accent: #27ae60;
+    --accent-light: #5ec97a;
+    --accent-glow: rgba(39,174,96,0.2);
+    --red: #e74c3c;
+    --gold: #f39c12;
+    --text: #1a3a1a;
+    --text-mid: #4a6a4a;
+    --card: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden;
+  }
+  .game-header {
+    background: linear-gradient(135deg, #1a6b35, #27ae60, #5ec97a);
+    color: white; text-align: center; padding: 16px 16px 20px; position: relative;
+  }
+  .game-header::after {
+    content: ''; position: absolute; bottom: -8px; left: 0; right: 0; height: 16px;
+    background: var(--bg); border-radius: 16px 16px 0 0;
+  }
+  .back-btn {
+    position: absolute; top: 12px; left: 12px;
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-family: 'Zen Maru Gothic', sans-serif;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+  .header-emoji { font-size: 32px; }
+  .header-title { font-size: 22px; font-weight: 900; }
+  .header-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 0 16px 60px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .start-area { text-align: center; padding-top: 30px; }
+  .start-icon { font-size: 72px; margin-bottom: 12px; animation: bounce 2s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  .start-title { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+  .start-desc { font-size: 14px; color: var(--text-mid); line-height: 1.8; margin-bottom: 20px; }
+  .rules-box {
+    background: var(--card); border-radius: 16px; padding: 18px 20px;
+    text-align: left; margin-bottom: 28px; border: 2px solid #c0e8c0;
+  }
+  .rules-box h3 { font-size: 14px; font-weight: 900; margin-bottom: 10px; }
+  .rules-box ul { list-style: none; font-size: 13px; color: var(--text-mid); line-height: 2.2; }
+  .rules-box li::before { content: '🧩 '; }
+  .start-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 16px 40px; border-radius: 16px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white; font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 18px; font-weight: 900; cursor: pointer;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .start-btn:active { transform: scale(0.96); }
+
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 0 10px; font-size: 13px; font-weight: 700;
+  }
+  .hud-item { display: flex; align-items: center; gap: 4px; }
+  .hud-score { font-family: 'Fredoka', sans-serif; color: var(--accent); font-size: 15px; }
+  .hud-round { color: var(--text-mid); }
+  .hud-level { font-family: 'Fredoka', sans-serif; color: var(--gold); font-size: 13px; }
+
+  .puzzle-card {
+    background: var(--card); border-radius: 20px; padding: 24px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 2px solid #c0e8c0;
+    text-align: center; animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .puzzle-type-label {
+    display: inline-block; padding: 4px 14px; border-radius: 10px;
+    background: #e0f8e0; color: var(--accent); font-size: 12px; font-weight: 900;
+    margin-bottom: 14px;
+  }
+
+  .equation {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .eq-frac {
+    display: inline-flex; flex-direction: column; align-items: center;
+    min-width: 56px;
+  }
+  .eq-frac .en, .eq-frac .ed {
+    font-family: 'Fredoka', sans-serif; font-size: 30px; font-weight: 700; color: var(--text); line-height: 1.1;
+  }
+  .eq-frac .el { width: 44px; height: 3px; background: var(--text); border-radius: 2px; }
+  .eq-frac .blank {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 46px; height: 40px; border: 3px dashed var(--accent); border-radius: 10px;
+    background: #f0fff0; font-family: 'Fredoka', sans-serif; font-size: 28px;
+    font-weight: 700; color: var(--accent);
+  }
+  .eq-sign {
+    font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700; color: var(--accent);
+  }
+
+  .hint-area {
+    background: #f8fdf8; border-radius: 12px; padding: 10px 14px;
+    font-size: 12px; color: var(--text-mid); font-weight: 700;
+    margin-bottom: 16px; border: 1px solid #d0e8d0;
+  }
+
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .choice-btn {
+    padding: 14px 10px; border-radius: 14px;
+    border: 2px solid #c0e8c0; background: white;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 24px; font-weight: 700; color: var(--text);
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .choice-btn:hover { border-color: var(--accent); background: #f0fff0; transform: scale(1.04); }
+  .choice-btn:active { transform: scale(0.96); }
+  .choice-btn.correct { border-color: var(--accent); background: #e0f8e0; color: var(--accent); }
+  .choice-btn.wrong { border-color: var(--red); background: #fde8e8; color: var(--red); }
+  .choice-btn.disabled { pointer-events: none; }
+  .choice-btn.dim { opacity: 0.3; }
+
+  .feedback {
+    margin-top: 14px; padding: 12px 16px; border-radius: 12px;
+    font-size: 14px; font-weight: 900; animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .feedback.ok { background: #e0f8e0; color: var(--accent); }
+  .feedback.ng { background: #fde8e8; color: var(--red); }
+  .feedback .explain { font-size: 12px; font-weight: 700; color: var(--text-mid); margin-top: 6px; line-height: 1.7; }
+
+  .next-btn {
+    display: block; width: 100%; margin-top: 14px; padding: 14px;
+    border-radius: 14px; border: none;
+    background: linear-gradient(135deg, #1a6b35, var(--accent));
+    color: white; font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 15px; font-weight: 900; cursor: pointer;
+  }
+  .next-btn:active { transform: scale(0.97); }
+
+  .final-area { text-align: center; padding-top: 30px; }
+  .final-icon { font-size: 64px; margin-bottom: 10px; }
+  .final-title { font-size: 22px; font-weight: 900; margin-bottom: 16px; }
+  .score-card {
+    background: var(--card); border-radius: 20px; padding: 24px;
+    border: 2px solid #c0e8c0; margin-bottom: 20px;
+  }
+  .score-big { font-family: 'Fredoka', sans-serif; font-size: 56px; font-weight: 700; color: var(--accent); }
+  .score-sub { font-size: 14px; color: var(--text-mid); font-weight: 700; }
+  .rank-badge {
+    display: inline-block; margin-top: 12px; padding: 8px 24px;
+    border-radius: 12px; font-size: 16px; font-weight: 900;
+  }
+  .rank-s { background: linear-gradient(135deg, #ffd700, #ffec8b); color: #8b6914; }
+  .rank-a { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #555; }
+  .rank-b { background: linear-gradient(135deg, #cd7f32, #daa06d); color: #4a2800; }
+  .rank-c { background: #e0f0e0; color: var(--text-mid); }
+  .retry-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 36px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white; font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 16px; font-weight: 900; cursor: pointer;
+    box-shadow: 0 4px 16px var(--accent-glow); margin-bottom: 12px;
+  }
+  .retry-btn:active { transform: scale(0.96); }
+  .home-link {
+    display: block; font-size: 13px; color: var(--text-mid);
+    text-decoration: none; font-weight: 700; margin-top: 8px;
+  }
+  .home-link:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="game-header">
+  <a class="back-btn" href="../" aria-label="もどる">←</a>
+  <div class="header-emoji">🧩</div>
+  <div class="header-title">分数パズル</div>
+  <div class="header-sub">□にあてはまる数を見つけよう！</div>
+</header>
+
+<div class="container">
+  <div class="screen active" id="startScreen">
+    <div class="start-area">
+      <div class="start-icon">🧩</div>
+      <div class="start-title">□を うめよう！</div>
+      <div class="start-desc">
+        分数の式に□があるよ。<br>
+        あてはまる数字を見つけて<br>
+        パズルを完成させよう！
+      </div>
+      <div class="rules-box">
+        <h3>📋 あそびかた</h3>
+        <ul>
+          <li>□にあてはまる数を4つからえらぼう</li>
+          <li>等しい分数・足し算・かけ算が出るよ</li>
+          <li>全10問！だんだんむずかしくなるよ</li>
+          <li>正解するとポイントゲット！</li>
+        </ul>
+      </div>
+      <button class="start-btn" id="startBtn">🧩 スタート！</button>
+    </div>
+  </div>
+
+  <div class="screen" id="gameScreen">
+    <div class="hud">
+      <div class="hud-item"><span>⭐</span><span class="hud-score" id="hudScore">0</span></div>
+      <div class="hud-item hud-round" id="hudRound">第1問 / 10問</div>
+      <div class="hud-item"><span>📊</span><span class="hud-level" id="hudLevel">Lv.1</span></div>
+    </div>
+    <div id="questionArea"></div>
+  </div>
+
+  <div class="screen" id="finalScreen"></div>
+</div>
+
+<script>
+  function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = b; b = a % b; a = t; } return a; }
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  // Puzzle types
+  function makeEquivalent(level) {
+    // a/b = ?/d  or  a/b = c/?
+    var b = randInt(2, 3 + level);
+    var a = randInt(1, b - 1);
+    var g = gcd(a, b);
+    a = a / g; b = b / g;
+    var mult = randInt(2, 2 + Math.floor(level / 2));
+    var c = a * mult;
+    var d = b * mult;
+
+    // Random: hide c or d
+    if (Math.random() < 0.5) {
+      // hide numerator: a/b = ?/d
+      return {
+        type: '等しい分数',
+        hint: '両方の分数は同じ大きさだよ。分母を見くらべてみよう！',
+        left: { n: String(a), d: String(b) },
+        right: { n: '□', d: String(d) },
+        sign: '=',
+        answer: c,
+        explain: b + ' × ' + mult + ' = ' + d + ' だから、分子も ' + a + ' × ' + mult + ' = ' + c + ' だよ。'
+      };
+    } else {
+      // hide denominator: a/b = c/?
+      return {
+        type: '等しい分数',
+        hint: '両方の分数は同じ大きさだよ。分子を見くらべてみよう！',
+        left: { n: String(a), d: String(b) },
+        right: { n: String(c), d: '□' },
+        sign: '=',
+        answer: d,
+        explain: a + ' × ' + mult + ' = ' + c + ' だから、分母も ' + b + ' × ' + mult + ' = ' + d + ' だよ。'
+      };
+    }
+  }
+
+  function makeAddition(level) {
+    // a/d + ?/d = c/d  (same denominator)
+    var d = randInt(3, 4 + level);
+    var a = randInt(1, d - 2);
+    var blank = randInt(1, d - a);
+    var c = a + blank;
+
+    return {
+      type: '分数の足し算',
+      hint: '分母が同じ分数の足し算だよ。分子だけ足せばOK！',
+      left: { n: String(a), d: String(d) },
+      right: { n: '□', d: String(d) },
+      sign: '+',
+      resultFrac: { n: String(c), d: String(d) },
+      answer: blank,
+      explain: a + '/' + d + ' + □/' + d + ' = ' + c + '/' + d + ' だから、□ = ' + c + ' - ' + a + ' = ' + blank + ' だよ。'
+    };
+  }
+
+  function makeMultiply(level) {
+    // a/b × ?  = c/b  (multiply numerator by integer)
+    var b = randInt(2, 4 + Math.floor(level / 3));
+    var a = randInt(1, b);
+    var mult = randInt(2, 3 + Math.floor(level / 3));
+    var c = a * mult;
+
+    return {
+      type: '分数のかけ算',
+      hint: '分数に整数をかけると、分子だけに整数をかけるよ！',
+      left: { n: String(a), d: String(b) },
+      right: null,
+      multiplier: '□',
+      sign: '×',
+      resultFrac: { n: String(c), d: String(b) },
+      answer: mult,
+      explain: a + '/' + b + ' × □ = ' + c + '/' + b + ' だから、□ = ' + c + ' ÷ ' + a + ' = ' + mult + ' だよ。'
+    };
+  }
+
+  function makeQuestion(round) {
+    var level = Math.ceil(round / 2);
+    var q;
+    if (round <= 4) {
+      q = makeEquivalent(level);
+    } else if (round <= 7) {
+      q = Math.random() < 0.5 ? makeAddition(level) : makeEquivalent(level);
+    } else {
+      var r = Math.random();
+      if (r < 0.33) q = makeEquivalent(level);
+      else if (r < 0.66) q = makeAddition(level);
+      else q = makeMultiply(level);
+    }
+    q.level = level;
+
+    // Make choices
+    var wrongs = [];
+    var tries = 0;
+    while (wrongs.length < 3 && tries < 30) {
+      tries++;
+      var w = q.answer + randInt(-3, 3);
+      if (w <= 0 || w === q.answer) continue;
+      if (wrongs.indexOf(w) >= 0) continue;
+      wrongs.push(w);
+    }
+    while (wrongs.length < 3) {
+      wrongs.push(q.answer + wrongs.length + 1);
+    }
+    q.options = shuffle([q.answer].concat(wrongs));
+    return q;
+  }
+
+  // State
+  var TOTAL = 10;
+  var score = 0, round = 0, correctCount = 0;
+
+  var startScreen = document.getElementById('startScreen');
+  var gameScreen = document.getElementById('gameScreen');
+  var finalScreen = document.getElementById('finalScreen');
+  var questionArea = document.getElementById('questionArea');
+  var hudScore = document.getElementById('hudScore');
+  var hudRound = document.getElementById('hudRound');
+  var hudLevel = document.getElementById('hudLevel');
+
+  function showScreen(s) {
+    [startScreen, gameScreen, finalScreen].forEach(function(el) { el.classList.remove('active'); });
+    s.classList.add('active');
+  }
+
+  document.getElementById('startBtn').addEventListener('click', function() {
+    score = 0; round = 0; correctCount = 0;
+    showScreen(gameScreen);
+    nextQuestion();
+  });
+
+  function nextQuestion() {
+    round++;
+    if (round > TOTAL) { showFinal(); return; }
+    hudScore.textContent = score;
+    hudRound.textContent = '第' + round + '問 / ' + TOTAL + '問';
+    var q = makeQuestion(round);
+    hudLevel.textContent = 'Lv.' + q.level;
+    renderQuestion(q);
+  }
+
+  function fracHtml(frac) {
+    var nHtml = frac.n === '□' ? '<span class="blank">？</span>' : '<span class="en">' + frac.n + '</span>';
+    var dHtml = frac.d === '□' ? '<span class="blank">？</span>' : '<span class="ed">' + frac.d + '</span>';
+    return '<div class="eq-frac">' + nHtml + '<span class="el"></span>' + dHtml + '</div>';
+  }
+
+  function renderQuestion(q) {
+    var eqHtml = '';
+    eqHtml += fracHtml(q.left);
+    eqHtml += '<span class="eq-sign">' + q.sign + '</span>';
+
+    if (q.right) {
+      eqHtml += fracHtml(q.right);
+    } else if (q.multiplier) {
+      eqHtml += '<div class="eq-frac"><span class="blank">？</span></div>';
+    }
+
+    if (q.resultFrac) {
+      eqHtml += '<span class="eq-sign">=</span>';
+      eqHtml += fracHtml(q.resultFrac);
+    }
+
+    var choicesHtml = '';
+    for (var i = 0; i < q.options.length; i++) {
+      choicesHtml += '<button class="choice-btn" data-val="' + q.options[i] + '">' + q.options[i] + '</button>';
+    }
+
+    questionArea.innerHTML =
+      '<div class="puzzle-card">' +
+        '<div class="puzzle-type-label">' + q.type + '</div>' +
+        '<div class="equation">' + eqHtml + '</div>' +
+        '<div class="hint-area">💡 ヒント: ' + q.hint + '</div>' +
+        '<div class="choices" id="choices">' + choicesHtml + '</div>' +
+        '<div id="feedbackArea"></div>' +
+      '</div>';
+
+    var btns = document.querySelectorAll('.choice-btn');
+    btns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        handleAnswer(q, parseInt(btn.dataset.val));
+      });
+    });
+  }
+
+  function handleAnswer(q, chosen) {
+    var isCorrect = chosen === q.answer;
+    var pts = isCorrect ? 10 + q.level * 2 : 0;
+    if (isCorrect) { score += pts; correctCount++; }
+    hudScore.textContent = score;
+
+    var btns = document.querySelectorAll('.choice-btn');
+    btns.forEach(function(btn) {
+      btn.classList.add('disabled');
+      var val = parseInt(btn.dataset.val);
+      if (val === q.answer) btn.classList.add('correct');
+      if (val === chosen && !isCorrect) btn.classList.add('wrong');
+      if (val !== q.answer && val !== chosen) btn.classList.add('dim');
+    });
+
+    var fb = document.getElementById('feedbackArea');
+    if (isCorrect) {
+      fb.innerHTML = '<div class="feedback ok">🎉 正解！ +' + pts + '点</div>';
+    } else {
+      fb.innerHTML = '<div class="feedback ng">❌ 残念！□ = ' + q.answer + ' だよ' +
+        '<div class="explain">' + q.explain + '</div></div>';
+    }
+
+    fb.innerHTML += '<button class="next-btn" id="nextBtn">' +
+      (round < TOTAL ? '次の問題へ ➜' : '結果を見る 🏆') + '</button>';
+    document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+  }
+
+  function showFinal() {
+    var pct = Math.round(correctCount / TOTAL * 100);
+    var rank, rankClass, emoji, label;
+    if (pct >= 90) { rank = 'S'; rankClass = 'rank-s'; emoji = '👑'; label = 'パズル名人！'; }
+    else if (pct >= 70) { rank = 'A'; rankClass = 'rank-a'; emoji = '🎖️'; label = 'パズルはかせ！'; }
+    else if (pct >= 50) { rank = 'B'; rankClass = 'rank-b'; emoji = '🧩'; label = 'パズルチャレンジャー！'; }
+    else { rank = 'C'; rankClass = 'rank-c'; emoji = '🌱'; label = 'もっとれんしゅう！'; }
+
+    finalScreen.innerHTML =
+      '<div class="final-area">' +
+        '<div class="final-icon">' + emoji + '</div>' +
+        '<div class="final-title">ゲーム終了！</div>' +
+        '<div class="score-card">' +
+          '<div class="score-big">' + score + '</div>' +
+          '<div class="score-sub">' + correctCount + ' / ' + TOTAL + ' 問正解</div>' +
+          '<div class="rank-badge ' + rankClass + '">' + emoji + ' ランク ' + rank + '「' + label + '」</div>' +
+        '</div>' +
+        '<button class="retry-btn" id="retryBtn">🔄 もう一度あそぶ</button>' +
+        '<a class="home-link" href="../">🌲 ゲームランドに戻る</a>' +
+      '</div>';
+    showScreen(finalScreen);
+    document.getElementById('retryBtn').addEventListener('click', function() {
+      score = 0; round = 0; correctCount = 0;
+      showScreen(gameScreen);
+      nextQuestion();
+    });
+  }
+</script>
+</body>
+</html>
