@@ -18,537 +18,667 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useCallback, useEffect, useRef } = React;
-
-function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
+/* ---- Math ---- */
+function gcd(a, b) {
+  a = Math.abs(a); b = Math.abs(b);
+  while (b) { [a, b] = [b, a % b]; }
+  return a;
+}
 function lcm(a, b) { return Math.abs(a * b) / gcd(a, b); }
 function canSimplify(n, d) { return d > 1 && gcd(Math.abs(n), Math.abs(d)) > 1; }
 function doSimplify(n, d) {
   const g = gcd(Math.abs(n), Math.abs(d));
-  const sign = d < 0 ? -1 : 1;
-  return { n: sign * n / g, d: sign * d / g };
+  return { n: (d < 0 ? -1 : 1) * n / g, d: Math.abs(d) / g };
 }
 function fracOp(a, b, op) {
-  let rn, rd;
-  switch (op) {
-    case '+': { const cd = lcm(a.d, b.d); rn = a.n * (cd / a.d) + b.n * (cd / b.d); rd = cd; break; }
-    case '\u2212': { const cd = lcm(a.d, b.d); rn = a.n * (cd / a.d) - b.n * (cd / b.d); rd = cd; break; }
-    case '\u00d7': rn = a.n * b.n; rd = a.d * b.d; break;
-    case '\u00f7': if (b.n === 0) return null; rn = a.n * b.d; rd = a.d * b.n; break;
-    default: return null;
-  }
+  let rn = 0, rd = 1;
+  if (op === '+') { const cd = lcm(a.d, b.d); rn = a.n * (cd / a.d) + b.n * (cd / b.d); rd = cd; }
+  else if (op === '\u2212') { const cd = lcm(a.d, b.d); rn = a.n * (cd / a.d) - b.n * (cd / b.d); rd = cd; }
+  else if (op === '\u00d7') { rn = a.n * b.n; rd = a.d * b.d; }
+  else if (op === '\u00f7') { if (b.n === 0) return null; rn = a.n * b.d; rd = a.d * b.n; }
+  else return null;
   if (rd === 0) return null;
   if (rd < 0) { rn = -rn; rd = -rd; }
   return { n: rn, d: rd };
 }
 function fracValid(r) { return r !== null && r.d > 0 && r.n > 0; }
 function isOne(f) { return f.n === f.d && f.d > 0; }
-function isSimplifiedOne(f) { return f.n === 1 && f.d === 1; }
-function fracValue(f) { return f.n / f.d; }
-function proximityTo1(f) { return Math.max(0, 1 - Math.abs(1 - fracValue(f))); }
-
-function Frac({ n, d, size = 24, color = '#fff', bold = true }) {
-  const fw = bold ? 700 : 500, ff = "'Fredoka', sans-serif";
-  if (d === 1) return <span style={{ fontSize: size * 1.4, fontWeight: fw, color, fontFamily: ff }}>{n}</span>;
+function isS1(f) { return f.n === 1 && f.d === 1; }
+function fracVal(f) { return f.n / f.d; }
+function prox1(f) { return Math.max(0, 1 - Math.abs(1 - fracVal(f))); }
+/* ---- Components ---- */
+function Frac({ n, d, size, color, bold }) {
+  const sz = size || 24;
+  const cl = color || '#fff';
+  const fw = bold === false ? 500 : 700;
+  const ff = "'Fredoka', sans-serif";
+  if (d === 1) return <span style={{ fontSize: sz * 1.4, fontWeight: fw, color: cl, fontFamily: ff }}>{n}</span>;
   return (
     <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', verticalAlign: 'middle', lineHeight: 1, margin: '0 2px' }}>
-      <span style={{ fontSize: size, fontWeight: fw, color, fontFamily: ff }}>{n}</span>
-      <span style={{ width: Math.max(size * 1.2, 18), height: Math.max(2, size * 0.1), background: color, borderRadius: 2, opacity: 0.7, margin: `${size * 0.04}px 0` }} />
-      <span style={{ fontSize: size, fontWeight: fw, color, fontFamily: ff }}>{d}</span>
+      <span style={{ fontSize: sz, fontWeight: fw, color: cl, fontFamily: ff }}>{n}</span>
+      <span style={{ width: Math.max(sz * 1.2, 18), height: Math.max(2, sz * 0.1), background: cl, borderRadius: 2, opacity: 0.7 }} />
+      <span style={{ fontSize: sz, fontWeight: fw, color: cl, fontFamily: ff }}>{d}</span>
     </span>
   );
 }
-
-function generatePuzzle() {
-  const denoms = [2, 3, 4, 5, 6, 8, 10, 12];
+function makePuzzle() {
+  const ds = [2, 3, 4, 5, 6, 8, 10, 12];
   const cards = [];
   const sim = (n, d) => { const g = gcd(Math.abs(n), Math.abs(d)); return { n: n / g, d: d / g }; };
-  let remaining = { n: 1, d: 1 };
-  const chainLen = 3 + Math.floor(Math.random() * 3);
-  for (let i = 0; i < chainLen - 1; i++) {
-    const d = denoms[Math.floor(Math.random() * denoms.length)];
-    const maxN = Math.min(d - 1, Math.floor(remaining.n * d / remaining.d) - 1);
-    if (maxN <= 0) break;
-    const n = Math.floor(Math.random() * maxN) + 1;
-    const frac = sim(n, d);
-    if (frac.n === 0) continue;
-    cards.push(frac);
-    remaining = sim(remaining.n * frac.d - frac.n * remaining.d, remaining.d * frac.d);
-    if (remaining.n <= 0) break;
+  let rem = { n: 1, d: 1 };
+  for (let i = 0; i < 4; i++) {
+    const d = ds[Math.floor(Math.random() * ds.length)];
+    const mx = Math.min(d - 1, Math.floor(rem.n * d / rem.d) - 1);
+    if (mx <= 0) break;
+    const n = Math.floor(Math.random() * mx) + 1;
+    const f = sim(n, d);
+    if (f.n === 0) continue;
+    cards.push(f);
+    rem = sim(rem.n * f.d - f.n * rem.d, rem.d * f.d);
+    if (rem.n <= 0) break;
   }
-  if (remaining.n > 0 && remaining.d > 0) cards.push(remaining);
+  if (rem.n > 0 && rem.d > 0) cards.push(rem);
   while (cards.length < 15) {
-    const d = denoms[Math.floor(Math.random() * denoms.length)];
-    const n = Math.floor(Math.random() * (d - 1)) + 1;
-    cards.push({ n, d });
+    const d = ds[Math.floor(Math.random() * ds.length)];
+    cards.push({ n: Math.floor(Math.random() * (d - 1)) + 1, d });
   }
   for (let i = cards.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [cards[i], cards[j]] = [cards[j], cards[i]];
   }
-  return cards.slice(0, 15).map((f, idx) => ({ id: `c${Date.now()}-${idx}`, ...f, slot: idx, depth: 0 }));
+  return cards.slice(0, 15).map((f, i) => ({ id: 'c' + Date.now() + '-' + i, n: f.n, d: f.d, slot: i, depth: 0 }));
 }
-
-const COLORS = [
-  { bg: '#FF6B6B', glow: 'rgba(255,107,107,0.4)' }, { bg: '#4ECDC4', glow: 'rgba(78,205,196,0.4)' },
-  { bg: '#45B7D1', glow: 'rgba(69,183,209,0.4)' }, { bg: '#96CEB4', glow: 'rgba(150,206,180,0.4)' },
-  { bg: '#FFEAA7', glow: 'rgba(255,234,167,0.4)' }, { bg: '#DDA0DD', glow: 'rgba(221,160,221,0.4)' },
-  { bg: '#F8B500', glow: 'rgba(248,181,0,0.4)' }, { bg: '#74B9FF', glow: 'rgba(116,185,255,0.4)' },
-  { bg: '#FD79A8', glow: 'rgba(253,121,168,0.4)' }, { bg: '#A29BFE', glow: 'rgba(162,155,254,0.4)' },
+function makeSpecials() {
+  const t = Date.now();
+  return [
+    { id: 'sp' + t + 'a', n: 1, d: 2, type: 'half' },
+    { id: 'sp' + t + 'b', n: 1, d: 2, type: 'half' },
+    { id: 'sp' + t + 'c', n: 1, d: 3, type: 'third' },
+    { id: 'sp' + t + 'd', n: 1, d: 3, type: 'third' },
+    { id: 'sp' + t + 'e', n: 0, d: 1, type: 'custom' },
+  ];
+}
+const CL = [
+  { bg: '#FF6B6B', gl: 'rgba(255,107,107,0.4)' },
+  { bg: '#4ECDC4', gl: 'rgba(78,205,196,0.4)' },
+  { bg: '#45B7D1', gl: 'rgba(69,183,209,0.4)' },
+  { bg: '#96CEB4', gl: 'rgba(150,206,180,0.4)' },
+  { bg: '#FFEAA7', gl: 'rgba(255,234,167,0.4)' },
+  { bg: '#DDA0DD', gl: 'rgba(221,160,221,0.4)' },
+  { bg: '#F8B500', gl: 'rgba(248,181,0,0.4)' },
+  { bg: '#74B9FF', gl: 'rgba(116,185,255,0.4)' },
+  { bg: '#FD79A8', gl: 'rgba(253,121,168,0.4)' },
+  { bg: '#A29BFE', gl: 'rgba(162,155,254,0.4)' },
 ];
-
-function getColor(id) { let h = 0; for (let i = 0; i < id.length; i++) h = ((h << 5) - h) + id.charCodeAt(i); return COLORS[Math.abs(h) % COLORS.length]; }
-function depthColor(d) { return d <= 1 ? '#4ECDC4' : d <= 2 ? '#FFEAA7' : d <= 3 ? '#FFA500' : '#FF6B6B'; }
-
-function calcScore(delivered, cards) {
+function getCol(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = ((h << 5) - h) + id.charCodeAt(i);
+  return CL[Math.abs(h) % CL.length];
+}
+function dCol(d) { return d <= 1 ? '#4ECDC4' : d <= 2 ? '#FFEAA7' : d <= 3 ? '#FFA500' : '#FF6B6B'; }
+function calcSc(del, cards) {
   const cl = cards.length;
-  const reductionPts = (15 - cl) * 100;
-  const oneCountPts = delivered.length * 300;
-  const depthPts = delivered.reduce((s, d) => s + d.depth * 200, 0);
-  let lastCardPts = 0, lastCardPct = 0, isPerfect = false;
+  const rP = (15 - cl) * 100;
+  const oP = del.length * 300;
+  const dP = del.reduce((s, x) => s + x.depth * 200, 0);
+  let lP = 0, lPct = 0, perf = false;
   if (cl === 1) {
-    const last = cards[0], simplified = doSimplify(last.n, last.d);
-    isPerfect = simplified.n === 1 && simplified.d === 1;
-    if (isPerfect) { lastCardPts = 3000; } else { lastCardPct = Math.round(proximityTo1(last) * 100); lastCardPts = Math.round(lastCardPct * 20); }
+    const si = doSimplify(cards[0].n, cards[0].d);
+    perf = si.n === 1 && si.d === 1;
+    if (perf) lP = 3000;
+    else { lPct = Math.round(prox1(cards[0]) * 100); lP = Math.round(lPct * 20); }
   }
-  return { reductionPts, oneCountPts, depthPts, lastCardPts, lastCardPct, isPerfect, total: reductionPts + oneCountPts + depthPts + lastCardPts, cardsLeft: cl };
+  return { rP, oP, dP, lP, lPct, perf, total: rP + oP + dP + lP, cl };
 }
-
 function getRank(t) {
-  if (t >= 6000) return { label: '\u5206\u6570\u306e\u795e', emoji: '\u{1f48e}', color: '#E8D5FF' };
-  if (t >= 4500) return { label: '\u878d\u5408\u30de\u30b9\u30bf\u30fc', emoji: '\u{1f451}', color: '#FFD700' };
-  if (t >= 3000) return { label: '\u878d\u5408\u306e\u9054\u4eba', emoji: '\u{1f31f}', color: '#FFA500' };
-  if (t >= 1500) return { label: '\u878d\u5408\u4f7f\u3044', emoji: '\u{1f525}', color: '#FF6B6B' };
-  if (t >= 500) return { label: '\u898b\u7fd2\u3044\u878d\u5408\u58eb', emoji: '\u26a1', color: '#74B9FF' };
-  return { label: '\u306f\u3058\u3081\u306e\u4e00\u6b69', emoji: '\u{1f331}', color: '#96CEB4' };
+  if (t >= 6000) return { l: '\u5206\u6570\u306e\u795e', e: '\u{1f48e}', c: '#E8D5FF' };
+  if (t >= 4500) return { l: '\u878d\u5408\u30de\u30b9\u30bf\u30fc', e: '\u{1f451}', c: '#FFD700' };
+  if (t >= 3000) return { l: '\u878d\u5408\u306e\u9054\u4eba', e: '\u{1f31f}', c: '#FFA500' };
+  if (t >= 1500) return { l: '\u878d\u5408\u4f7f\u3044', e: '\u{1f525}', c: '#FF6B6B' };
+  if (t >= 500) return { l: '\u898b\u7fd2\u3044\u878d\u5408\u58eb', e: '\u26a1', c: '#74B9FF' };
+  return { l: '\u306f\u3058\u3081\u306e\u4e00\u6b69', e: '\u{1f331}', c: '#96CEB4' };
 }
-
+const OPS = ['+', '\u2212', '\u00d7', '\u00f7'];
+const FF = "'Fredoka', sans-serif";
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bigCalcIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes bigCalcOut{to{opacity:0;transform:scale(.9) translateY(-20px)}}
+@keyframes opPopIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+@keyframes dropTarget{0%,100%{box-shadow:0 0 0 3px rgba(116,185,255,.6)}50%{box-shadow:0 0 0 7px rgba(116,185,255,.8)}}
+@keyframes winGlow{0%,100%{box-shadow:0 0 15px rgba(255,215,0,.3)}50%{box-shadow:0 0 35px rgba(255,215,0,.5)}}
+@keyframes dockPulse{0%,100%{box-shadow:inset 0 0 15px rgba(255,215,0,.08)}50%{box-shadow:inset 0 0 25px rgba(255,215,0,.18)}}
+@keyframes cardAppear{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes logAppear{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+@keyframes deliverBounce{0%{transform:scale(.5);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes perfectBurst{0%{transform:scale(.3);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes spFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
+`;
 function BigCalcDisplay({ formula, onDone }) {
   useEffect(() => { const t = setTimeout(onDone, 2600); return () => clearTimeout(t); }, [onDone]);
   return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 800, pointerEvents: 'none', background: 'rgba(0,0,0,0.25)' }}>
-      <div style={{ animation: 'bigCalcIn 0.5s cubic-bezier(0.34,1.56,0.64,1), bigCalcOut 0.5s 2.1s ease-in forwards', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <div style={{ background: 'rgba(10,10,30,0.94)', backdropFilter: 'blur(16px)', border: '2px solid rgba(255,255,255,0.12)', borderRadius: 28, padding: '24px 40px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: 20 }}>
+      <div style={{ animation: 'bigCalcIn .5s cubic-bezier(.34,1.56,.64,1), bigCalcOut .5s 2.1s ease-in forwards', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ background: 'rgba(10,10,30,.94)', backdropFilter: 'blur(16px)', border: '2px solid rgba(255,255,255,.12)', borderRadius: 28, padding: '24px 40px', boxShadow: '0 20px 60px rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', gap: 20 }}>
           <Frac n={formula.a.n} d={formula.a.d} size={36} color="#FF6B6B" />
-          <div style={{ fontSize: 36, fontWeight: 700, color: '#FFEAA7', width: 50, height: 50, borderRadius: 14, background: 'rgba(255,234,167,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Fredoka', sans-serif" }}>{formula.op}</div>
+          <div style={{ fontSize: 36, fontWeight: 700, color: '#FFEAA7', width: 50, height: 50, borderRadius: 14, background: 'rgba(255,234,167,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FF }}>{formula.op}</div>
           <Frac n={formula.b.n} d={formula.b.d} size={36} color="#4ECDC4" />
-          <div style={{ fontSize: 36, color: 'rgba(255,255,255,0.3)', fontWeight: 700, fontFamily: "'Fredoka', sans-serif" }}>=</div>
+          <div style={{ fontSize: 36, color: 'rgba(255,255,255,.3)', fontWeight: 700, fontFamily: FF }}>=</div>
           <Frac n={formula.result.n} d={formula.result.d} size={40} color="#fff" />
         </div>
       </div>
     </div>
   );
 }
-
-function OpSelector({ x, y, cardA, cardB, onSelect, onCancel }) {
-  const ops = ['+', '\u2212', '\u00d7', '\u00f7'];
-  const results = ops.map(op => fracOp(cardA, cardB, op));
-  const left = Math.min(Math.max(x - 170, 8), window.innerWidth - 380);
-  const top = Math.min(Math.max(y - 90, 8), window.innerHeight - 180);
+function FractionFusion() {
+  const [cards, setCards] = useState(makePuzzle);
+  const [specials, setSpecials] = useState(makeSpecials);
+  const [rules, setRules] = useState(true);
+  const [opPop, setOpPop] = useState(null);
+  const [cMenu, setCMenu] = useState(null);
+  const [result, setResult] = useState(false);
+  const [calcF, setCalcF] = useState(null);
+  const [log, setLog] = useState([]);
+  const [del, setDel] = useState([]);
+  const [hist, setHist] = useState([]);
+  const [hMeta, setHMeta] = useState([]);
+  const [showLog, setShowLog] = useState(true);
+  const [custIn, setCustIn] = useState(null);
+  const dragR = useRef(null);
+  const [dRender, setDRender] = useState(null);
+  const [hovId, setHovId] = useState(null);
+  const cRef = useRef(cards); cRef.current = cards;
+  const spRef = useRef(specials); spRef.current = specials;
+  const dragged = useRef(false);
+  const sRef = useRef({ log, del, specials }); sRef.current = { log, del, specials };
+  const live = calcSc(del, cards);
+  const findC = useCallback((cx, cy, ex) => {
+    const els = document.querySelectorAll('[data-cid]');
+    for (let i = 0; i < els.length; i++) {
+      const cid = els[i].getAttribute('data-cid');
+      if (cid === ex) continue;
+      const r = els[i].getBoundingClientRect();
+      if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+        return cRef.current.find(c => c.id === cid) || null;
+      }
+    }
+    return null;
+  }, []);
+  const onDock = useCallback((cx, cy) => {
+    const dk = document.getElementById('dock');
+    if (!dk) return false;
+    const r = dk.getBoundingClientRect();
+    return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
+  }, []);
+  const saveH = useCallback(() => {
+    setHist(h => [...h, cards]);
+    setHMeta(h => [...h, { log: sRef.current.log, del: sRef.current.del, sp: sRef.current.specials }]);
+  }, [cards]);
+  const onPD = useCallback((e, card, isSp) => {
+    if (opPop || result || cMenu || custIn || rules) return;
+    e.preventDefault();
+    dragged.current = false;
+    dragR.current = { id: card.id, sx: e.clientX, sy: e.clientY, isSp: !!isSp };
+    setDRender({ id: card.id, dx: 0, dy: 0, isSp: !!isSp });
+  }, [opPop, result, cMenu, custIn, rules]);
+  useEffect(() => {
+    function onMove(e) {
+      const d = dragR.current;
+      if (!d) return;
+      e.preventDefault();
+      const dx = e.clientX - d.sx;
+      const dy = e.clientY - d.sy;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragged.current = true;
+      setDRender({ id: d.id, dx, dy, isSp: d.isSp });
+      const tgt = findC(e.clientX, e.clientY, d.id);
+      setHovId(tgt ? tgt.id : null);
+    }
+    function onUp(e) {
+      const d = dragR.current;
+      if (!d) return;
+      dragR.current = null;
+      setDRender(null);
+      setHovId(null);
+      if (d.isSp) {
+        const sp = spRef.current.find(s => s.id === d.id);
+        if (!sp || !dragged.current) return;
+        const tgt = findC(e.clientX, e.clientY, d.id);
+        if (!tgt) return;
+        if (sp.type === 'custom') {
+          setCustIn({ sid: sp.id, tgt, x: e.clientX, y: e.clientY });
+        } else {
+          setOpPop({ a: tgt, b: { n: sp.n, d: sp.d, id: sp.id, depth: 0 }, x: e.clientX, y: e.clientY, sid: sp.id });
+        }
+        return;
+      }
+      const dc = cRef.current.find(c => c.id === d.id);
+      if (!dc) return;
+      if (!dragged.current) { setCMenu(dc); return; }
+      if (onDock(e.clientX, e.clientY) && isS1(dc)) {
+        const st = sRef.current;
+        setHist(h => [...h, cRef.current]);
+        setHMeta(h => [...h, { log: st.log, del: st.del, sp: st.specials }]);
+        setDel(p => [...p, { depth: dc.depth }]);
+        setLog(p => [...p, { type: 'deliver', depth: dc.depth }]);
+        const rem = cRef.current.filter(c => c.id !== dc.id);
+        rem.sort((a, b) => a.slot - b.slot);
+        rem.forEach((c, i) => { c.slot = i; });
+        setCards([...rem]);
+        return;
+      }
+      const tgt = findC(e.clientX, e.clientY, d.id);
+      if (tgt) setOpPop({ a: tgt, b: dc, x: e.clientX, y: e.clientY });
+    }
+    window.addEventListener('pointermove', onMove, { passive: false });
+    window.addEventListener('pointerup', onUp);
+    return () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); };
+  }, [findC, onDock]);
+  const doOp = useCallback((op) => {
+    if (!opPop) return;
+    const { a, b, sid } = opPop;
+    const res = fracOp(a, b, op);
+    if (!fracValid(res)) { setOpPop(null); return; }
+    saveH();
+    const le = { type: 'fuse', a: { n: a.n, d: a.d }, b: { n: b.n, d: b.d }, op, result: { n: res.n, d: res.d } };
+    setCalcF(le);
+    setLog(p => [...p, le]);
+    if (sid) {
+      const nd = a.depth + 1;
+      setCards(p => p.map(c => c.id === a.id ? { ...c, n: res.n, d: res.d, depth: nd, id: 'c' + Date.now() } : c));
+      setSpecials(p => p.filter(s => s.id !== sid));
+    } else {
+      const nd = Math.max(a.depth, b.depth) + 1;
+      const nc = { id: 'c' + Date.now(), n: res.n, d: res.d, slot: a.slot, depth: nd };
+      const rem = cards.filter(c => c.id !== a.id && c.id !== b.id).concat(nc);
+      rem.sort((x, y) => x.slot - y.slot);
+      rem.forEach((c, i) => { c.slot = i; });
+      setCards(rem);
+    }
+    setOpPop(null);
+  }, [opPop, cards, saveH]);
+  const doCust = useCallback((n, d) => {
+    if (!custIn) return;
+    setCustIn(null);
+    const tgt = custIn.tgt;
+    setOpPop({ a: tgt, b: { n, d, id: custIn.sid, depth: 0 }, x: custIn.x, y: custIn.y, sid: custIn.sid });
+  }, [custIn]);
+  const doSimp = useCallback(() => {
+    if (!cMenu) return;
+    const s = doSimplify(cMenu.n, cMenu.d);
+    saveH();
+    setLog(p => [...p, { type: 'simplify', from: { n: cMenu.n, d: cMenu.d }, to: s }]);
+    setCards(p => p.map(c => c.id === cMenu.id ? { ...c, n: s.n, d: s.d } : c));
+    setCMenu(null);
+  }, [cMenu, saveH]);
+  const doConv = useCallback((nn, nd) => {
+    if (!cMenu) return;
+    saveH();
+    setLog(p => [...p, { type: 'convert', from: { n: cMenu.n, d: cMenu.d }, to: { n: nn, d: nd } }]);
+    setCards(p => p.map(c => c.id === cMenu.id ? { ...c, n: nn, d: nd } : c));
+    setCMenu(null);
+  }, [cMenu, saveH]);
+  const undo = useCallback(() => {
+    if (hist.length === 0) return;
+    setCards(hist[hist.length - 1]);
+    const m = hMeta[hMeta.length - 1];
+    setLog(m.log); setDel(m.del); setSpecials(m.sp);
+    setHist(h => h.slice(0, -1)); setHMeta(h => h.slice(0, -1));
+    setCalcF(null); setCMenu(null); setOpPop(null);
+  }, [hist, hMeta]);
+  const finish = useCallback(() => { setResult(true); setOpPop(null); setCMenu(null); }, []);
+  const retry = useCallback(() => {
+    setCards(makePuzzle()); setSpecials(makeSpecials()); setResult(false); setDel([]);
+    setHist([]); setHMeta([]); setCalcF(null); setLog([]);
+  }, []);
+  useEffect(() => {
+    function h(e) { if (e.key === 'Escape') { setOpPop(null); setCMenu(null); setCustIn(null); } }
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, []);
+  const lastHint = cards.length === 1 && isOne(cards[0]);
+  /* ---- Render ---- */
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }} onClick={onCancel}>
-      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', left, top, background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: 22, padding: '20px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.08)', animation: 'opPopIn 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-          <Frac n={cardA.n} d={cardA.d} size={18} color="#FF6B6B" />
-          <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 18, fontFamily: "'Fredoka', sans-serif" }}>?</span>
-          <Frac n={cardB.n} d={cardB.d} size={18} color="#4ECDC4" />
-        </div>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          {ops.map((op, i) => {
-            const r = results[i];
-            const valid = fracValid(r);
-            return (
-              <button key={op} disabled={!valid} onClick={() => valid && onSelect(op)}
-                style={{ width: 74, padding: '12px 0', borderRadius: 14, border: 'none', background: valid ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.04)', color: valid ? '#fff' : '#444', cursor: valid ? 'pointer' : 'not-allowed', fontFamily: "'Fredoka', sans-serif", fontSize: 22, fontWeight: 700, transition: 'all 0.15s', boxShadow: valid ? '0 3px 12px rgba(102,126,234,0.3)' : 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
-                onMouseEnter={e => { if (valid) e.currentTarget.style.transform = 'scale(1.12)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-              >
-                <div>{op}</div>
-                {valid && r && <div style={{ fontSize: 10, opacity: 0.8 }}><Frac n={r.n} d={r.d} size={7} color="#fff" bold={false} /></div>}
-              </button>
-            );
-          })}
+    <div style={{ width: '100%', minHeight: '100vh', background: 'linear-gradient(150deg,#0a0a1a 0%,#141432 40%,#0d1b2a 100%)', fontFamily: FF, display: 'flex', flexDirection: 'column', userSelect: 'none', position: 'relative', overflow: 'hidden' }}>
+      <style>{CSS}</style>
+      {/* Header */}
+      <div style={{ padding: '10px 16px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, background: 'linear-gradient(135deg,#FF6B6B,#FFEAA7,#4ECDC4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{'\u5206\u6570\u878d\u5408'}</div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <div style={{ background: 'rgba(255,255,255,.06)', borderRadius: 8, padding: '2px 8px', textAlign: 'center' }}>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,.3)' }}>{'\u6d88\u5316'}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{'\u{1f5c2}'}{15 - cards.length}</div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,.06)', borderRadius: 8, padding: '2px 8px', textAlign: 'center' }}>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,.3)' }}>{'\u7d0d\u54c1'}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{'\u{1f4e6}'}{del.length}</div>
+          </div>
+          <div style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', borderRadius: 8, padding: '2px 12px', textAlign: 'center' }}>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,.5)' }}>Score</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{live.total}</div>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function CardActionMenu({ card, onSimplify, onConvert, onCancel }) {
-  const canReduce = canSimplify(card.n, card.d);
-  const convertTargets = [2, 3, 4, 5, 6, 8, 10, 12, 15, 16, 20, 24, 30, 36].filter(d => d !== card.d && d % card.d === 0).slice(0, 6);
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }} onClick={onCancel}>
-      <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: 22, padding: '24px 28px', boxShadow: '0 20px 60px rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.08)', animation: 'opPopIn 0.25s cubic-bezier(0.34,1.56,0.64,1)', minWidth: 260 }}>
-        <div style={{ textAlign: 'center', marginBottom: 16 }}><Frac n={card.n} d={card.d} size={28} color="#fff" /></div>
-        {canReduce && (
-          <div style={{ marginBottom: 12 }}>
-            <button onClick={onSimplify} style={{ width: '100%', padding: '10px 16px', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg, #FF6B6B, #ee5a24)', color: '#fff', fontFamily: "'Fredoka', sans-serif", fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 3px 12px rgba(255,107,107,0.3)' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-            ><span>{'\u7d04\u5206 \u2192'}</span><Frac n={doSimplify(card.n, card.d).n} d={doSimplify(card.n, card.d).d} size={14} color="#fff" /></button>
+      {/* Toolbar */}
+      <div style={{ padding: '2px 16px', display: 'flex', gap: 6, alignItems: 'center', zIndex: 10 }}>
+        <button onClick={undo} disabled={hist.length === 0} style={{ background: hist.length ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.05)', borderRadius: 8, padding: '3px 10px', color: hist.length ? 'rgba(255,255,255,.6)' : 'rgba(255,255,255,.12)', fontSize: 11, fontFamily: FF, cursor: hist.length ? 'pointer' : 'default' }}>{'\u21a9 \u623b\u3059'}</button>
+        <button onClick={retry} style={{ background: 'rgba(255,107,107,.08)', border: '1px solid rgba(255,107,107,.1)', borderRadius: 8, padding: '3px 10px', color: '#FF6B6B', fontSize: 11, fontFamily: FF, cursor: 'pointer' }}>{'\u21bb'}</button>
+        <div style={{ flex: 1 }} />
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,.15)' }}>{'\u6b8b'}{cards.length}{'\u679a'}</div>
+        <button onClick={() => setShowLog(v => !v)} style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.05)', borderRadius: 8, padding: '3px 8px', color: 'rgba(255,255,255,.4)', fontSize: 10, fontFamily: FF, cursor: 'pointer' }}>{'\u{1f4cb}'}</button>
+        <button onClick={finish} style={{ background: (del.length > 0 || cards.length === 1) ? 'linear-gradient(135deg,#FFD700,#FFA500)' : 'rgba(255,255,255,.06)', border: (del.length > 0 || cards.length === 1) ? 'none' : '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: '4px 14px', color: (del.length > 0 || cards.length === 1) ? '#1a1a2e' : 'rgba(255,255,255,.4)', fontSize: 12, fontWeight: 700, fontFamily: FF, cursor: 'pointer' }}>
+          {cards.length === 1 ? '\u{1f3c6} \u7d50\u679c\uff01' : del.length > 0 ? '\u2728 \u7d50\u679c' : '\u7d42\u4e86'}
+        </button>
+      </div>
+      {cards.length === 1 && (
+        <div style={{ textAlign: 'center', padding: '4px 16px', zIndex: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: FF, color: lastHint ? '#FFD700' : '#DDA0DD' }}>
+            {lastHint ? '\u{1f389} \u30d1\u30fc\u30d5\u30a7\u30af\u30c8\uff01' : '\u6700\u5f8c\u306e1\u679a: \u2248' + fracVal(cards[0]).toFixed(2)}
+          </span>
+        </div>
+      )}
+      {/* Main area */}
+      <div style={{ flex: 1, display: 'flex', gap: 10, padding: '6px 12px 8px', maxWidth: 920, width: '100%', alignSelf: 'center', zIndex: 10, minHeight: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, gap: 6 }}>
+          {/* Card grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, touchAction: 'none' }}>
+            {Array.from({ length: Math.max(cards.length, 1) }).map((_, slot) => {
+              const card = cards.find(c => c.slot === slot);
+              if (!card) return <div key={'e' + slot} style={{ aspectRatio: '3/4', borderRadius: 14, background: 'rgba(255,255,255,.01)', border: '1px dashed rgba(255,255,255,.03)' }} />;
+              const isDg = dRender && dRender.id === card.id && !dRender.isSp;
+              const isHv = hovId === card.id;
+              const col = getCol(card.id);
+              const c1 = isS1(card);
+              const cu1 = isOne(card) && !c1;
+              const dx = isDg ? dRender.dx : 0;
+              const dy = isDg ? dRender.dy : 0;
+              const isLast = cards.length === 1;
+              return (
+                <div key={card.id} data-cid={card.id} onPointerDown={e => onPD(e, card)}
+                  style={{
+                    aspectRatio: '3/4', borderRadius: 14,
+                    gridColumn: isLast ? '2/4' : undefined,
+                    gridRow: isLast ? '1/3' : undefined,
+                    background: c1 ? 'linear-gradient(135deg,#FFD700,#FF8C00)' : cu1 ? 'linear-gradient(135deg,#FFA500,#e67e22)' : 'linear-gradient(145deg,' + col.bg + 'dd,' + col.bg + '88)',
+                    border: isHv ? '3px solid #74B9FF' : c1 ? '2px solid rgba(255,215,0,.5)' : '2px solid rgba(255,255,255,.08)',
+                    cursor: isDg ? 'grabbing' : 'grab',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    position: 'relative', overflow: 'hidden', zIndex: isDg ? 100 : 1,
+                    transform: isDg ? 'translate(' + dx + 'px,' + dy + 'px) scale(1.15) rotate(-3deg)' : isHv ? 'scale(1.08)' : 'scale(1)',
+                    transition: isDg ? 'none' : 'all .2s cubic-bezier(.34,1.56,.64,1)',
+                    animation: isHv ? 'dropTarget .6s infinite' : c1 ? 'winGlow 2s infinite' : isDg ? 'none' : 'cardAppear .35s ease-out',
+                    boxShadow: isDg ? '0 20px 50px rgba(0,0,0,.6),0 0 25px ' + col.gl : c1 ? '0 6px 20px rgba(255,215,0,.3)' : '0 3px 12px rgba(0,0,0,.3)',
+                  }}>
+                  {card.depth > 0 && (
+                    <div style={{ position: 'absolute', top: 3, left: 4, background: 'rgba(0,0,0,.5)', borderRadius: 6, padding: '1px 5px', display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <span style={{ fontSize: isLast ? 11 : 8 }}>{'\u{1f525}'}</span>
+                      <span style={{ fontSize: isLast ? 12 : 9, fontWeight: 700, color: dCol(card.depth) }}>{card.depth}</span>
+                    </div>
+                  )}
+                  {cu1 && <div style={{ position: 'absolute', top: 3, right: 3, fontSize: 7, color: '#fff', fontWeight: 700, background: 'rgba(0,0,0,.5)', borderRadius: 4, padding: '1px 3px' }}>{'\u7d04\u5206\u21921'}</div>}
+                  {card.d === 1 ? (
+                    <div style={{ fontSize: isLast ? 64 : 32, fontWeight: 700, color: c1 ? '#1a1a2e' : '#fff', fontFamily: FF }}>{card.n}</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: c1 ? '#1a1a2e' : '#fff' }}>
+                      <div style={{ fontSize: isLast ? 44 : 22, fontWeight: 700, lineHeight: 1.1, fontFamily: FF }}>{card.n}</div>
+                      <div style={{ width: isLast ? 52 : 26, height: isLast ? 4 : 2.5, background: c1 ? 'rgba(0,0,0,.3)' : 'rgba(255,255,255,.7)', borderRadius: 2, margin: '3px 0' }} />
+                      <div style={{ fontSize: isLast ? 44 : 22, fontWeight: 700, lineHeight: 1.1, fontFamily: FF }}>{card.d}</div>
+                    </div>
+                  )}
+                  {c1 && <div style={{ position: 'absolute', top: 2, right: 4, fontSize: isLast ? 20 : 12 }}>{'\u2b50'}</div>}
+                </div>
+              );
+            })}
+          </div>
+          {/* Special cards */}
+          {specials.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '4px 0', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 10, color: 'rgba(162,155,254,.5)', fontWeight: 600 }}>{'\u2b50\u30b9\u30da\u30b7\u30e3\u30eb'}</div>
+              {specials.map(sp => {
+                const isDg = dRender && dRender.id === sp.id && dRender.isSp;
+                const dx = isDg ? dRender.dx : 0;
+                const dy = isDg ? dRender.dy : 0;
+                const isCust = sp.type === 'custom';
+                return (
+                  <div key={sp.id} onPointerDown={e => onPD(e, sp, true)}
+                    style={{
+                      width: 52, height: 66, borderRadius: 12, touchAction: 'none',
+                      background: isCust ? 'linear-gradient(135deg,#A29BFE,#667eea)' : 'linear-gradient(135deg,#DDA0DD,#A29BFE)',
+                      border: '2px solid rgba(162,155,254,.3)',
+                      cursor: isDg ? 'grabbing' : 'grab',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      position: 'relative', zIndex: isDg ? 100 : 1,
+                      transform: isDg ? 'translate(' + dx + 'px,' + dy + 'px) scale(1.15) rotate(-3deg)' : 'scale(1)',
+                      transition: isDg ? 'none' : 'all .2s',
+                      boxShadow: isDg ? '0 15px 40px rgba(0,0,0,.5)' : '0 3px 12px rgba(0,0,0,.3)',
+                    }}>
+                    <div style={{ position: 'absolute', top: 2, left: 4, fontSize: 8 }}>{'\u2b50'}</div>
+                    {isCust ? (
+                      <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', fontFamily: FF }}>?</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.1, color: '#fff', fontFamily: FF }}>{sp.n}</div>
+                        <div style={{ width: 20, height: 2, background: 'rgba(255,255,255,.7)', borderRadius: 2, margin: '2px 0' }} />
+                        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.1, color: '#fff', fontFamily: FF }}>{sp.d}</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {/* Dock */}
+          <div id="dock" style={{ borderRadius: 16, padding: '12px 16px', background: 'rgba(255,215,0,.04)', border: '2px dashed rgba(255,215,0,.2)', animation: 'dockPulse 3s infinite', display: 'flex', alignItems: 'center', gap: 12, minHeight: 60, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 12, color: 'rgba(255,215,0,.5)', fontWeight: 600 }}>{'\u{1f4e6} \u7d0d\u54c1\u53f0'}</div>
+            {del.length === 0 && <div style={{ fontSize: 11, color: 'rgba(255,255,255,.15)', fontStyle: 'italic' }}>{'1\u3092\u3053\u3053\u306b\u30c9\u30e9\u30c3\u30b0'}</div>}
+            {del.map((d, i) => (
+              <div key={i} style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#FFD700,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 4px 15px rgba(255,215,0,.3)', animation: 'deliverBounce .5s ease-out' }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e', fontFamily: FF }}>1</span>
+                <div style={{ position: 'absolute', top: -4, right: -4, background: 'rgba(0,0,0,.6)', borderRadius: 6, padding: '0 4px', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <span style={{ fontSize: 7 }}>{'\u{1f525}'}</span><span style={{ fontSize: 8, fontWeight: 700, color: dCol(d.depth) }}>{d.depth}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ padding: '2px 0', color: 'rgba(255,255,255,.1)', fontSize: 9, textAlign: 'center' }}>{'\u30c9\u30e9\u30c3\u30b0\u2192\u878d\u5408 \u30fb \u30af\u30ea\u30c3\u30af\u2192\u7d04\u5206/\u901a\u5206 \u30fb \u2b50\u2192\u30ab\u30fc\u30c9\u306b\u91cd\u306d\u3066\u4f7f\u3046'}</div>
+        </div>
+        {/* Log panel */}
+        {showLog && (
+          <div style={{ width: 200, minWidth: 150, background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.04)', borderRadius: 14, padding: 10, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.35)', marginBottom: 6 }}>{'\u{1f4cb} \u30ed\u30b0'} {log.length > 0 && <span style={{ background: 'rgba(78,205,196,.15)', borderRadius: 6, padding: '0 5px', fontSize: 9, color: '#4ECDC4' }}>{log.length}</span>}</div>
+            <LogPanel log={log} />
           </div>
         )}
-        {convertTargets.length > 0 && (
-          <div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 8, fontFamily: "'Fredoka', sans-serif" }}>{'\u901a\u5206\uff08\u5206\u6bcd\u3092\u5909\u3048\u308b\uff09'}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {convertTargets.map(targetD => {
-                const newN = card.n * (targetD / card.d);
+      </div>
+      {/* ---- Overlays ---- */}
+      {rules && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 950, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 28, padding: '36px 36px 28px', textAlign: 'center', boxShadow: '0 30px 80px rgba(0,0,0,.6)', border: '2px solid rgba(255,255,255,.08)', animation: 'fadeIn .5s ease-out', maxWidth: 400, width: '92%' }}>
+            <div style={{ fontSize: 40, marginBottom: 4 }}>{'\u{1f9ea}'}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: FF, background: 'linear-gradient(135deg,#FF6B6B,#FFEAA7,#4ECDC4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 16 }}>{'\u5206\u6570\u878d\u5408'}</div>
+            <div style={{ background: 'rgba(255,215,0,.06)', border: '1px solid rgba(255,215,0,.15)', borderRadius: 16, padding: '16px 20px', marginBottom: 18 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#FFD700', fontFamily: FF, lineHeight: 1.6 }}>{'15\u679a\u306e\u30ab\u30fc\u30c9\u3092'}<br />{'\u3059\u3079\u3066\u5408\u4f53\u3055\u305b\u3066'}<br />{'\u300c1\u300d\u3092\u4f5c\u308d\u3046\uff01'}</div>
+            </div>
+            <div style={{ textAlign: 'left', marginBottom: 18 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,.6)', fontFamily: FF, marginBottom: 8 }}>{'\u{1f3ae} \u3042\u305d\u3073\u304b\u305f'}</div>
+              {['\u{1f446} \u30c9\u30e9\u30c3\u30b0\u3057\u3066\u91cd\u306d\u308b \u2192 \u8a08\u7b97\u3057\u3066\u5408\u4f53', '\u{1f447} \u30af\u30ea\u30c3\u30af \u2192 \u7d04\u5206\u30fb\u901a\u5206', '\u{1f4e6} 1\u3092\u4f5c\u3063\u305f\u3089\u7d0d\u54c1\u53f0\u3078\u30c9\u30e9\u30c3\u30b0', '\u2b50 \u30b9\u30da\u30b7\u30e3\u30eb\u30ab\u30fc\u30c9\u3092\u30ab\u30fc\u30c9\u306b\u91cd\u306d\u3066\u4f7f\u3046'].map((t, i) => (
+                <div key={i} style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', fontFamily: FF, marginBottom: 4 }}>{t}</div>
+              ))}
+            </div>
+            <div style={{ textAlign: 'left', marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,.6)', fontFamily: FF, marginBottom: 8 }}>{'\u{1f3c6} \u9ad8\u30b9\u30b3\u30a2\u306e\u30b3\u30c4'}</div>
+              {['\u{1f5c2} \u30ab\u30fc\u30c9\u3092\u305f\u304f\u3055\u3093\u6d88\u5316\u3057\u3088\u3046', '\u{1f4e6} 1\u3092\u305f\u304f\u3055\u3093\u7d0d\u54c1\u3057\u3088\u3046', '\u{1f525} \u305f\u304f\u3055\u3093\u5408\u4f53\u3055\u305b\u305f1\u306f\u9ad8\u5f97\u70b9', '\u{1f48e} \u6700\u5f8c\u306e1\u679a\u304c\u300c1\u300d\u2192 \u30d1\u30fc\u30d5\u30a7\u30af\u30c8\uff01'].map((t, i) => (
+                <div key={i} style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', fontFamily: FF, marginBottom: 4 }}>{t}</div>
+              ))}
+            </div>
+            <button onClick={() => setRules(false)} style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', border: 'none', borderRadius: 16, padding: '14px 48px', color: '#fff', fontSize: 18, fontWeight: 700, fontFamily: FF, cursor: 'pointer', boxShadow: '0 6px 20px rgba(102,126,234,.35)' }}>{'\u30b9\u30bf\u30fc\u30c8\uff01'}</button>
+          </div>
+        </div>
+      )}
+      {calcF && <BigCalcDisplay formula={calcF} onDone={() => setCalcF(null)} />}
+      {opPop && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(4px)' }} onClick={() => setOpPop(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', left: Math.min(Math.max(opPop.x - 170, 8), (typeof window !== 'undefined' ? window.innerWidth : 800) - 380), top: Math.min(Math.max(opPop.y - 90, 8), (typeof window !== 'undefined' ? window.innerHeight : 600) - 180), background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 22, padding: '20px 24px', boxShadow: '0 20px 60px rgba(0,0,0,.6)', border: '1px solid rgba(255,255,255,.08)', animation: 'opPopIn .25s cubic-bezier(.34,1.56,.64,1)' }}>
+            <div style={{ textAlign: 'center', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <Frac n={opPop.a.n} d={opPop.a.d} size={18} color="#FF6B6B" />
+              <span style={{ color: 'rgba(255,255,255,.25)', fontSize: 18, fontFamily: FF }}>?</span>
+              <Frac n={opPop.b.n} d={opPop.b.d} size={18} color="#4ECDC4" />
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              {OPS.map(op => {
+                const r = fracOp(opPop.a, opPop.b, op);
+                const ok = fracValid(r);
                 return (
-                  <button key={targetD} onClick={() => onConvert(newN, targetD)} style={{ padding: '8px 12px', borderRadius: 12, border: 'none', background: 'rgba(116,185,255,0.15)', color: '#74B9FF', fontFamily: "'Fredoka', sans-serif", fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(116,185,255,0.25)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(116,185,255,0.15)'}
-                  ><span>{'\u2192'}</span><Frac n={newN} d={targetD} size={11} color="#74B9FF" /></button>
+                  <button key={op} disabled={!ok} onClick={() => ok && doOp(op)}
+                    style={{ width: 74, padding: '12px 0', borderRadius: 14, border: 'none', background: ok ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'rgba(255,255,255,.04)', color: ok ? '#fff' : '#444', cursor: ok ? 'pointer' : 'not-allowed', fontFamily: FF, fontSize: 22, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <div>{op}</div>
+                    {ok && r && <div style={{ fontSize: 10, opacity: 0.8 }}><Frac n={r.n} d={r.d} size={7} color="#fff" bold={false} /></div>}
+                  </button>
                 );
               })}
             </div>
           </div>
-        )}
-        {!canReduce && convertTargets.length === 0 && <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12, textAlign: 'center', fontFamily: "'Fredoka', sans-serif" }}>{'\u5909\u63db\u3067\u304d\u307e\u305b\u3093'}</div>}
-      </div>
+        </div>
+      )}
+      {cMenu && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(4px)' }} onClick={() => setCMenu(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 22, padding: '24px 28px', boxShadow: '0 20px 60px rgba(0,0,0,.6)', border: '1px solid rgba(255,255,255,.08)', animation: 'opPopIn .25s cubic-bezier(.34,1.56,.64,1)', minWidth: 260 }}>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}><Frac n={cMenu.n} d={cMenu.d} size={28} color="#fff" /></div>
+            {canSimplify(cMenu.n, cMenu.d) && (
+              <div style={{ marginBottom: 12 }}>
+                <button onClick={doSimp} style={{ width: '100%', padding: '10px 16px', borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#FF6B6B,#ee5a24)', color: '#fff', fontFamily: FF, fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  <span>{'\u7d04\u5206 \u2192'}</span><Frac n={doSimplify(cMenu.n, cMenu.d).n} d={doSimplify(cMenu.n, cMenu.d).d} size={14} color="#fff" />
+                </button>
+              </div>
+            )}
+            {(() => {
+              const tgts = [2, 3, 4, 5, 6, 8, 10, 12, 15, 16, 20, 24, 30, 36].filter(d => d !== cMenu.d && d % cMenu.d === 0).slice(0, 6);
+              if (tgts.length === 0) return null;
+              return (
+                <div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,.35)', marginBottom: 8, fontFamily: FF }}>{'\u901a\u5206\uff08\u5206\u6bcd\u3092\u5909\u3048\u308b\uff09'}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {tgts.map(td => (
+                      <button key={td} onClick={() => doConv(cMenu.n * (td / cMenu.d), td)} style={{ padding: '8px 12px', borderRadius: 12, border: 'none', background: 'rgba(116,185,255,.15)', color: '#74B9FF', fontFamily: FF, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>{'\u2192'}</span><Frac n={cMenu.n * (td / cMenu.d)} d={td} size={11} color="#74B9FF" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+      {custIn && (
+        <CustInput onConfirm={doCust} onCancel={() => setCustIn(null)} />
+      )}
+      {result && <ResultScr del={del} cards={cards} onRetry={retry} />}
     </div>
   );
 }
-
-function FusionLog({ log }) {
+/* Extracted sub-components to keep main render clean */
+function LogPanel({ log }) {
   const endRef = useRef(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [log.length]);
-  if (log.length === 0) return <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.12)', fontSize: 11, fontStyle: 'italic', fontFamily: "'Fredoka', sans-serif", textAlign: 'center', padding: 10 }}>{'\u30c9\u30e9\u30c3\u30b0\u2192\u878d\u5408'}<br />{'\u30af\u30ea\u30c3\u30af\u2192\u7d04\u5206/\u901a\u5206'}</div>;
+  if (log.length === 0) return <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,.12)', fontSize: 11, fontStyle: 'italic', fontFamily: FF, textAlign: 'center', padding: 10 }}>{'\u30c9\u30e9\u30c3\u30b0\u2192\u878d\u5408'}<br />{'\u30af\u30ea\u30c3\u30af\u2192\u7d04\u5206/\u901a\u5206'}</div>;
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '2px 0' }}>
       {log.map((e, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 8, background: e.type === 'deliver' ? 'rgba(255,215,0,0.06)' : 'transparent', marginBottom: 1, animation: 'logAppear 0.3s ease-out', fontFamily: "'Fredoka', sans-serif" }}>
-          <span style={{ fontSize: 9, fontWeight: 700, color: '#FFEAA7', background: 'rgba(255,255,255,0.06)', borderRadius: 5, padding: '1px 4px', minWidth: 22, textAlign: 'center' }}>
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 8, marginBottom: 1, animation: 'logAppear .3s ease-out', fontFamily: FF }}>
+          <span style={{ fontSize: 9, fontWeight: 700, color: '#FFEAA7', background: 'rgba(255,255,255,.06)', borderRadius: 5, padding: '1px 4px', minWidth: 22, textAlign: 'center' }}>
             {e.type === 'fuse' ? '\u26a1' : e.type === 'simplify' ? '\u7d04' : e.type === 'convert' ? '\u901a' : '\u{1f4e6}'}
           </span>
-          {e.type === 'fuse' && <><Frac n={e.a.n} d={e.a.d} size={10} color="#FF6B6B" /><span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{e.op}</span><Frac n={e.b.n} d={e.b.d} size={10} color="#4ECDC4" /><span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>=</span><Frac n={e.result.n} d={e.result.d} size={11} color="#74B9FF" /></>}
-          {e.type === 'simplify' && <><Frac n={e.from.n} d={e.from.d} size={10} color="rgba(255,255,255,0.4)" /><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{'\u2192'}</span><Frac n={e.to.n} d={e.to.d} size={11} color="#FF6B6B" /></>}
-          {e.type === 'convert' && <><Frac n={e.from.n} d={e.from.d} size={10} color="rgba(255,255,255,0.4)" /><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{'\u2192'}</span><Frac n={e.to.n} d={e.to.d} size={11} color="#74B9FF" /></>}
-          {e.type === 'deliver' && <><span style={{ fontSize: 11, color: '#FFD700', fontWeight: 700 }}>1</span><span style={{ fontSize: 9 }}>{'\u{1f525}'}{e.depth}</span><span style={{ fontSize: 9 }}>{'\u2728'}</span></>}
+          {e.type === 'fuse' && <><Frac n={e.a.n} d={e.a.d} size={10} color="#FF6B6B" /><span style={{ fontSize: 11, color: 'rgba(255,255,255,.35)' }}>{e.op}</span><Frac n={e.b.n} d={e.b.d} size={10} color="#4ECDC4" /><span style={{ fontSize: 9, color: 'rgba(255,255,255,.2)' }}>=</span><Frac n={e.result.n} d={e.result.d} size={11} color="#74B9FF" /></>}
+          {e.type === 'simplify' && <><Frac n={e.from.n} d={e.from.d} size={10} color="rgba(255,255,255,.4)" /><span style={{ color: 'rgba(255,255,255,.3)' }}>{'\u2192'}</span><Frac n={e.to.n} d={e.to.d} size={11} color="#FF6B6B" /></>}
+          {e.type === 'convert' && <><Frac n={e.from.n} d={e.from.d} size={10} color="rgba(255,255,255,.4)" /><span style={{ color: 'rgba(255,255,255,.3)' }}>{'\u2192'}</span><Frac n={e.to.n} d={e.to.d} size={11} color="#74B9FF" /></>}
+          {e.type === 'deliver' && <span style={{ fontSize: 11, color: '#FFD700', fontWeight: 700 }}>{'1 \u{1f525}'}{e.depth}{' \u2728'}</span>}
         </div>
       ))}
       <div ref={endRef} />
     </div>
   );
 }
-
-function ResultScreen({ delivered, cards, onRetry }) {
-  const sc = calcScore(delivered, cards);
-  const rank = getRank(sc.total);
-  const maxDepth = delivered.length > 0 ? Math.max(...delivered.map(d => d.depth)) : 0;
-  const lastCard = sc.cardsLeft === 1 ? cards[0] : null;
+function CustInput({ onConfirm, onCancel }) {
+  const [n, setN] = useState('');
+  const [d, setD] = useState('');
+  const nV = parseInt(n);
+  const dV = parseInt(d);
+  const ok = !isNaN(nV) && !isNaN(dV) && nV > 0 && dV > 0 && nV <= 99 && dV <= 99;
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'linear-gradient(145deg, #1a1a2e, #16213e)', borderRadius: 28, padding: '32px 36px', textAlign: 'center', boxShadow: sc.isPerfect ? '0 0 80px rgba(255,215,0,0.2), 0 30px 80px rgba(0,0,0,0.6)' : '0 30px 80px rgba(0,0,0,0.6)', border: sc.isPerfect ? '2px solid rgba(255,215,0,0.3)' : '2px solid rgba(255,255,255,0.08)', animation: 'fadeIn 0.5s ease-out', maxWidth: 440, width: '92%' }}>
-        {sc.isPerfect ? (
-          <div style={{ animation: 'perfectBurst 1s ease-out', marginBottom: 4 }}>
-            <div style={{ fontSize: 56 }}>{'\u{1f3c6}'}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, fontFamily: "'Fredoka', sans-serif", background: 'linear-gradient(135deg, #FFD700, #FF6B6B, #FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'shimmer 2s linear infinite', backgroundSize: '200% auto' }}>PERFECT!</div>
-          </div>
-        ) : (<><div style={{ fontSize: 48, marginBottom: 2 }}>{rank.emoji}</div><div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Fredoka', sans-serif", color: rank.color, marginBottom: 4 }}>{rank.label}</div></>)}
-        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: '16px 18px', marginBottom: 16, textAlign: 'left' }}>
-          {[
-            { icon: '\u{1f5c2}', label: `\u30ab\u30fc\u30c9\u6d88\u5316 (${15 - sc.cardsLeft}\u679a)`, value: sc.reductionPts, color: '#74B9FF' },
-            { icon: '\u{1f4e6}', label: `\u7d0d\u54c1\u3057\u305f1 (${delivered.length}\u500b)`, value: sc.oneCountPts, color: '#4ECDC4' },
-            ...(delivered.length > 0 ? [{ icon: '\u{1f525}', label: `\u878d\u5408\u306e\u6df1\u3055 (\u6700\u5927\u{1f525}${maxDepth})`, value: sc.depthPts, color: '#FFA500' }] : []),
-            ...(sc.cardsLeft === 1 ? [{ icon: sc.isPerfect ? '\u{1f3c6}' : '\u{1f3af}', label: sc.isPerfect ? '\u30d1\u30fc\u30d5\u30a7\u30af\u30c8\u30dc\u30fc\u30ca\u30b9\uff01' : `\u30e9\u30b9\u30c8\u30ab\u30fc\u30c9 (1\u306b${sc.lastCardPct}%\u8fd1\u3044)`, value: sc.lastCardPts, color: sc.isPerfect ? '#FFD700' : '#DDA0DD' }] : []),
-          ].map((row, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontFamily: "'Fredoka', sans-serif" }}>
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>{row.icon} {row.label}</span>
-              <span style={{ color: row.color, fontSize: 16, fontWeight: 700 }}>+{row.value}</span>
-            </div>
-          ))}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, marginTop: 6 }}>
-            <span style={{ color: '#fff', fontSize: 16, fontWeight: 700, fontFamily: "'Fredoka', sans-serif" }}>{'\u5408\u8a08\u30b9\u30b3\u30a2'}</span>
-            <span style={{ fontSize: 32, fontWeight: 700, fontFamily: "'Fredoka', sans-serif", background: 'linear-gradient(135deg, #FFD700, #FFA500)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{sc.total}</span>
-          </div>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onCancel}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 22, padding: '28px 32px', boxShadow: '0 20px 60px rgba(0,0,0,.6)', border: '1px solid rgba(162,155,254,.3)', animation: 'opPopIn .25s cubic-bezier(.34,1.56,.64,1)', textAlign: 'center', minWidth: 240 }}>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,.5)', fontFamily: FF, marginBottom: 12 }}>{'\u2b50 \u597d\u304d\u306a\u5206\u6570\u3092\u5165\u529b'}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+          <input value={n} onChange={e => setN(e.target.value.replace(/\D/g, '').slice(0, 2))} placeholder={'\u5206\u5b50'} autoFocus style={{ width: 60, padding: '10px 8px', borderRadius: 12, border: '2px solid rgba(162,155,254,.3)', background: 'rgba(255,255,255,.06)', color: '#fff', fontSize: 22, fontWeight: 700, fontFamily: FF, textAlign: 'center', outline: 'none' }} />
+          <div style={{ width: 30, height: 3, background: 'rgba(255,255,255,.4)', borderRadius: 2 }} />
+          <input value={d} onChange={e => setD(e.target.value.replace(/\D/g, '').slice(0, 2))} placeholder={'\u5206\u6bcd'} style={{ width: 60, padding: '10px 8px', borderRadius: 12, border: '2px solid rgba(162,155,254,.3)', background: 'rgba(255,255,255,.06)', color: '#fff', fontSize: 22, fontWeight: 700, fontFamily: FF, textAlign: 'center', outline: 'none' }} />
         </div>
-        {lastCard && !sc.isPerfect && (
-          <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontFamily: "'Fredoka', sans-serif" }}>{'\u6700\u5f8c\u306e1\u679a:'}</span>
-            <Frac n={lastCard.n} d={lastCard.d} size={18} color="#DDA0DD" />
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: "'Fredoka', sans-serif" }}>{'\u2248'} {fracValue(lastCard).toFixed(2)}</span>
-          </div>
-        )}
-        {delivered.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-            {delivered.map((d, i) => (
-              <div key={i} style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #FFD700, #FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 4px 15px rgba(255,215,0,0.3)' }}>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e', fontFamily: "'Fredoka', sans-serif" }}>1</span>
-                <div style={{ position: 'absolute', top: -5, right: -5, background: 'rgba(0,0,0,0.7)', borderRadius: 6, padding: '0px 4px', display: 'flex', alignItems: 'center', gap: 1 }}><span style={{ fontSize: 7 }}>{'\u{1f525}'}</span><span style={{ fontSize: 9, fontWeight: 700, color: depthColor(d.depth) }}>{d.depth}</span></div>
-              </div>
-            ))}
-          </div>
-        )}
-        <button onClick={onRetry} style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', border: 'none', borderRadius: 16, padding: '12px 36px', color: '#fff', fontSize: 16, fontWeight: 700, fontFamily: "'Fredoka', sans-serif", cursor: 'pointer', boxShadow: '0 6px 20px rgba(102,126,234,0.35)' }}
-          onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
-          onMouseLeave={e => e.target.style.transform = 'scale(1)'}
-        >{'\u3082\u3046\u4e00\u5ea6\u6311\u6226 \u21bb'}</button>
+        {ok && <div style={{ marginBottom: 12 }}>{'\u2192'} <Frac n={nV} d={dV} size={16} color="#A29BFE" /></div>}
+        <button disabled={!ok} onClick={() => ok && onConfirm(nV, dV)} style={{ background: ok ? 'linear-gradient(135deg,#A29BFE,#667eea)' : 'rgba(255,255,255,.04)', border: 'none', borderRadius: 14, padding: '10px 32px', color: ok ? '#fff' : '#444', fontSize: 15, fontWeight: 700, fontFamily: FF, cursor: ok ? 'pointer' : 'default' }}>{'\u6c7a\u5b9a'}</button>
       </div>
     </div>
   );
 }
-
-function FractionFusion() {
-  const [cards, setCards] = useState(() => generatePuzzle());
-  const [opPopup, setOpPopup] = useState(null);
-  const [cardMenu, setCardMenu] = useState(null);
-  const [showResult, setShowResult] = useState(false);
-  const [calcFormula, setCalcFormula] = useState(null);
-  const [fusionLog, setFusionLog] = useState([]);
-  const [delivered, setDelivered] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [historyMeta, setHistoryMeta] = useState([]);
-  const [showLog, setShowLog] = useState(true);
-  const dragRef = useRef(null);
-  const [dragRender, setDragRender] = useState(null);
-  const [hoveredId, setHoveredId] = useState(null);
-  const cardsRef = useRef(cards); cardsRef.current = cards;
-  const isDragged = useRef(false);
-  const stateRef = useRef({ fusionLog, delivered }); stateRef.current = { fusionLog, delivered };
-  const liveScore = calcScore(delivered, cards);
-
-  const findCardAtPoint = useCallback((cx, cy, exId) => {
-    for (const el of document.querySelectorAll('[data-card-id]')) {
-      const cid = el.getAttribute('data-card-id');
-      if (cid === exId) continue;
-      const r = el.getBoundingClientRect();
-      if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) return cardsRef.current.find(c => c.id === cid) || null;
-    }
-    return null;
-  }, []);
-
-  const isOnDock = useCallback((cx, cy) => {
-    const dock = document.getElementById('delivery-dock');
-    if (!dock) return false;
-    const r = dock.getBoundingClientRect();
-    return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
-  }, []);
-
-  const saveHistory = useCallback(() => {
-    setHistory(h => [...h, cards]);
-    setHistoryMeta(h => [...h, { fusionLog: stateRef.current.fusionLog, delivered: stateRef.current.delivered }]);
-  }, [cards]);
-
-  const onPointerDown = useCallback((e, card) => {
-    if (opPopup || showResult || cardMenu) return;
-    e.preventDefault();
-    isDragged.current = false;
-    dragRef.current = { id: card.id, startX: e.clientX, startY: e.clientY };
-    setDragRender({ id: card.id, dx: 0, dy: 0 });
-  }, [opPopup, showResult, cardMenu]);
-
-  useEffect(() => {
-    const onMove = (e) => {
-      const d = dragRef.current; if (!d) return; e.preventDefault();
-      const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
-      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragged.current = true;
-      setDragRender({ id: d.id, dx, dy });
-      const target = findCardAtPoint(e.clientX, e.clientY, d.id);
-      setHoveredId(target ? target.id : null);
-    };
-    const onUp = (e) => {
-      const d = dragRef.current; if (!d) return;
-      dragRef.current = null; setDragRender(null); setHoveredId(null);
-      const dc = cardsRef.current.find(c => c.id === d.id); if (!dc) return;
-      if (!isDragged.current) { setCardMenu(dc); return; }
-      if (isOnDock(e.clientX, e.clientY) && isSimplifiedOne(dc)) {
-        const st = stateRef.current;
-        setHistory(h => [...h, cardsRef.current]);
-        setHistoryMeta(h => [...h, { fusionLog: st.fusionLog, delivered: st.delivered }]);
-        setDelivered(p => [...p, { depth: dc.depth }]);
-        setFusionLog(p => [...p, { type: 'deliver', depth: dc.depth }]);
-        const rem = cardsRef.current.filter(c => c.id !== dc.id);
-        rem.sort((a, b) => a.slot - b.slot); rem.forEach((c, i) => { c.slot = i; });
-        setCards([...rem]); return;
-      }
-      const target = findCardAtPoint(e.clientX, e.clientY, d.id);
-      if (target) setOpPopup({ cardA: target, cardB: dc, x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener('pointermove', onMove, { passive: false });
-    window.addEventListener('pointerup', onUp);
-    return () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); };
-  }, [findCardAtPoint, isOnDock]);
-
-  const handleOpSelect = useCallback((op) => {
-    if (!opPopup) return;
-    const { cardA, cardB } = opPopup;
-    const result = fracOp(cardA, cardB, op);
-    if (!fracValid(result)) { setOpPopup(null); return; }
-    saveHistory();
-    const logEntry = { type: 'fuse', a: { n: cardA.n, d: cardA.d }, b: { n: cardB.n, d: cardB.d }, op, result: { n: result.n, d: result.d } };
-    setCalcFormula(logEntry);
-    setFusionLog(p => [...p, logEntry]);
-    const newDepth = Math.max(cardA.depth, cardB.depth) + 1;
-    const newCard = { id: `c${Date.now()}`, ...result, slot: cardA.slot, depth: newDepth };
-    const rem = cards.filter(c => c.id !== cardA.id && c.id !== cardB.id).concat(newCard);
-    rem.sort((a, b) => a.slot - b.slot); rem.forEach((c, i) => { c.slot = i; });
-    setCards(rem); setOpPopup(null);
-  }, [opPopup, cards, saveHistory]);
-
-  const handleSimplify = useCallback(() => {
-    if (!cardMenu) return;
-    const s = doSimplify(cardMenu.n, cardMenu.d);
-    saveHistory();
-    setFusionLog(p => [...p, { type: 'simplify', from: { n: cardMenu.n, d: cardMenu.d }, to: s }]);
-    setCards(p => p.map(c => c.id === cardMenu.id ? { ...c, n: s.n, d: s.d } : c));
-    setCardMenu(null);
-  }, [cardMenu, saveHistory]);
-
-  const handleConvert = useCallback((newN, newD) => {
-    if (!cardMenu) return;
-    saveHistory();
-    setFusionLog(p => [...p, { type: 'convert', from: { n: cardMenu.n, d: cardMenu.d }, to: { n: newN, d: newD } }]);
-    setCards(p => p.map(c => c.id === cardMenu.id ? { ...c, n: newN, d: newD } : c));
-    setCardMenu(null);
-  }, [cardMenu, saveHistory]);
-
-  const handleUndo = useCallback(() => {
-    if (history.length === 0) return;
-    setCards(history[history.length - 1]);
-    const m = historyMeta[historyMeta.length - 1];
-    setFusionLog(m.fusionLog); setDelivered(m.delivered);
-    setHistory(h => h.slice(0, -1)); setHistoryMeta(h => h.slice(0, -1));
-    setCalcFormula(null); setCardMenu(null); setOpPopup(null);
-  }, [history, historyMeta]);
-
-  const handleFinish = useCallback(() => { setShowResult(true); setOpPopup(null); setCardMenu(null); }, []);
-
-  const handleRetry = useCallback(() => {
-    setCards(generatePuzzle()); setShowResult(false); setDelivered([]);
-    setHistory([]); setHistoryMeta([]); setCalcFormula(null); setFusionLog([]);
-  }, []);
-
-  useEffect(() => {
-    const h = (e) => { if (e.key === 'Escape') { setOpPopup(null); setCardMenu(null); } };
-    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
-  }, []);
-
-  const lastOneHint = cards.length === 1 && isOne(cards[0]);
-  const COLS = 5;
-
+function ResultScr({ del, cards, onRetry }) {
+  const sc = calcSc(del, cards);
+  const rank = getRank(sc.total);
+  const maxD = del.length > 0 ? Math.max(...del.map(x => x.depth)) : 0;
+  const last = sc.cl === 1 ? cards[0] : null;
   return (
-    <div style={{ width: '100%', minHeight: '100vh', background: 'linear-gradient(150deg, #0a0a1a 0%, #141432 40%, #0d1b2a 100%)', fontFamily: "'Fredoka', sans-serif", display: 'flex', flexDirection: 'column', userSelect: 'none', position: 'relative', overflow: 'hidden' }}>
-      <style>{`
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes bigCalcIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
-        @keyframes bigCalcOut { to { opacity: 0; transform: scale(0.9) translateY(-20px); } }
-        @keyframes opPopIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-        @keyframes dropTarget { 0%,100% { box-shadow: 0 0 0 3px rgba(116,185,255,0.6); } 50% { box-shadow: 0 0 0 7px rgba(116,185,255,0.8); } }
-        @keyframes winGlow { 0%,100% { box-shadow: 0 0 15px rgba(255,215,0,0.3); } 50% { box-shadow: 0 0 35px rgba(255,215,0,0.5); } }
-        @keyframes dockPulse { 0%,100% { box-shadow: inset 0 0 15px rgba(255,215,0,0.08); } 50% { box-shadow: inset 0 0 25px rgba(255,215,0,0.18); } }
-        @keyframes bgFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        @keyframes cardAppear { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
-        @keyframes logAppear { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes deliverBounce { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes perfectBurst { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
-      `}</style>
-      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-        {[...Array(6)].map((_, i) => <div key={i} style={{ position: 'absolute', left: `${8 + i * 16}%`, top: `${10 + (i % 3) * 28}%`, width: 120 + i * 25, height: 120 + i * 25, borderRadius: '50%', background: `radial-gradient(circle, ${COLORS[i].glow}, transparent 70%)`, animation: `bgFloat ${6 + i * 1.5}s ease-in-out infinite`, animationDelay: `${i * 0.7}s`, opacity: 0.1 }} />)}
-      </div>
-      <div style={{ width: '100%', padding: '10px 16px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, background: 'linear-gradient(135deg, #FF6B6B, #FFEAA7, #4ECDC4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{'\u5206\u6570\u878d\u5408'}</div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {[{ icon: '\u{1f5c2}', value: `${15 - cards.length}`, tip: '\u6d88\u5316' }, { icon: '\u{1f4e6}', value: `${delivered.length}`, tip: '\u7d0d\u54c1' }].map((s, i) => (
-            <div key={i} style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '2px 8px', textAlign: 'center' }}>
-              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)' }}>{s.tip}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{s.icon}{s.value}</div>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 28, padding: '32px 36px', textAlign: 'center', boxShadow: '0 30px 80px rgba(0,0,0,.6)', border: sc.perf ? '2px solid rgba(255,215,0,.3)' : '2px solid rgba(255,255,255,.08)', animation: 'fadeIn .5s ease-out', maxWidth: 440, width: '92%' }}>
+        {sc.perf ? (
+          <div style={{ animation: 'perfectBurst 1s ease-out', marginBottom: 4 }}>
+            <div style={{ fontSize: 56 }}>{'\u{1f3c6}'}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, fontFamily: FF, background: 'linear-gradient(135deg,#FFD700,#FF6B6B,#FFD700)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '200% auto', animation: 'shimmer 2s linear infinite' }}>PERFECT!</div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: 48, marginBottom: 2 }}>{rank.e}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: FF, color: rank.c, marginBottom: 4 }}>{rank.l}</div>
+          </div>
+        )}
+        <div style={{ background: 'rgba(255,255,255,.04)', borderRadius: 14, padding: '16px 18px', marginBottom: 16, textAlign: 'left' }}>
+          {[
+            { i: '\u{1f5c2}', l: '\u30ab\u30fc\u30c9\u6d88\u5316 (' + (15 - sc.cl) + '\u679a)', v: sc.rP, c: '#74B9FF' },
+            { i: '\u{1f4e6}', l: '\u7d0d\u54c1\u3057\u305f1 (' + del.length + '\u500b)', v: sc.oP, c: '#4ECDC4' },
+            ...(del.length > 0 ? [{ i: '\u{1f525}', l: '\u878d\u5408\u306e\u6df1\u3055 (\u6700\u5927\u{1f525}' + maxD + ')', v: sc.dP, c: '#FFA500' }] : []),
+            ...(sc.cl === 1 ? [{ i: sc.perf ? '\u{1f3c6}' : '\u{1f3af}', l: sc.perf ? '\u30d1\u30fc\u30d5\u30a7\u30af\u30c8\u30dc\u30fc\u30ca\u30b9\uff01' : '\u30e9\u30b9\u30c8\u30ab\u30fc\u30c9 (1\u306b' + sc.lPct + '%\u8fd1\u3044)', v: sc.lP, c: sc.perf ? '#FFD700' : '#DDA0DD' }] : []),
+          ].map((r, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,.04)', fontFamily: FF }}>
+              <span style={{ color: 'rgba(255,255,255,.6)', fontSize: 13 }}>{r.i} {r.l}</span>
+              <span style={{ color: r.c, fontSize: 16, fontWeight: 700 }}>+{r.v}</span>
             </div>
           ))}
-          <div style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 8, padding: '2px 12px', textAlign: 'center' }}>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.5)' }}>Score</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{liveScore.total}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, marginTop: 6 }}>
+            <span style={{ color: '#fff', fontSize: 16, fontWeight: 700, fontFamily: FF }}>{'\u5408\u8a08\u30b9\u30b3\u30a2'}</span>
+            <span style={{ fontSize: 32, fontWeight: 700, fontFamily: FF, background: 'linear-gradient(135deg,#FFD700,#FFA500)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{sc.total}</span>
           </div>
         </div>
-      </div>
-      <div style={{ width: '100%', padding: '2px 16px', display: 'flex', gap: 6, alignItems: 'center', zIndex: 10 }}>
-        <button onClick={handleUndo} disabled={history.length === 0} style={{ background: history.length ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, padding: '3px 10px', color: history.length ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.12)', fontSize: 11, fontFamily: "'Fredoka', sans-serif", cursor: history.length ? 'pointer' : 'default' }}>{'\u21a9 \u623b\u3059'}</button>
-        <button onClick={handleRetry} style={{ background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.1)', borderRadius: 8, padding: '3px 10px', color: '#FF6B6B', fontSize: 11, fontFamily: "'Fredoka', sans-serif", cursor: 'pointer' }}>{'\u21bb \u6700\u521d\u304b\u3089'}</button>
-        <div style={{ flex: 1 }} />
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)' }}>{'\u6b8b'}{cards.length}{'\u679a'}</div>
-        <button onClick={() => setShowLog(v => !v)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, padding: '3px 8px', color: 'rgba(255,255,255,0.4)', fontSize: 10, fontFamily: "'Fredoka', sans-serif", cursor: 'pointer' }}>{'\u{1f4cb}'}</button>
-        <button onClick={handleFinish} style={{ background: (delivered.length > 0 || cards.length === 1) ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'rgba(255,255,255,0.06)', border: (delivered.length > 0 || cards.length === 1) ? 'none' : '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '4px 14px', color: (delivered.length > 0 || cards.length === 1) ? '#1a1a2e' : 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 700, fontFamily: "'Fredoka', sans-serif", cursor: 'pointer', boxShadow: (delivered.length > 0 || cards.length === 1) ? '0 3px 10px rgba(255,215,0,0.3)' : 'none', animation: lastOneHint ? 'pulse 1s ease-in-out infinite' : 'none' }}>
-          {cards.length === 1 ? '\u{1f3c6} \u7d50\u679c\u3092\u898b\u308b\uff01' : delivered.length > 0 ? '\u2728 \u7d50\u679c\u3092\u898b\u308b' : '\u7d42\u4e86'}
-        </button>
-      </div>
-      {cards.length === 1 && (
-        <div style={{ textAlign: 'center', padding: '4px 16px', zIndex: 10 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Fredoka', sans-serif", color: lastOneHint ? '#FFD700' : '#DDA0DD', animation: lastOneHint ? 'pulse 1.5s ease-in-out infinite' : 'none' }}>
-            {lastOneHint ? '\u{1f389} \u6700\u5f8c\u306e1\u679a\u304c1\uff01\u30d1\u30fc\u30d5\u30a7\u30af\u30c8\u3060\uff01' : `\u6700\u5f8c\u306e1\u679a: ${fracValue(cards[0]).toFixed(3)}\uff081\u306b${Math.round(proximityTo1(cards[0]) * 100)}%\u8fd1\u3044\uff09`}
-          </span>
-        </div>
-      )}
-      <div style={{ flex: 1, display: 'flex', gap: 10, padding: '6px 12px 8px', width: '100%', maxWidth: 900, alignSelf: 'center', zIndex: 10, minHeight: 0 }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, gap: 8 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS}, 1fr)`, gap: 8, touchAction: 'none' }}>
-            {[...Array(Math.max(cards.length, 1))].map((_, slot) => {
-              const card = cards.find(c => c.slot === slot);
-              if (!card) return <div key={`e-${slot}`} style={{ aspectRatio: '3/4', borderRadius: 14, background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.03)' }} />;
-              const isDg = dragRender?.id === card.id, isHv = hoveredId === card.id;
-              const col = getColor(card.id), c1 = isSimplifiedOne(card), cu1 = isOne(card) && !c1;
-              const dc = depthColor(card.depth), dx = isDg ? dragRender.dx : 0, dy = isDg ? dragRender.dy : 0;
-              const isLast = cards.length === 1;
-              return (
-                <div key={card.id} data-card-id={card.id} onPointerDown={e => onPointerDown(e, card)}
-                  style={{
-                    aspectRatio: '3/4', borderRadius: 14,
-                    gridColumn: isLast ? '2 / 4' : undefined, gridRow: isLast ? '1 / 3' : undefined,
-                    background: c1 ? 'linear-gradient(135deg, #FFD700, #FF8C00)' : cu1 ? 'linear-gradient(135deg, #FFA500, #e67e22)' : `linear-gradient(145deg, ${col.bg}dd, ${col.bg}88)`,
-                    border: isHv ? '3px solid #74B9FF' : c1 ? '2px solid rgba(255,215,0,0.5)' : '2px solid rgba(255,255,255,0.08)',
-                    cursor: isDg ? 'grabbing' : 'grab',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    position: 'relative', overflow: 'hidden', zIndex: isDg ? 100 : 1,
-                    transform: isDg ? `translate(${dx}px,${dy}px) scale(1.15) rotate(-3deg)` : isHv ? 'scale(1.08)' : 'scale(1)',
-                    transition: isDg ? 'none' : 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
-                    animation: isHv ? 'dropTarget 0.6s ease-in-out infinite' : c1 ? 'winGlow 2s ease-in-out infinite' : !isDg ? 'cardAppear 0.35s ease-out' : 'none',
-                    boxShadow: isDg ? `0 20px 50px rgba(0,0,0,0.6),0 0 25px ${col.glow}` : c1 ? '0 6px 20px rgba(255,215,0,0.3)' : '0 3px 12px rgba(0,0,0,0.3)',
-                  }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '45%', background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)', borderRadius: '12px 12px 0 0', pointerEvents: 'none' }} />
-                  {card.depth > 0 && <div style={{ position: 'absolute', top: 4, left: 6, background: 'rgba(0,0,0,0.5)', borderRadius: 6, padding: '1px 5px', display: 'flex', alignItems: 'center', gap: 2 }}><span style={{ fontSize: isLast ? 11 : 8 }}>{'\u{1f525}'}</span><span style={{ fontSize: isLast ? 12 : 9, fontWeight: 700, color: dc }}>{card.depth}</span></div>}
-                  {cu1 && <div style={{ position: 'absolute', top: 4, right: 4, fontSize: isLast ? 10 : 7, color: '#fff', fontWeight: 700, background: 'rgba(0,0,0,0.5)', borderRadius: 4, padding: '2px 4px' }}>{'\u7d04\u5206\u21921'}</div>}
-                  {card.d === 1 ? (
-                    <div style={{ fontSize: isLast ? 64 : 32, fontWeight: 700, color: c1 ? '#1a1a2e' : '#fff', fontFamily: "'Fredoka', sans-serif" }}>{card.n}</div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: c1 ? '#1a1a2e' : '#fff' }}>
-                      <div style={{ fontSize: isLast ? 44 : 22, fontWeight: 700, lineHeight: 1.1, fontFamily: "'Fredoka', sans-serif" }}>{card.n}</div>
-                      <div style={{ width: isLast ? 52 : 26, height: isLast ? 4 : 2.5, background: c1 ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', borderRadius: 2, margin: '3px 0' }} />
-                      <div style={{ fontSize: isLast ? 44 : 22, fontWeight: 700, lineHeight: 1.1, fontFamily: "'Fredoka', sans-serif" }}>{card.d}</div>
-                    </div>
-                  )}
-                  {c1 && <div style={{ position: 'absolute', top: 3, right: 6, fontSize: isLast ? 20 : 12 }}>{'\u2b50'}</div>}
+        {last && !sc.perf && (
+          <div style={{ marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', fontFamily: FF }}>{'\u6700\u5f8c\u306e1\u679a:'}</span>
+            <Frac n={last.n} d={last.d} size={18} color="#DDA0DD" />
+          </div>
+        )}
+        {del.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+            {del.map((d, i) => (
+              <div key={i} style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#FFD700,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 4px 15px rgba(255,215,0,.3)' }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e', fontFamily: FF }}>1</span>
+                <div style={{ position: 'absolute', top: -5, right: -5, background: 'rgba(0,0,0,.7)', borderRadius: 6, padding: '0 4px' }}>
+                  <span style={{ fontSize: 7 }}>{'\u{1f525}'}</span><span style={{ fontSize: 9, fontWeight: 700, color: dCol(d.depth) }}>{d.depth}</span>
                 </div>
-              );
-            })}
-          </div>
-          <div id="delivery-dock" style={{ borderRadius: 16, padding: '12px 16px', background: 'rgba(255,215,0,0.04)', border: '2px dashed rgba(255,215,0,0.2)', animation: 'dockPulse 3s ease-in-out infinite', display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, flexWrap: 'wrap' }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,215,0,0.5)', fontWeight: 600, whiteSpace: 'nowrap' }}>{'\u{1f4e6} \u7d0d\u54c1\u53f0'}</div>
-            {delivered.length === 0 && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.15)', fontStyle: 'italic' }}>{'1\u3092\u3053\u3053\u306b\u30c9\u30e9\u30c3\u30b0'}</div>}
-            {delivered.map((d, i) => (
-              <div key={i} style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #FFD700, #FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(255,215,0,0.3)', animation: 'deliverBounce 0.5s ease-out', position: 'relative' }}>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e', fontFamily: "'Fredoka', sans-serif" }}>1</span>
-                <div style={{ position: 'absolute', top: -4, right: -4, background: 'rgba(0,0,0,0.6)', borderRadius: 6, padding: '0px 4px', display: 'flex', alignItems: 'center', gap: 1 }}><span style={{ fontSize: 7 }}>{'\u{1f525}'}</span><span style={{ fontSize: 8, fontWeight: 700, color: depthColor(d.depth) }}>{d.depth}</span></div>
               </div>
             ))}
           </div>
-          <div style={{ padding: '2px 0', color: 'rgba(255,255,255,0.1)', fontSize: 9, textAlign: 'center' }}>{'\u30c9\u30e9\u30c3\u30b0\u2192\u878d\u5408 \u30fb \u30af\u30ea\u30c3\u30af\u2192\u7d04\u5206/\u901a\u5206 \u30fb 1\u3092\u7d0d\u54c1\u53f0\u3078 \u30fb \u6700\u5f8c\u306e1\u679a=1\u306a\u3089\u30d1\u30fc\u30d5\u30a7\u30af\u30c8\uff01'}</div>
-        </div>
-        {showLog && (
-          <div style={{ width: 210, minWidth: 160, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: '10px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span>{'\u{1f4cb}'}</span> {'\u30ed\u30b0'}
-              {fusionLog.length > 0 && <span style={{ background: 'rgba(78,205,196,0.15)', borderRadius: 6, padding: '0px 5px', fontSize: 9, color: '#4ECDC4' }}>{fusionLog.length}</span>}
-            </div>
-            <FusionLog log={fusionLog} />
-          </div>
         )}
+        <button onClick={onRetry} style={{ background: 'linear-gradient(135deg,#667eea,#764ba2)', border: 'none', borderRadius: 16, padding: '12px 36px', color: '#fff', fontSize: 16, fontWeight: 700, fontFamily: FF, cursor: 'pointer', boxShadow: '0 6px 20px rgba(102,126,234,.35)' }}>{'\u3082\u3046\u4e00\u5ea6\u6311\u6226 \u21bb'}</button>
       </div>
-      {calcFormula && <BigCalcDisplay formula={calcFormula} onDone={() => setCalcFormula(null)} />}
-      {opPopup && <OpSelector x={opPopup.x} y={opPopup.y} cardA={opPopup.cardA} cardB={opPopup.cardB} onSelect={handleOpSelect} onCancel={() => setOpPopup(null)} />}
-      {cardMenu && <CardActionMenu card={cardMenu} onSimplify={handleSimplify} onConvert={handleConvert} onCancel={() => setCardMenu(null)} />}
-      {showResult && <ResultScreen delivered={delivered} cards={cards} onRetry={handleRetry} />}
     </div>
   );
 }
