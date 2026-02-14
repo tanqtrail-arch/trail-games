@@ -11,13 +11,24 @@
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body, #root { width: 100%; height: 100%; }
-  body { overflow: hidden; }
+  body { overflow: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useCallback, useEffect, useRef } = React;
+/* ---- Mobile detect ---- */
+function useMobile(bp) {
+  const b = bp || 600;
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.innerWidth < b);
+  useEffect(() => {
+    const h = () => setM(window.innerWidth < b);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, [b]);
+  return m;
+}
 /* ---- Math ---- */
 function gcd(a, b) {
   a = Math.abs(a); b = Math.abs(b);
@@ -158,23 +169,27 @@ const CSS = `
 @keyframes spFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
 *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent}
 `;
-function BigCalcDisplay({ formula, onDone }) {
+function BigCalcDisplay({ formula, onDone, small }) {
   useEffect(() => { const t = setTimeout(onDone, 2600); return () => clearTimeout(t); }, [onDone]);
+  const s = small ? 20 : 36;
+  const sr = small ? 24 : 40;
+  const bx = small ? 36 : 50;
   return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 800, pointerEvents: 'none', background: 'rgba(0,0,0,0.25)' }}>
       <div style={{ animation: 'bigCalcIn .5s cubic-bezier(.34,1.56,.64,1), bigCalcOut .5s 2.1s ease-in forwards', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ background: 'rgba(10,10,30,.94)', backdropFilter: 'blur(16px)', border: '2px solid rgba(255,255,255,.12)', borderRadius: 28, padding: '24px 40px', boxShadow: '0 20px 60px rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Frac n={formula.a.n} d={formula.a.d} size={36} color="#FF6B6B" />
-          <div style={{ fontSize: 36, fontWeight: 700, color: '#FFEAA7', width: 50, height: 50, borderRadius: 14, background: 'rgba(255,234,167,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FF }}>{formula.op}</div>
-          <Frac n={formula.b.n} d={formula.b.d} size={36} color="#4ECDC4" />
-          <div style={{ fontSize: 36, color: 'rgba(255,255,255,.3)', fontWeight: 700, fontFamily: FF }}>=</div>
-          <Frac n={formula.result.n} d={formula.result.d} size={40} color="#fff" />
+        <div style={{ background: 'rgba(10,10,30,.94)', backdropFilter: 'blur(16px)', border: '2px solid rgba(255,255,255,.12)', borderRadius: small ? 18 : 28, padding: small ? '14px 18px' : '24px 40px', boxShadow: '0 20px 60px rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', gap: small ? 10 : 20 }}>
+          <Frac n={formula.a.n} d={formula.a.d} size={s} color="#FF6B6B" />
+          <div style={{ fontSize: s, fontWeight: 700, color: '#FFEAA7', width: bx, height: bx, borderRadius: small ? 10 : 14, background: 'rgba(255,234,167,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FF }}>{formula.op}</div>
+          <Frac n={formula.b.n} d={formula.b.d} size={s} color="#4ECDC4" />
+          <div style={{ fontSize: s, color: 'rgba(255,255,255,.3)', fontWeight: 700, fontFamily: FF }}>=</div>
+          <Frac n={formula.result.n} d={formula.result.d} size={sr} color="#fff" />
         </div>
       </div>
     </div>
   );
 }
 function FractionFusion() {
+  const mob = useMobile();
   const [cards, setCards] = useState(makePuzzle);
   const [specials, setSpecials] = useState(makeSpecials);
   const [rules, setRules] = useState(true);
@@ -186,7 +201,7 @@ function FractionFusion() {
   const [del, setDel] = useState([]);
   const [hist, setHist] = useState([]);
   const [hMeta, setHMeta] = useState([]);
-  const [showLog, setShowLog] = useState(true);
+  const [showLog, setShowLog] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 600 : true);
   const [custIn, setCustIn] = useState(null);
   const dragR = useRef(null);
   const [dRender, setDRender] = useState(null);
@@ -381,10 +396,10 @@ function FractionFusion() {
         </div>
       )}
       {/* Main area */}
-      <div style={{ flex: 1, display: 'flex', gap: 10, padding: '6px 12px 8px', maxWidth: 920, width: '100%', alignSelf: 'center', zIndex: 10, minHeight: 0 }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, gap: 6 }}>
+      <div style={{ flex: mob ? undefined : 1, display: 'flex', flexDirection: mob ? 'column' : 'row', gap: mob ? 6 : 10, padding: mob ? '4px 8px 16px' : '6px 12px 8px', maxWidth: 920, width: '100%', alignSelf: 'center', zIndex: 10, minHeight: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, gap: mob ? 4 : 6 }}>
           {/* Card grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, touchAction: 'none' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: mob ? 5 : 8, touchAction: 'none' }}>
             {Array.from({ length: Math.max(cards.length, 1) }).map((_, slot) => {
               const card = cards.find(c => c.slot === slot);
               if (!card) return <div key={'e' + slot} style={{ aspectRatio: '3/4', borderRadius: 14, background: 'rgba(255,255,255,.01)', border: '1px dashed rgba(255,255,255,.03)' }} />;
@@ -435,8 +450,8 @@ function FractionFusion() {
           </div>
           {/* Special cards */}
           {specials.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '4px 0', flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 10, color: 'rgba(162,155,254,.5)', fontWeight: 600 }}>{'\u2b50\u30b9\u30da\u30b7\u30e3\u30eb'}</div>
+            <div style={{ display: 'flex', gap: mob ? 5 : 8, alignItems: 'center', padding: '4px 0', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: mob ? 9 : 10, color: 'rgba(162,155,254,.5)', fontWeight: 600 }}>{'\u2b50\u30b9\u30da\u30b7\u30e3\u30eb'}</div>
               {specials.map(sp => {
                 const isDg = dRender && dRender.id === sp.id && dRender.isSp;
                 const dx = isDg ? dRender.dx : 0;
@@ -445,7 +460,7 @@ function FractionFusion() {
                 return (
                   <div key={sp.id} onPointerDown={e => onPD(e, sp, true)}
                     style={{
-                      width: 52, height: 66, borderRadius: 12, touchAction: 'none',
+                      width: mob ? 42 : 52, height: mob ? 54 : 66, borderRadius: mob ? 10 : 12, touchAction: 'none',
                       background: isCust ? 'linear-gradient(135deg,#A29BFE,#667eea)' : 'linear-gradient(135deg,#DDA0DD,#A29BFE)',
                       border: '2px solid rgba(162,155,254,.3)',
                       cursor: isDg ? 'grabbing' : 'grab',
@@ -455,14 +470,14 @@ function FractionFusion() {
                       transition: isDg ? 'none' : 'all .2s',
                       boxShadow: isDg ? '0 15px 40px rgba(0,0,0,.5)' : '0 3px 12px rgba(0,0,0,.3)',
                     }}>
-                    <div style={{ position: 'absolute', top: 2, left: 4, fontSize: 8 }}>{'\u2b50'}</div>
+                    <div style={{ position: 'absolute', top: 2, left: 3, fontSize: mob ? 6 : 8 }}>{'\u2b50'}</div>
                     {isCust ? (
-                      <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', fontFamily: FF }}>?</div>
+                      <div style={{ fontSize: mob ? 18 : 24, fontWeight: 700, color: '#fff', fontFamily: FF }}>?</div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.1, color: '#fff', fontFamily: FF }}>{sp.n}</div>
-                        <div style={{ width: 20, height: 2, background: 'rgba(255,255,255,.7)', borderRadius: 2, margin: '2px 0' }} />
-                        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.1, color: '#fff', fontFamily: FF }}>{sp.d}</div>
+                        <div style={{ fontSize: mob ? 14 : 18, fontWeight: 700, lineHeight: 1.1, color: '#fff', fontFamily: FF }}>{sp.n}</div>
+                        <div style={{ width: mob ? 16 : 20, height: 2, background: 'rgba(255,255,255,.7)', borderRadius: 2, margin: '2px 0' }} />
+                        <div style={{ fontSize: mob ? 14 : 18, fontWeight: 700, lineHeight: 1.1, color: '#fff', fontFamily: FF }}>{sp.d}</div>
                       </div>
                     )}
                   </div>
@@ -471,12 +486,12 @@ function FractionFusion() {
             </div>
           )}
           {/* Dock */}
-          <div id="dock" style={{ borderRadius: 16, padding: '12px 16px', background: 'rgba(255,215,0,.04)', border: '2px dashed rgba(255,215,0,.2)', animation: 'dockPulse 3s infinite', display: 'flex', alignItems: 'center', gap: 12, minHeight: 60, flexWrap: 'wrap' }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,215,0,.5)', fontWeight: 600 }}>{'\u{1f4e6} \u7d0d\u54c1\u53f0'}</div>
-            {del.length === 0 && <div style={{ fontSize: 11, color: 'rgba(255,255,255,.15)', fontStyle: 'italic' }}>{'1\u3092\u3053\u3053\u306b\u30c9\u30e9\u30c3\u30b0'}</div>}
+          <div id="dock" style={{ borderRadius: mob ? 12 : 16, padding: mob ? '8px 10px' : '12px 16px', background: 'rgba(255,215,0,.04)', border: '2px dashed rgba(255,215,0,.2)', animation: 'dockPulse 3s infinite', display: 'flex', alignItems: 'center', gap: mob ? 8 : 12, minHeight: mob ? 48 : 60, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: mob ? 10 : 12, color: 'rgba(255,215,0,.5)', fontWeight: 600 }}>{'\u{1f4e6} \u7d0d\u54c1\u53f0'}</div>
+            {del.length === 0 && <div style={{ fontSize: mob ? 10 : 11, color: 'rgba(255,255,255,.15)', fontStyle: 'italic' }}>{'1\u3092\u3053\u3053\u306b\u30c9\u30e9\u30c3\u30b0'}</div>}
             {del.map((d, i) => (
-              <div key={i} style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#FFD700,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 4px 15px rgba(255,215,0,.3)', animation: 'deliverBounce .5s ease-out' }}>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e', fontFamily: FF }}>1</span>
+              <div key={i} style={{ width: mob ? 36 : 44, height: mob ? 36 : 44, borderRadius: mob ? 10 : 12, background: 'linear-gradient(135deg,#FFD700,#FF8C00)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 4px 15px rgba(255,215,0,.3)', animation: 'deliverBounce .5s ease-out' }}>
+                <span style={{ fontSize: mob ? 14 : 18, fontWeight: 700, color: '#1a1a2e', fontFamily: FF }}>1</span>
                 <div style={{ position: 'absolute', top: -4, right: -4, background: 'rgba(0,0,0,.6)', borderRadius: 6, padding: '0 4px', display: 'flex', alignItems: 'center', gap: 1 }}>
                   <span style={{ fontSize: 7 }}>{'\u{1f525}'}</span><span style={{ fontSize: 8, fontWeight: 700, color: dCol(d.depth) }}>{d.depth}</span>
                 </div>
@@ -487,16 +502,28 @@ function FractionFusion() {
         </div>
         {/* Log panel */}
         {showLog && (
-          <div style={{ width: 200, minWidth: 150, background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.04)', borderRadius: 14, padding: 10, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.35)', marginBottom: 6 }}>{'\u{1f4cb} \u30ed\u30b0'} {log.length > 0 && <span style={{ background: 'rgba(78,205,196,.15)', borderRadius: 6, padding: '0 5px', fontSize: 9, color: '#4ECDC4' }}>{log.length}</span>}</div>
-            <LogPanel log={log} />
-          </div>
+          mob ? (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowLog(false)}>
+              <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '50vh', background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: '18px 18px 0 0', padding: '12px 14px', display: 'flex', flexDirection: 'column', boxShadow: '0 -10px 30px rgba(0,0,0,.4)', border: '1px solid rgba(255,255,255,.06)', animation: 'fadeIn .25s ease-out' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,.4)' }}>{'\u{1f4cb} \u30ed\u30b0'} {log.length > 0 && <span style={{ background: 'rgba(78,205,196,.15)', borderRadius: 6, padding: '0 5px', fontSize: 9, color: '#4ECDC4' }}>{log.length}</span>}</div>
+                  <button onClick={() => setShowLog(false)} style={{ background: 'rgba(255,255,255,.08)', border: 'none', borderRadius: 8, padding: '3px 10px', color: 'rgba(255,255,255,.5)', fontSize: 11, fontFamily: FF, cursor: 'pointer' }}>{'\u2715 \u3068\u3058\u308b'}</button>
+                </div>
+                <LogPanel log={log} />
+              </div>
+            </div>
+          ) : (
+            <div style={{ width: 200, minWidth: 150, background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.04)', borderRadius: 14, padding: 10, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.35)', marginBottom: 6 }}>{'\u{1f4cb} \u30ed\u30b0'} {log.length > 0 && <span style={{ background: 'rgba(78,205,196,.15)', borderRadius: 6, padding: '0 5px', fontSize: 9, color: '#4ECDC4' }}>{log.length}</span>}</div>
+              <LogPanel log={log} />
+            </div>
+          )
         )}
       </div>
       {/* ---- Overlays ---- */}
       {rules && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 950, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 28, padding: '36px 36px 28px', textAlign: 'center', boxShadow: '0 30px 80px rgba(0,0,0,.6)', border: '2px solid rgba(255,255,255,.08)', animation: 'fadeIn .5s ease-out', maxWidth: 400, width: '92%' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 950, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: mob ? 'flex-start' : 'center', justifyContent: 'center', overflowY: 'auto', padding: mob ? '20px 0' : 0 }}>
+          <div style={{ background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: mob ? 22 : 28, padding: mob ? '24px 20px 20px' : '36px 36px 28px', textAlign: 'center', boxShadow: '0 30px 80px rgba(0,0,0,.6)', border: '2px solid rgba(255,255,255,.08)', animation: 'fadeIn .5s ease-out', maxWidth: 400, width: '92%' }}>
             <div style={{ fontSize: 40, marginBottom: 4 }}>{'\u{1f9ea}'}</div>
             <div style={{ fontSize: 24, fontWeight: 700, fontFamily: FF, background: 'linear-gradient(135deg,#FF6B6B,#FFEAA7,#4ECDC4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 16 }}>{'\u5206\u6570\u878d\u5408'}</div>
             <div style={{ background: 'rgba(255,215,0,.06)', border: '1px solid rgba(255,215,0,.15)', borderRadius: 16, padding: '16px 20px', marginBottom: 18 }}>
@@ -518,24 +545,24 @@ function FractionFusion() {
           </div>
         </div>
       )}
-      {calcF && <BigCalcDisplay formula={calcF} onDone={() => setCalcF(null)} />}
+      {calcF && <BigCalcDisplay formula={calcF} onDone={() => setCalcF(null)} small={mob} />}
       {opPop && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(4px)' }} onClick={() => setOpPop(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', left: Math.min(Math.max(opPop.x - 170, 8), (typeof window !== 'undefined' ? window.innerWidth : 800) - 380), top: Math.min(Math.max(opPop.y - 90, 8), (typeof window !== 'undefined' ? window.innerHeight : 600) - 180), background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 22, padding: '20px 24px', boxShadow: '0 20px 60px rgba(0,0,0,.6)', border: '1px solid rgba(255,255,255,.08)', animation: 'opPopIn .25s cubic-bezier(.34,1.56,.64,1)' }}>
-            <div style={{ textAlign: 'center', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <Frac n={opPop.a.n} d={opPop.a.d} size={18} color="#FF6B6B" />
-              <span style={{ color: 'rgba(255,255,255,.25)', fontSize: 18, fontFamily: FF }}>?</span>
-              <Frac n={opPop.b.n} d={opPop.b.d} size={18} color="#4ECDC4" />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(4px)', display: mob ? 'flex' : 'block', alignItems: 'center', justifyContent: 'center' }} onClick={() => setOpPop(null)}>
+          <div onClick={e => e.stopPropagation()} style={mob ? { background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 22, padding: '20px 20px', boxShadow: '0 20px 60px rgba(0,0,0,.6)', border: '1px solid rgba(255,255,255,.08)', animation: 'opPopIn .25s cubic-bezier(.34,1.56,.64,1)', width: '90%', maxWidth: 360 } : { position: 'absolute', left: Math.min(Math.max(opPop.x - 170, 8), (typeof window !== 'undefined' ? window.innerWidth : 800) - 380), top: Math.min(Math.max(opPop.y - 90, 8), (typeof window !== 'undefined' ? window.innerHeight : 600) - 180), background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 22, padding: '20px 24px', boxShadow: '0 20px 60px rgba(0,0,0,.6)', border: '1px solid rgba(255,255,255,.08)', animation: 'opPopIn .25s cubic-bezier(.34,1.56,.64,1)' }}>
+            <div style={{ textAlign: 'center', marginBottom: mob ? 10 : 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <Frac n={opPop.a.n} d={opPop.a.d} size={mob ? 16 : 18} color="#FF6B6B" />
+              <span style={{ color: 'rgba(255,255,255,.25)', fontSize: mob ? 16 : 18, fontFamily: FF }}>?</span>
+              <Frac n={opPop.b.n} d={opPop.b.d} size={mob ? 16 : 18} color="#4ECDC4" />
             </div>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: mob ? 6 : 10, justifyContent: 'center' }}>
               {OPS.map(op => {
                 const r = fracOp(opPop.a, opPop.b, op);
                 const ok = fracValid(r);
                 return (
                   <button key={op} disabled={!ok} onClick={() => ok && doOp(op)}
-                    style={{ width: 74, padding: '12px 0', borderRadius: 14, border: 'none', background: ok ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'rgba(255,255,255,.04)', color: ok ? '#fff' : '#444', cursor: ok ? 'pointer' : 'not-allowed', fontFamily: FF, fontSize: 22, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    style={{ width: mob ? 64 : 74, padding: mob ? '10px 0' : '12px 0', borderRadius: mob ? 12 : 14, border: 'none', background: ok ? 'linear-gradient(135deg,#667eea,#764ba2)' : 'rgba(255,255,255,.04)', color: ok ? '#fff' : '#444', cursor: ok ? 'pointer' : 'not-allowed', fontFamily: FF, fontSize: mob ? 20 : 22, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                     <div>{op}</div>
-                    {ok && r && <div style={{ fontSize: 10, opacity: 0.8 }}><Frac n={r.n} d={r.d} size={7} color="#fff" bold={false} /></div>}
+                    {ok && r && <div style={{ fontSize: mob ? 9 : 10, opacity: 0.8 }}><Frac n={r.n} d={r.d} size={mob ? 6 : 7} color="#fff" bold={false} /></div>}
                   </button>
                 );
               })}
@@ -544,8 +571,8 @@ function FractionFusion() {
         </div>
       )}
       {cMenu && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(4px)' }} onClick={() => setCMenu(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 22, padding: '24px 28px', boxShadow: '0 20px 60px rgba(0,0,0,.6)', border: '1px solid rgba(255,255,255,.08)', animation: 'opPopIn .25s cubic-bezier(.34,1.56,.64,1)', minWidth: 260 }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setCMenu(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 22, padding: mob ? '20px 18px' : '24px 28px', boxShadow: '0 20px 60px rgba(0,0,0,.6)', border: '1px solid rgba(255,255,255,.08)', animation: 'opPopIn .25s cubic-bezier(.34,1.56,.64,1)', minWidth: mob ? 220 : 260, width: mob ? '88%' : undefined, maxWidth: mob ? 320 : undefined }}>
             <div style={{ textAlign: 'center', marginBottom: 16 }}><Frac n={cMenu.n} d={cMenu.d} size={28} color="#fff" /></div>
             {canSimplify(cMenu.n, cMenu.d) && (
               <div style={{ marginBottom: 12 }}>
@@ -629,8 +656,8 @@ function ResultScr({ del, cards, onRetry }) {
   const maxD = del.length > 0 ? Math.max(...del.map(x => x.depth)) : 0;
   const last = sc.cl === 1 ? cards[0] : null;
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 28, padding: '32px 36px', textAlign: 'center', boxShadow: '0 30px 80px rgba(0,0,0,.6)', border: sc.perf ? '2px solid rgba(255,215,0,.3)' : '2px solid rgba(255,255,255,.08)', animation: 'fadeIn .5s ease-out', maxWidth: 440, width: '92%' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflowY: 'auto', padding: '20px 0' }}>
+      <div style={{ background: 'linear-gradient(145deg,#1a1a2e,#16213e)', borderRadius: 28, padding: '32px 36px', textAlign: 'center', boxShadow: '0 30px 80px rgba(0,0,0,.6)', border: sc.perf ? '2px solid rgba(255,215,0,.3)' : '2px solid rgba(255,255,255,.08)', animation: 'fadeIn .5s ease-out', maxWidth: 440, width: '92%', margin: 'auto 0' }}>
         {sc.perf ? (
           <div style={{ animation: 'perfectBurst 1s ease-out', marginBottom: 4 }}>
             <div style={{ fontSize: 56 }}>{'\u{1f3c6}'}</div>
