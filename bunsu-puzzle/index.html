@@ -7,6 +7,7 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../shared/math-utils.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,8 +32,8 @@ const DM = {
   hard:{label:"\u3080\u305a\u304b\u3057\u3044",emoji:"\u{1f525}",color:"#FF6B6B",desc:"\u5206\u6bcd2\u301c12 / \u624b\u672d6\u679a",copies:3,skips:2,hs:6},
 };
 const CC={2:{bg:"#FF6B6B",gw:"#ff4444",lt:"#ff9999",tx:"#fff"},3:{bg:"#4ECDC4",gw:"#2dbdb4",lt:"#7eded8",tx:"#fff"},4:{bg:"#FFE66D",gw:"#ffd700",lt:"#fff0a0",tx:"#555"},5:{bg:"#A78BFA",gw:"#8b5cf6",lt:"#c4b5fd",tx:"#fff"},6:{bg:"#F97316",gw:"#ea580c",lt:"#fb923c",tx:"#fff"},8:{bg:"#ec4899",gw:"#db2777",lt:"#f9a8d4",tx:"#fff"},10:{bg:"#14b8a6",gw:"#0d9488",lt:"#5eead4",tx:"#fff"},12:{bg:"#6366f1",gw:"#4f46e5",lt:"#a5b4fc",tx:"#fff"},sp:{bg:"#38bdf8",gw:"#0ea5e9",lt:"#7dd3fc",tx:"#fff"}};
-const fv=f=>f.n/f.d, gcd=(a,b)=>b===0?a:gcd(b,a%b);
-function simp(n,d){const g=gcd(Math.abs(n),Math.abs(d));return{n:n/g,d:d/g};}
+/* Math functions (gcd, simplify, fracVal) loaded from ../shared/math-utils.js */
+const fv = fracVal, simp = simplify;
 function rSum(bl){return bl.filter(b=>!b.type).reduce((s,b)=>s+fv(b),0);}
 function rRem(bl){if(!bl.length)return{n:1,d:1};let tN=0,tD=1;for(const b of bl){if(b.type)continue;const g=gcd(tD,b.d),l=(tD*b.d)/g;tN=tN*(l/tD)+b.n*(l/b.d);tD=l;}const r=tD-tN;return r<=0?null:simp(r,tD);}
 function bEq(bl){return bl.filter(b=>!b.type).map(b=>b.n+"/"+b.d).join(" + ")+" = 1";}

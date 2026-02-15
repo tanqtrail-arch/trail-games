@@ -426,6 +426,7 @@
   <div class="cards-area" id="cardsArea"></div>
 </div>
 <div class="result-popup" id="resultPopup"></div>
+<script src="../shared/math-utils.js"></script>
 <script>
 // ===================== STATE =====================
 const state = {
@@ -473,9 +474,7 @@ const hardPool = [
 ];
 const PIE_COLORS = ['#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#feca57','#ff9ff3','#54a0ff','#5f27cd','#a29bfe','#fd79a8','#00cec9','#fdcb6e'];
 // ===================== HELPERS =====================
-function gcd(a,b){return b===0?a:gcd(b,a%b);}
-function simplify(n,d){const g=gcd(Math.abs(n),Math.abs(d));return{n:n/g,d:d/g};}
-function fractionsEqual(a,b){const sa=simplify(a.n,a.d),sb=simplify(b.n,b.d);return sa.n===sb.n&&sa.d===sb.d;}
+// Math functions (gcd, simplify, fractionsEqual) loaded from ../shared/math-utils.js
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function getPool() {
