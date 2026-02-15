@@ -7,6 +7,7 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../shared/math-utils.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,34 +30,9 @@ function useMobile(bp) {
   }, [b]);
   return m;
 }
-/* ---- Math ---- */
-function gcd(a, b) {
-  a = Math.abs(a); b = Math.abs(b);
-  while (b) { [a, b] = [b, a % b]; }
-  return a;
-}
-function lcm(a, b) { return Math.abs(a * b) / gcd(a, b); }
-function canSimplify(n, d) { return d > 1 && gcd(Math.abs(n), Math.abs(d)) > 1; }
-function doSimplify(n, d) {
-  const g = gcd(Math.abs(n), Math.abs(d));
-  return { n: (d < 0 ? -1 : 1) * n / g, d: Math.abs(d) / g };
-}
-function fracOp(a, b, op) {
-  let rn = 0, rd = 1;
-  if (op === '+') { const cd = lcm(a.d, b.d); rn = a.n * (cd / a.d) + b.n * (cd / b.d); rd = cd; }
-  else if (op === '\u2212') { const cd = lcm(a.d, b.d); rn = a.n * (cd / a.d) - b.n * (cd / b.d); rd = cd; }
-  else if (op === '\u00d7') { rn = a.n * b.n; rd = a.d * b.d; }
-  else if (op === '\u00f7') { if (b.n === 0) return null; rn = a.n * b.d; rd = a.d * b.n; }
-  else return null;
-  if (rd === 0) return null;
-  if (rd < 0) { rn = -rn; rd = -rd; }
-  return { n: rn, d: rd };
-}
-function fracValid(r) { return r !== null && r.d > 0 && r.n > 0; }
-function isOne(f) { return f.n === f.d && f.d > 0; }
-function isS1(f) { return f.n === 1 && f.d === 1; }
-function fracVal(f) { return f.n / f.d; }
-function prox1(f) { return Math.max(0, 1 - Math.abs(1 - fracVal(f))); }
+/* Math functions loaded from ../shared/math-utils.js */
+/* Alias: this game uses doSimplify instead of simplify */
+const doSimplify = simplify;
 /* ---- Components ---- */
 function Frac({ n, d, size, color, bold }) {
   const sz = size || 24;
