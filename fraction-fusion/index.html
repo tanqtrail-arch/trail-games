@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分数融合 - Fraction Fusion</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body, #root { width: 100%; height: 100dvh; overflow: hidden; }
+        body { background: #0a0a1a; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        var useState = React.useState;
+        var useCallback = React.useCallback;
+        var useEffect = React.useEffect;
+        var useRef = React.useRef;
+
+        function gcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b) {
+                var t = b;
+                b = a % b;
+                a = t;
+            }
+            return a;
+        }
+
+        function lcm(a, b) {
+            return Math.abs(a * b) / gcd(a, b);
+        }
+
+        function canSimplify(n, d) {
+            return d > 1 && gcd(Math.abs(n), Math.abs(d)) > 1;
+        }
+
+        function doSimplify(n, d) {
+            var g = gcd(Math.abs(n), Math.abs(d));
+            return { n: (d < 0 ? -1 : 1) * n / g, d: Math.abs(d) / g };
+        }
+
+        function isOne(f) {
+            return f.n === f.d && f.d > 0;
+        }
+
+        function isS1(f) {
+            return f.n === 1 && f.d === 1;
+        }
+
+        function fracVal(f) {
+            return f.n / f.d;
+        }
+
+        function prox1(f) {
+            return Math.max(0, 1 - Math.abs(1 - fracVal(f)));
+        }
+
+        var FF = "'Fredoka', sans-serif";
+
+        function Frac(props) {
+            var sz = props.size || 24,
+                cl = props.color || "#fff",
+                fw = props.bold === false ? 500 : 700;
+            if (props.d === 1)
+                return React.createElement("span", {
+                    style: {
+                        fontSize: sz * 1.4,
+                        fontWeight: fw,
+                        color: cl,
+                        fontFamily: FF
+                    }
+                }, props.n);
+            return React.createElement("span", {
+                style: {
+                    display: "inline-flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    verticalAlign: "middle",
+                    lineHeight: 1,
+                    margin: "0 2px"
+                }
+            },
+            React.createElement("span", {
+                style: {
+                    fontSize: sz,
+                    fontWeight: fw,
+                    color: cl,
+                    fontFamily: FF
+                }
+            }, props.n),
+            React.createElement("span", {
+                style: {
+                    width: Math.max(sz * 1.2, 18),
+                    height: Math.max(2, sz * 0.1),
+                    background: cl,
+                    borderRadius: 2,
+                    opacity: 0.7
+                }
+            }),
+            React.createElement("span", {
+                style: {
+                    fontSize: sz,
+                    fontWeight: fw,
+                    color: cl,
+                    fontFamily: FF
+                }
+            }, props.d));
+        }
+
+        var DIFFICULTIES = {
+            easy: {
+                label: "かんたん",
+                emoji: "🌱",
+                cardCount: 6,
+                ds: [2, 3, 4, 6],
+                splits: 2,
+                color: "#4ECDC4",
+                desc: "6枚・かんたんな分母",
+                bonus: 0.7
+            },
+            normal: {
+                label: "ふつう",
+                emoji: "⚡",
+                cardCount: 15,
+                ds: [2, 3, 4, 5, 6, 8, 10, 12],
+                splits: 3,
+                color: "#FFEAA7",
+                desc: "15枚・分母12まで",
+                bonus: 1.0
+            },
+            hard: {
+                label: "むずかしい",
+                emoji: "🔥",
+                cardCount: 15,
+                ds: [2, 3, 4, 5, 6, 8, 10, 12],
+                splits: 4,
+                color: "#FF6B6B",
+                desc: "15枚・大きな分母も",
+                bonus: 1.5
+            }
+        };
+
+        var SP_NUMS = [2, 3, 5, 7];
+
+        var CL = [
+            { bg: "#FF6B6B", gl: "rgba(255,107,107,0.4)" },
+            { bg: "#4ECDC4", gl: "rgba(78,205,196,0.4)" },
+            { bg: "#45B7D1", gl: "rgba(69,183,209,0.4)" },
+            { bg: "#96CEB4", gl: "rgba(150,206,180,0.4)" },
+            { bg: "#FFEAA7", gl: "rgba(255,234,167,0.4)" },
+            { bg: "#DDA0DD", gl: "rgba(221,160,221,0.4)" },
+            { bg: "#F8B500", gl: "rgba(248,181,0,0.4)" },
+            { bg: "#74B9FF", gl: "rgba(116,185,255,0.4)" },
+            { bg: "#FD79A8", gl: "rgba(253,121,168,0.4)" },
+            { bg: "#A29BFE", gl: "rgba(162,155,254,0.4)" }
+        ];
+
+        function getCol(id) {
+            var h = 0;
+            for (var i = 0; i < id.length; i++)
+                h = ((h << 5) - h) + id.charCodeAt(i);
+            return CL[Math.abs(h) % CL.length];
+        }
+
+        function dCol(d) {
+            return d <= 1 ? "#4ECDC4" : d <= 2 ? "#FFEAA7" : d <= 3 ? "#FFA500" : "#FF6B6B";
+        }
+
+        function makePuzzle(diff) {
+            var cfg = DIFFICULTIES[diff] || DIFFICULTIES.normal;
+            var ds = cfg.ds,
+                total = cfg.cardCount,
+                splits = cfg.splits;
+            var cards = [];
+            var sim = function(n, d) {
+                var g = gcd(Math.abs(n), Math.abs(d));
+                return { n: n / g, d: d / g };
+            };
+            var rem = { n: 1, d: 1 };
+            for (var i = 0; i < splits; i++) {
+                var d = ds[Math.floor(Math.random() * ds.length)];
+                var mx = Math.min(d - 1, Math.floor(rem.n * d / rem.d) - 1);
+                if (mx <= 0) break;
+                var n = Math.floor(Math.random() * mx) + 1;
+                var f = sim(n, d);
+                if (f.n === 0) continue;
+                cards.push(f);
+                rem = sim(rem.n * f.d - f.n * rem.d, rem.d * f.d);
+                if (rem.n <= 0) break;
+            }
+            if (rem.n > 0 && rem.d > 0) cards.push(rem);
+            while (cards.length < total) {
+                var d2 = ds[Math.floor(Math.random() * ds.length)];
+                cards.push({
+                    n: Math.floor(Math.random() * (d2 - 1)) + 1,
+                    d: d2
+                });
+            }
+            for (var i2 = cards.length - 1; i2 > 0; i2--) {
+                var j = Math.floor(Math.random() * (i2 + 1));
+                var tmp = cards[i2];
+                cards[i2] = cards[j];
+                cards[j] = tmp;
+            }
+            return cards.slice(0, total).map(function(f, idx) {
+                return {
+                    id: "c" + Date.now() + "-" + idx,
+                    n: f.n,
+                    d: f.d,
+                    slot: idx,
+                    depth: 0
+                };
+            });
+        }
+
+        function calcSc(del, cards, diff) {
+            var cfg = DIFFICULTIES[diff] || DIFFICULTIES.normal;
+            var cl = cards.length;
+            var rP = (cfg.cardCount - cl) * 100;
+            var oP = del.length * 300;
+            var dP = del.reduce(function(s, x) {
+                return s + x.depth * 200;
+            }, 0);
+            var lP = 0,
+                lPct = 0,
+                perf = false;
+            if (cl === 1) {
+                var si = doSimplify(cards[0].n, cards[0].d);
+                perf = si.n === 1 && si.d === 1;
+                if (perf) lP = 3000;
+                else {
+                    lPct = Math.round(prox1(cards[0]) * 100);
+                    lP = Math.round(lPct * 20);
+                }
+            }
+            var raw = rP + oP + dP + lP;
+            return {
+                rP: rP,
+                oP: oP,
+                dP: dP,
+                lP: lP,
+                lPct: lPct,
+                perf: perf,
+                total: Math.round(raw * cfg.bonus),
+                cl: cl,
+                diffBonus: cfg.bonus
+            };
+        }
+
+        function getRank(t) {
+            if (t >= 6000)
+                return {
+                    l: "分数の神",
+                    e: "💎",
+                    c: "#E8D5FF"
+                };
+            if (t >= 4500)
+                return {
+                    l: "融合マスター",
+                    e: "👑",
+                    c: "#FFD700"
+                };
+            if (t >= 3000)
+                return {
+                    l: "融合の達人",
+                    e: "🌟",
+                    c: "#FFA500"
+                };
+            if (t >= 1500)
+                return {
+                    l: "融合使い",
+                    e: "🔥",
+                    c: "#FF6B6B"
+                };
+            if (t >= 500)
+                return {
+                    l: "見習い融合士",
+                    e: "⚡",
+                    c: "#74B9FF"
+                };
+            return {
+                l: "はじめの一歩",
+                e: "🌱",
+                c: "#96CEB4"
+            };
+        }
+
+        var CSS = [
+            "@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');",
+            "@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}",
+            "@keyframes popIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}",
+            "@keyframes dropTarget{0%,100%{box-shadow:0 0 0 3px rgba(116,185,255,.6)}50%{box-shadow:0 0 0 7px rgba(116,185,255,.8)}}",
+            "@keyframes winGlow{0%,100%{box-shadow:0 0 12px rgba(255,215,0,.4),inset 0 0 8px rgba(255,215,0,.1)}50%{box-shadow:0 0 30px rgba(255,215,0,.7),inset 0 0 12px rgba(255,215,0,.15)}}",
+            "@keyframes dockGlow{0%,100%{box-shadow:0 0 12px rgba(255,215,0,.15)}50%{box-shadow:0 0 24px rgba(255,215,0,.3)}}",
+            "@keyframes cu1Pulse{0%,100%{box-shadow:0 0 10px rgba(255,165,0,.3),inset 0 0 6px rgba(255,165,0,.08)}50%{box-shadow:0 0 24px rgba(255,165,0,.6),inset 0 0 10px rgba(255,165,0,.12)}}",
+            "@keyframes cardAppear{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}",
+            "@keyframes deliverBounce{0%{transform:scale(.5);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}",
+            "@keyframes perfectBurst{0%{transform:scale(.3);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}",
+            "@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}",
+            "@keyframes formulaIn{from{opacity:0;transform:scale(.8) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}",
+            "@keyframes answerReveal{from{opacity:0;transform:scale(1.3)}to{opacity:1;transform:scale(1)}}",
+            "*{box-sizing:border-box;}",
+            "html,body{overscroll-behavior:none;}"
+        ].join("\n");
+
+        function FormulaOverlay(props) {
+            var a = props.a,
+                b = props.b,
+                onConfirm = props.onConfirm;
+            var needsConvert = a.d !== b.d;
+            var cd = lcm(a.d, b.d);
+            var ca = { n: a.n * (cd / a.d), d: cd },
+                cb = { n: b.n * (cd / b.d), d: cd };
+            var result = { n: ca.n + cb.n, d: cd };
+            var _p = useState(0),
+                phase = _p[0],
+                setPhase = _p[1];
+            var done = useRef(false);
+            useEffect(function() {
+                var t1, t2;
+                if (needsConvert) {
+                    t1 = setTimeout(function() {
+                        setPhase(1);
+                    }, 400);
+                    t2 = setTimeout(function() {
+                        setPhase(2);
+                    }, 900);
+                } else {
+                    t2 = setTimeout(function() {
+                        setPhase(2);
+                    }, 500);
+                }
+                return function() {
+                    clearTimeout(t1);
+                    clearTimeout(t2);
+                };
+            }, [needsConvert]);
+            useEffect(function() {
+                if (phase === 2) {
+                    var t = setTimeout(function() {
+                        if (!done.current) {
+                            done.current = true;
+                            onConfirm(result);
+                        }
+                    }, 600);
+                    return function() {
+                        clearTimeout(t);
+                    };
+                }
+            }, [phase]);
+            var skip = function() {
+                if (!done.current) {
+                    done.current = true;
+                    onConfirm(result);
+                }
+            };
+            return React.createElement("div", {
+                onClick: skip,
+                style: {
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 800,
+                    background: "rgba(0,0,0,.5)",
+                    backdropFilter: "blur(8px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer"
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    background: "linear-gradient(145deg,#1a1a2e,#16213e)",
+                    borderRadius: 24,
+                    padding: "24px 20px",
+                    boxShadow: "0 20px 60px rgba(0,0,0,.6)",
+                    border: "2px solid rgba(255,255,255,.1)",
+                    animation: "formulaIn .3s ease-out",
+                    maxWidth: "92vw",
+                    width: 340,
+                    textAlign: "center"
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    marginBottom: needsConvert ? 12 : 16,
+                    padding: "8px 0"
+                }
+            },
+            React.createElement(Frac, { n: a.n, d: a.d, size: 22, color: "#FF6B6B" }),
+            React.createElement("span", {
+                style: {
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: "#FFEAA7",
+                    fontFamily: FF
+                }
+            }, "+"),
+            React.createElement(Frac, { n: b.n, d: b.d, size: 22, color: "#4ECDC4" }),
+            React.createElement("span", {
+                style: {
+                    fontSize: 22,
+                    color: "rgba(255,255,255,.3)",
+                    fontWeight: 700,
+                    fontFamily: FF
+                }
+            }, "="),
+            phase < 2 ? React.createElement("span", {
+                style: {
+                    fontSize: 28,
+                    fontWeight: 700,
+                    color: "rgba(255,255,255,.2)",
+                    fontFamily: FF
+                }
+            }, "?") : React.createElement("span", {
+                style: { animation: "answerReveal .3s ease-out" }
+            },
+            React.createElement(Frac, { n: result.n, d: result.d, size: 24, color: "#FFD700" }))),
+            needsConvert && React.createElement("div", {
+                style: {
+                    opacity: phase >= 1 ? 1 : 0.15,
+                    transition: "opacity .3s",
+                    marginBottom: 12
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    fontSize: 10,
+                    color: "rgba(255,255,255,.35)",
+                    marginBottom: 6
+                }
+            }, "通分すると..."),
+            React.createElement("div", {
+                style: {
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    background: "rgba(116,185,255,.06)",
+                    borderRadius: 14,
+                    padding: "8px 12px"
+                }
+            },
+            React.createElement(Frac, { n: ca.n, d: ca.d, size: 18, color: "#FF6B6B", bold: false }),
+            React.createElement("span", {
+                style: {
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: "#FFEAA7",
+                    fontFamily: FF
+                }
+            }, "+"),
+            React.createElement(Frac, { n: cb.n, d: cb.d, size: 18, color: "#4ECDC4", bold: false }),
+            React.createElement("span", {
+                style: {
+                    fontSize: 18,
+                    color: "rgba(255,255,255,.3)",
+                    fontFamily: FF
+                }
+            }, "="),
+            phase < 2 ? React.createElement("span", {
+                style: {
+                    fontSize: 22,
+                    color: "rgba(255,255,255,.15)",
+                    fontFamily: FF
+                }
+            }, "?") : React.createElement("span", {
+                style: { animation: "answerReveal .3s ease-out" }
+            },
+            React.createElement(Frac, { n: result.n, d: result.d, size: 20, color: "#FFD700", bold: false })))),
+            phase < 2 && React.createElement("div", {
+                style: {
+                    fontSize: 11,
+                    color: "rgba(255,255,255,.2)",
+                    marginTop: 4
+                }
+            }, "計算中... タップでスキップ"),
+            phase >= 2 && React.createElement("div", {
+                style: {
+                    fontSize: 12,
+                    color: "#FFD700",
+                    fontWeight: 700,
+                    marginTop: 4,
+                    animation: "answerReveal .3s ease-out"
+                }
+            }, "✓ 合体！")));
+        }
+
+        function SpOpChooser(props) {
+            var spNum = props.spNum,
+                target = props.target,
+                onChoose = props.onChoose,
+                onCancel = props.onCancel;
+            var mulR = { n: target.n * spNum, d: target.d },
+                divR = { n: target.n, d: target.d * spNum };
+            return React.createElement("div", {
+                style: {
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 600,
+                    background: "rgba(0,0,0,.5)",
+                    backdropFilter: "blur(6px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                },
+                onClick: onCancel
+            },
+            React.createElement("div", {
+                onClick: function(e) { e.stopPropagation(); },
+                style: {
+                    background: "linear-gradient(145deg,#1a1a2e,#16213e)",
+                    borderRadius: 22,
+                    padding: "22px 20px",
+                    boxShadow: "0 20px 60px rgba(0,0,0,.6)",
+                    border: "1px solid rgba(162,155,254,.3)",
+                    animation: "popIn .25s cubic-bezier(.34,1.56,.64,1)",
+                    width: "calc(100% - 32px)",
+                    maxWidth: 320,
+                    textAlign: "center"
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    fontSize: 12,
+                    color: "rgba(255,255,255,.4)",
+                    marginBottom: 10
+                }
+            }, "⭐ スペシャルカード"),
+            React.createElement("div", {
+                style: {
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    marginBottom: 16
+                }
+            },
+            React.createElement(Frac, { n: target.n, d: target.d, size: 22, color: "#fff" }),
+            React.createElement("span", {
+                style: {
+                    fontSize: 18,
+                    color: "rgba(255,255,255,.3)"
+                }
+            }, "× or ÷"),
+            React.createElement("span", {
+                style: {
+                    fontSize: 28,
+                    fontWeight: 700,
+                    color: "#A29BFE",
+                    fontFamily: FF
+                }
+            }, spNum)),
+            React.createElement("div", {
+                style: {
+                    display: "flex",
+                    gap: 10,
+                    justifyContent: "center"
+                }
+            },
+            React.createElement("button", {
+                onClick: function() { onChoose(mulR); },
+                style: {
+                    flex: 1,
+                    padding: "14px 0",
+                    borderRadius: 14,
+                    border: "none",
+                    background: "linear-gradient(135deg,#667eea,#764ba2)",
+                    color: "#fff",
+                    fontFamily: FF,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                }
+            }, "×" + spNum),
+            React.createElement("button", {
+                onClick: function() { onChoose(divR); },
+                style: {
+                    flex: 1,
+                    padding: "14px 0",
+                    borderRadius: 14,
+                    border: "none",
+                    background: "linear-gradient(135deg,#4ECDC4,#45B7D1)",
+                    color: "#fff",
+                    fontFamily: FF,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                }
+            }, "÷" + spNum))));
+        }
+
+        function ResultScr(props) {
+            var del = props.del,
+                cards = props.cards,
+                onRetry = props.onRetry,
+                diff = props.diff;
+            var sc = calcSc(del, cards, diff);
+            var rank = getRank(sc.total);
+            var cfg = DIFFICULTIES[diff] || DIFFICULTIES.normal;
+            return React.createElement("div", {
+                style: {
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 900,
+                    background: "rgba(0,0,0,.6)",
+                    backdropFilter: "blur(10px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 12
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    background: "linear-gradient(145deg,#1a1a2e,#16213e)",
+                    borderRadius: 22,
+                    padding: "24px 20px",
+                    textAlign: "center",
+                    boxShadow: "0 30px 80px rgba(0,0,0,.6)",
+                    border: sc.perf ? "2px solid rgba(255,215,0,.3)" : "2px solid rgba(255,255,255,.08)",
+                    animation: "fadeIn .5s ease-out",
+                    maxWidth: 380,
+                    width: "100%"
+                }
+            },
+            React.createElement("div", {
+                style: { fontSize: 40, marginBottom: 2 }
+            }, sc.perf ? "🏆" : rank.e),
+            React.createElement("div", {
+                style: {
+                    fontSize: 20,
+                    fontWeight: 700,
+                    fontFamily: FF,
+                    color: sc.perf ? "#FFD700" : rank.c,
+                    marginBottom: 8
+                }
+            }, sc.perf ? "PERFECT!" : rank.l),
+            React.createElement("div", {
+                style: {
+                    fontSize: 32,
+                    fontWeight: 700,
+                    fontFamily: FF,
+                    background: "linear-gradient(135deg,#FFD700,#FFA500)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    marginBottom: 16
+                }
+            }, sc.total),
+            del.length > 0 && React.createElement("div", {
+                style: {
+                    display: "flex",
+                    gap: 5,
+                    justifyContent: "center",
+                    marginBottom: 12,
+                    flexWrap: "wrap"
+                }
+            },
+            del.map(function(d, i) {
+                return React.createElement("div", {
+                    key: i,
+                    style: {
+                        width: 36,
+                        height: 36,
+                        borderRadius: 9,
+                        background: "linear-gradient(135deg,#FFD700,#FF8C00)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 3px 10px rgba(255,215,0,.3)"
+                    }
+                },
+                React.createElement("span", {
+                    style: {
+                        fontSize: 15,
+                        fontWeight: 700,
+                        color: "#1a1a2e",
+                        fontFamily: FF
+                    }
+                }, "1"));
+            })),
+            React.createElement("button", {
+                onClick: onRetry,
+                style: {
+                    background: "linear-gradient(135deg,#667eea,#764ba2)",
+                    border: "none",
+                    borderRadius: 14,
+                    padding: "11px 30px",
+                    color: "#fff",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    fontFamily: FF,
+                    cursor: "pointer"
+                }
+            }, "もう一度挑戦 ↻")));
+        }
+
+        function FractionFusion() {
+            var _diff = useState(null),
+                diff = _diff[0],
+                setDiff = _diff[1];
+            var _cards = useState([]),
+                cards = _cards[0],
+                setCards = _cards[1];
+            var _rules = useState(true),
+                rules = _rules[0],
+                setRules = _rules[1];
+            var _cMenu = useState(null),
+                cMenu = _cMenu[0],
+                setCMenu = _cMenu[1];
+            var _result = useState(false),
+                result = _result[0],
+                setResult = _result[1];
+            var _formula = useState(null),
+                formula = _formula[0],
+                setFormula = _formula[1];
+            var _spOp = useState(null),
+                spOp = _spOp[0],
+                setSpOp = _spOp[1];
+            var _spUses = useState(3),
+                spUses = _spUses[0],
+                setSpUses = _spUses[1];
+            var _del = useState([]),
+                del = _del[0],
+                setDel = _del[1];
+            var _hist = useState([]),
+                hist = _hist[0],
+                setHist = _hist[1];
+            var _hMeta = useState([]),
+                hMeta = _hMeta[0],
+                setHMeta = _hMeta[1];
+            var dragR = useRef(null);
+            var _dRender = useState(null),
+                dRender = _dRender[0],
+                setDRender = _dRender[1];
+            var _hovId = useState(null),
+                hovId = _hovId[0],
+                setHovId = _hovId[1];
+            var _dragSp = useState(null),
+                dragSp = _dragSp[0],
+                setDragSp = _dragSp[1];
+            var cRef = useRef(cards);
+            cRef.current = cards;
+            var dragged = useRef(false);
+            var sRef = useRef({ del: del, spUses: spUses });
+            sRef.current = { del: del, spUses: spUses };
+            var cfg = DIFFICULTIES[diff] || DIFFICULTIES.normal;
+            var live = cards.length > 0 ? calcSc(del, cards, diff || "normal") : { total: 0 };
+            var findC = useCallback(function(cx, cy, ex) {
+                var els = document.querySelectorAll("[data-cid]");
+                for (var i = 0; i < els.length; i++) {
+                    var cid = els[i].getAttribute("data-cid");
+                    if (cid === ex) continue;
+                    var r = els[i].getBoundingClientRect();
+                    if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom)
+                        return cRef.current.find(function(c) {
+                            return c.id === cid;
+                        }) || null;
+                }
+                return null;
+            }, []);
+            var saveH = useCallback(function() {
+                setHist(function(h) {
+                    return h.concat([cards]);
+                });
+                setHMeta(function(h) {
+                    return h.concat([{ del: sRef.current.del, spUses: sRef.current.spUses }]);
+                });
+            }, [cards]);
+            var deliverOne = useCallback(function() {
+                var ints = cards.filter(function(c) {
+                    return c.d === 1;
+                });
+                if (ints.length === 0) return;
+                saveH();
+                ints.forEach(function(dc) {
+                    setDel(function(p) {
+                        return p.concat([{ depth: dc.depth, n: dc.n }]);
+                    });
+                });
+                var rem = cards.filter(function(c) {
+                    return c.d !== 1;
+                });
+                rem.sort(function(a, b) {
+                    return a.slot - b.slot;
+                });
+                rem.forEach(function(c, i) {
+                    c.slot = i;
+                });
+                setCards(rem.slice());
+            }, [cards, saveH]);
+            var onPD = useCallback(function(e, card) {
+                if (formula || result || cMenu || spOp || rules || !diff) return;
+                e.preventDefault();
+                dragged.current = false;
+                dragR.current = { id: card.id, sx: e.clientX, sy: e.clientY };
+                setDRender({ id: card.id, dx: 0, dy: 0 });
+                setDragSp(null);
+            }, [formula, result, cMenu, spOp, rules, diff]);
+            var onSpDown = useCallback(function(e, spNum) {
+                if (formula || result || cMenu || spOp || rules || !diff || spUses <= 0) return;
+                e.preventDefault();
+                dragged.current = false;
+                dragR.current = { id: "sp-" + spNum, sx: e.clientX, sy: e.clientY, spNum: spNum };
+                setDRender({ id: "sp-" + spNum, dx: 0, dy: 0 });
+                setDragSp(spNum);
+            }, [formula, result, cMenu, spOp, rules, diff, spUses]);
+            useEffect(function() {
+                function onMove(e) {
+                    var d = dragR.current;
+                    if (!d) return;
+                    e.preventDefault();
+                    var dx = e.clientX - d.sx,
+                        dy = e.clientY - d.sy;
+                    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragged.current = true;
+                    setDRender({ id: d.id, dx: dx, dy: dy });
+                    if (!d.spNum) {
+                        var tgt = findC(e.clientX, e.clientY, d.id);
+                        setHovId(tgt ? tgt.id : null);
+                    }
+                }
+                function onUp(e) {
+                    var d = dragR.current;
+                    if (!d) return;
+                    dragR.current = null;
+                    setDRender(null);
+                    setHovId(null);
+                    setDragSp(null);
+                    if (d.spNum) {
+                        if (!dragged.current) return;
+                        var tgt = findC(e.clientX, e.clientY, null);
+                        if (tgt) setSpOp({ spNum: d.spNum, target: tgt });
+                        return;
+                    }
+                    var dc = cRef.current.find(function(c) {
+                        return c.id === d.id;
+                    });
+                    if (!dc) return;
+                    if (!dragged.current) {
+                        setCMenu(dc);
+                        return;
+                    }
+                    var tgt2 = findC(e.clientX, e.clientY, d.id);
+                    if (tgt2) {
+                        saveH();
+                        setFormula({ a: dc, b: tgt2 });
+                    }
+                }
+                window.addEventListener("pointermove", onMove, { passive: false });
+                window.addEventListener("pointerup", onUp);
+                return function() {
+                    window.removeEventListener("pointermove", onMove);
+                    window.removeEventListener("pointerup", onUp);
+                };
+            }, [findC, saveH]);
+            var onFormulaConfirm = useCallback(function(res) {
+                if (!formula) return;
+                var a = formula.a,
+                    b = formula.b;
+                var nd = Math.max(a.depth, b.depth) + 1;
+                var nc = { id: "c" + Date.now(), n: res.n, d: res.d, slot: a.slot, depth: nd };
+                var rem = cards.filter(function(c) {
+                    return c.id !== a.id && c.id !== b.id;
+                }).concat(nc);
+                rem.sort(function(x, y) {
+                    return x.slot - y.slot;
+                });
+                rem.forEach(function(c, i) {
+                    c.slot = i;
+                });
+                setCards(rem);
+                setFormula(null);
+            }, [formula, cards]);
+            var onSpChoose = useCallback(function(newFrac) {
+                if (!spOp) return;
+                saveH();
+                setCards(function(p) {
+                    return p.map(function(c) {
+                        return c.id === spOp.target.id ? Object.assign({}, c, { n: newFrac.n, d: newFrac.d }) : c;
+                    });
+                });
+                setSpUses(function(u) {
+                    return u - 1;
+                });
+                setSpOp(null);
+            }, [spOp, saveH]);
+            var doSimp = useCallback(function() {
+                if (!cMenu) return;
+                var s = doSimplify(cMenu.n, cMenu.d);
+                saveH();
+                setCards(function(p) {
+                    return p.map(function(c) {
+                        return c.id === cMenu.id ? Object.assign({}, c, { n: s.n, d: s.d }) : c;
+                    });
+                });
+                setCMenu(null);
+            }, [cMenu, saveH]);
+            var doConv = useCallback(function(nn, nd) {
+                if (!cMenu) return;
+                saveH();
+                setCards(function(p) {
+                    return p.map(function(c) {
+                        return c.id === cMenu.id ? Object.assign({}, c, { n: nn, d: nd }) : c;
+                    });
+                });
+                setCMenu(null);
+            }, [cMenu, saveH]);
+            var undo = useCallback(function() {
+                if (hist.length === 0) return;
+                setCards(hist[hist.length - 1]);
+                var m = hMeta[hMeta.length - 1];
+                setDel(m.del);
+                setSpUses(m.spUses);
+                setHist(function(h) {
+                    return h.slice(0, -1);
+                });
+                setHMeta(function(h) {
+                    return h.slice(0, -1);
+                });
+                setFormula(null);
+                setCMenu(null);
+                setSpOp(null);
+            }, [hist, hMeta]);
+            var finish = useCallback(function() {
+                setResult(true);
+                setCMenu(null);
+            }, []);
+            var startGame = useCallback(function(d) {
+                setDiff(d);
+                setCards(makePuzzle(d));
+                setRules(false);
+                setResult(false);
+                setDel([]);
+                setHist([]);
+                setHMeta([]);
+                setFormula(null);
+                setSpUses(3);
+            }, []);
+            var retry = useCallback(function() {
+                if (!diff) return;
+                setCards(makePuzzle(diff));
+                setResult(false);
+                setDel([]);
+                setHist([]);
+                setHMeta([]);
+                setFormula(null);
+                setSpUses(3);
+            }, [diff]);
+            var backToMenu = useCallback(function() {
+                setDiff(null);
+                setRules(true);
+                setResult(false);
+                setCards([]);
+                setDel([]);
+                setHist([]);
+                setHMeta([]);
+                setFormula(null);
+                setSpUses(3);
+            }, []);
+            useEffect(function() {
+                function h(e) {
+                    if (e.key === "Escape") {
+                        setCMenu(null);
+                        setSpOp(null);
+                    }
+                }
+                window.addEventListener("keydown", h);
+                return function() {
+                    window.removeEventListener("keydown", h);
+                };
+            }, []);
+            var gridCols = cards.length <= 2 ? 2 : cards.length <= 4 ? 2 : cards.length <= 9 ? 3 : 5;
+            var gridRows = Math.max(1, Math.ceil(cards.length / gridCols));
+            var cardFont = cards.length <= 2 ? 32 : cards.length <= 4 ? 28 : cards.length <= 9 ? 24 : 18;
+            var finishActive = del.length > 0;
+            var hasOnes = cards.some(function(c) {
+                return c.d === 1;
+            });
+            var oneCount = cards.filter(function(c) {
+                return c.d === 1;
+            }).length;
+
+            if (rules) {
+                return React.createElement("div", {
+                    style: {
+                        width: "100%",
+                        minHeight: "100vh",
+                        background: "linear-gradient(150deg,#0a0a1a 0%,#141432 40%,#0d1b2a 100%)",
+                        fontFamily: FF,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 20,
+                        userSelect: "none"
+                    }
+                },
+                React.createElement("style", null, CSS),
+                React.createElement("div", {
+                    style: {
+                        animation: "fadeIn .5s ease-out",
+                        textAlign: "center",
+                        maxWidth: 380,
+                        width: "100%"
+                    }
+                },
+                React.createElement("div", {
+                    style: { fontSize: 48, marginBottom: 8 }
+                }, "🧮"),
+                React.createElement("div", {
+                    style: {
+                        fontSize: 26,
+                        fontWeight: 700,
+                        fontFamily: FF,
+                        background: "linear-gradient(135deg,#FF6B6B,#FFEAA7,#4ECDC4)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        marginBottom: 6
+                    }
+                }, "分数融合"),
+                React.createElement("div", {
+                    style: {
+                        fontSize: 13,
+                        color: "rgba(255,255,255,.4)",
+                        marginBottom: 24
+                    }
+                }, "カードをたし算で合体させて「1」を作ろう！"),
+                React.createElement("div", {
+                    style: {
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                        marginBottom: 24
+                    }
+                },
+                ["easy", "normal", "hard"].map(function(key) {
+                    var d = DIFFICULTIES[key];
+                    return React.createElement("button", {
+                        key: key,
+                        onClick: function() { startGame(key); },
+                        style: {
+                            background: "rgba(255,255,255,.04)",
+                            border: "2px solid " + d.color + "44",
+                            borderRadius: 16,
+                            padding: "16px 20px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 14,
+                            transition: "all .2s"
+                        }
+                    },
+                    React.createElement("div", {
+                        style: { fontSize: 32 }
+                    }, d.emoji),
+                    React.createElement("div", {
+                        style: { textAlign: "left", flex: 1 }
+                    },
+                    React.createElement("div", {
+                        style: {
+                            fontSize: 18,
+                            fontWeight: 700,
+                            color: d.color,
+                            fontFamily: FF
+                        }
+                    }, d.label),
+                    React.createElement("div", {
+                        style: {
+                            fontSize: 11,
+                            color: "rgba(255,255,255,.4)",
+                            fontFamily: FF
+                        }
+                    }, d.desc)));
+                })),
+                React.createElement("div", {
+                    style: {
+                        background: "rgba(255,255,255,.03)",
+                        borderRadius: 14,
+                        padding: "14px 16px",
+                        textAlign: "left"
+                    }
+                },
+                React.createElement("div", {
+                    style: {
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "rgba(255,255,255,.5)",
+                        marginBottom: 8
+                    }
+                }, "🎮 あそびかた"),
+                ["👆 カードを重ねる → たし算で合体", "👇 タップ → 約分・通分", "📦 1を作ったら納品ボタンで納品", "⭐ スペシャル(2,3,5,7)をカードに重ねて×÷（3回）"].map(function(t, i) {
+                    return React.createElement("div", {
+                        key: i,
+                        style: {
+                            fontSize: 11,
+                            color: "rgba(255,255,255,.4)",
+                            marginBottom: 2
+                        }
+                    }, t);
+                }))
+                ));
+            }
+
+            return React.createElement("div", {
+                style: {
+                    width: "100%",
+                    height: "100dvh",
+                    background: "linear-gradient(150deg,#0a0a1a 0%,#141432 40%,#0d1b2a 100%)",
+                    fontFamily: FF,
+                    position: "relative",
+                    overflow: "hidden",
+                    userSelect: "none",
+                    touchAction: "none"
+                }
+            },
+            React.createElement("style", null, CSS),
+            React.createElement("div", {
+                style: {
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 30,
+                    padding: "0 8px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    zIndex: 30,
+                    background: "#0a0a1a"
+                }
+            },
+            React.createElement("button", {
+                onClick: backToMenu,
+                style: {
+                    background: "none",
+                    border: "none",
+                    fontSize: 14,
+                    color: "rgba(255,255,255,.4)",
+                    cursor: "pointer",
+                    padding: "2px"
+                }
+            }, "←"),
+            React.createElement("div", {
+                style: {
+                    fontSize: 13,
+                    fontWeight: 700,
+                    background: "linear-gradient(135deg,#FF6B6B,#FFEAA7,#4ECDC4)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent"
+                }
+            }, "分数融合"),
+            React.createElement("span", {
+                style: {
+                    fontSize: 8,
+                    color: cfg.color,
+                    background: cfg.color + "22",
+                    borderRadius: 5,
+                    padding: "1px 4px",
+                    fontWeight: 600
+                }
+            }, cfg.emoji + cfg.label),
+            React.createElement("div", { style: { flex: 1 } }),
+            React.createElement("button", {
+                onClick: undo,
+                disabled: hist.length === 0,
+                style: {
+                    background: hist.length ? "rgba(255,255,255,.08)" : "transparent",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "3px 6px",
+                    color: hist.length ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.1)",
+                    fontSize: 10,
+                    fontFamily: FF,
+                    cursor: "pointer"
+                }
+            }, "↩"),
+            React.createElement("button", {
+                onClick: retry,
+                style: {
+                    background: "rgba(255,107,107,.1)",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "3px 6px",
+                    color: "#FF6B6B",
+                    fontSize: 10,
+                    fontFamily: FF,
+                    cursor: "pointer"
+                }
+            }, "↻"),
+            React.createElement("span", {
+                style: {
+                    fontSize: 9,
+                    color: "rgba(255,255,255,.2)"
+                }
+            }, "残" + cards.length),
+            React.createElement("div", {
+                style: {
+                    background: "linear-gradient(135deg,#667eea,#764ba2)",
+                    borderRadius: 6,
+                    padding: "1px 8px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#fff"
+                }
+            }, live.total)),
+            React.createElement("div", {
+                style: {
+                    position: "absolute",
+                    top: 30,
+                    left: 6,
+                    right: 6,
+                    bottom: "30dvh",
+                    overflow: "hidden",
+                    zIndex: 10
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    width: "100%",
+                    height: "100%",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(" + gridCols + ",1fr)",
+                    gridTemplateRows: "repeat(" + gridRows + ",1fr)",
+                    gap: 4,
+                    touchAction: "none"
+                }
+            },
+            cards.map(function(card) {
+                var isDg = dRender && dRender.id === card.id && !dragSp;
+                var isHv = hovId === card.id;
+                var col = getCol(card.id);
+                var c1 = card.d === 1;
+                var cu1 = isOne(card) && !c1;
+                var dx = isDg ? dRender.dx : 0;
+                var dy = isDg ? dRender.dy : 0;
+                var isLast = cards.length === 1;
+                var fs = isLast ? 40 : cardFont;
+                var lw = isLast ? 40 : Math.max(cardFont * 1.1, 18);
+                var bg = c1 ? "linear-gradient(135deg,#FFD700,#FF8C00)" : cu1 ? "linear-gradient(135deg,#FFA500,#e67e22)" : "linear-gradient(145deg," + col.bg + "dd," + col.bg + "88)";
+                var bdr = isHv ? "3px solid #74B9FF" : c1 ? "3px solid #FFD700" : cu1 ? "3px solid #FFA500" : "1px solid rgba(255,255,255,.08)";
+                return React.createElement("div", {
+                    key: card.id,
+                    "data-cid": card.id,
+                    onPointerDown: function(e) { onPD(e, card); },
+                    style: {
+                        borderRadius: 10,
+                        gridColumn: isLast ? "1/-1" : undefined,
+                        maxWidth: isLast ? 100 : undefined,
+                        justifySelf: isLast ? "center" : undefined,
+                        background: bg,
+                        border: bdr,
+                        cursor: isDg ? "grabbing" : "grab",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        position: "relative",
+                        overflow: "hidden",
+                        zIndex: isDg ? 100 : 1,
+                        transform: isDg ? "translate(" + dx + "px," + dy + "px) scale(1.15) rotate(-3deg)" : isHv ? "scale(1.08)" : "scale(1)",
+                        transition: isDg ? "none" : "all .2s",
+                        animation: isHv ? "dropTarget .6s infinite" : c1 ? "winGlow 2s infinite" : cu1 ? "cu1Pulse 2s infinite" : isDg ? "none" : "cardAppear .35s ease-out",
+                        boxShadow: isDg ? "0 20px 50px rgba(0,0,0,.6)" : c1 ? "0 6px 20px rgba(255,215,0,.3)" : cu1 ? "0 4px 16px rgba(255,165,0,.3)" : "0 2px 8px rgba(0,0,0,.3)",
+                        minHeight: 0,
+                        minWidth: 0
+                    }
+                },
+                card.depth > 0 && React.createElement("div", {
+                    style: {
+                        position: "absolute",
+                        top: 1,
+                        left: 2,
+                        background: "rgba(0,0,0,.5)",
+                        borderRadius: 4,
+                        padding: "0 3px",
+                        fontSize: 8,
+                        fontWeight: 700,
+                        color: dCol(card.depth)
+                    }
+                }, "🔥" + card.depth),
+                cu1 && React.createElement("div", {
+                    style: {
+                        position: "absolute",
+                        top: 2,
+                        right: 2,
+                        fontSize: 9,
+                        color: "#fff",
+                        fontWeight: 700,
+                        background: "rgba(255,140,0,.8)",
+                        borderRadius: 5,
+                        padding: "1px 5px"
+                    }
+                }, "タップ➡1"),
+                card.d === 1 ? React.createElement("div", {
+                    style: {
+                        fontSize: fs * 1.4,
+                        fontWeight: 700,
+                        color: c1 ? "#1a1a2e" : "#fff",
+                        fontFamily: FF
+                    }
+                }, card.n) : React.createElement("div", {
+                    style: {
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        color: c1 ? "#1a1a2e" : "#fff"
+                    }
+                },
+                React.createElement("div", {
+                    style: {
+                        fontSize: fs,
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        fontFamily: FF
+                    }
+                }, card.n),
+                React.createElement("div", {
+                    style: {
+                        width: lw,
+                        height: 2,
+                        background: c1 ? "rgba(0,0,0,.3)" : "rgba(255,255,255,.7)",
+                        borderRadius: 2,
+                        margin: "1px 0"
+                    }
+                }),
+                React.createElement("div", {
+                    style: {
+                        fontSize: fs,
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        fontFamily: FF
+                    }
+                }, card.d)),
+                c1 && React.createElement("div", {
+                    style: {
+                        position: "absolute",
+                        top: 0,
+                        right: 2,
+                        fontSize: isLast ? 14 : 10
+                    }
+                }, "⭐"));
+            }))),
+            React.createElement("div", {
+                style: {
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: "30dvh",
+                    display: "flex",
+                    gap: 6,
+                    padding: "6px",
+                    alignItems: "stretch",
+                    zIndex: 20,
+                    background: "#0d0d20",
+                    borderTop: "2px solid rgba(255,255,255,.08)"
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 3,
+                    minWidth: 0
+                }
+            },
+            React.createElement("span", {
+                style: {
+                    fontSize: 9,
+                    color: "rgba(162,155,254,.5)",
+                    fontWeight: 600,
+                    textAlign: "center"
+                }
+            }, "⭐スペシャル " + spUses + "/3"),
+            React.createElement("div", {
+                style: {
+                    flex: 1,
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateRows: "1fr 1fr",
+                    gap: 5,
+                    minHeight: 0
+                }
+            },
+            SP_NUMS.map(function(num) {
+                var sid = "sp-" + num;
+                var isDg = dRender && dRender.id === sid;
+                var dx = isDg ? dRender.dx : 0,
+                    dy = isDg ? dRender.dy : 0;
+                var disabled = spUses <= 0;
+                return React.createElement("div", {
+                    key: num,
+                    onPointerDown: function(e) { onSpDown(e, num); },
+                    style: {
+                        borderRadius: 12,
+                        touchAction: "none",
+                        background: disabled ? "rgba(255,255,255,.03)" : "linear-gradient(135deg,#A29BFE,#667eea)",
+                        border: "2px solid " + (disabled ? "rgba(255,255,255,.05)" : "rgba(162,155,254,.4)"),
+                        cursor: disabled ? "default" : "grab",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: isDg ? 100 : 1,
+                        transform: isDg ? "translate(" + dx + "px," + dy + "px) scale(1.15)" : "scale(1)",
+                        transition: isDg ? "none" : "all .2s",
+                        opacity: disabled ? 0.3 : 1,
+                        minWidth: 0,
+                        minHeight: 0,
+                        boxShadow: disabled ? "none" : "0 2px 8px rgba(162,155,254,.2)"
+                    }
+                },
+                React.createElement("span", {
+                    style: {
+                        fontSize: 24,
+                        fontWeight: 700,
+                        color: "#fff",
+                        fontFamily: FF
+                    }
+                }, num));
+            }))),
+            React.createElement("div", {
+                style: {
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    minWidth: 0
+                }
+            },
+            React.createElement("div", {
+                id: "dock",
+                style: {
+                    flex: 1,
+                    borderRadius: 16,
+                    padding: "8px 10px",
+                    background: "linear-gradient(135deg, rgba(255,215,0,.1), rgba(255,165,0,.06))",
+                    border: "2.5px dashed rgba(255,215,0,.45)",
+                    animation: "dockGlow 2.5s infinite",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 6,
+                    overflow: "hidden",
+                    minHeight: 0
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                }
+            },
+            React.createElement("span", {
+                style: { fontSize: 22 }
+            }, "📦"),
+            React.createElement("span", {
+                style: {
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#FFD700",
+                    fontFamily: FF
+                }
+            }, "納品台")),
+            hasOnes && React.createElement("button", {
+                onClick: deliverOne,
+                style: {
+                    padding: "8px 18px",
+                    borderRadius: 12,
+                    border: "2px solid rgba(255,215,0,.6)",
+                    background: "linear-gradient(135deg,#FFD700,#FF8C00)",
+                    color: "#1a1a2e",
+                    fontFamily: FF,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    boxShadow: "0 3px 16px rgba(255,215,0,.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                }
+            },
+            React.createElement("span", null, "📦納品！"),
+            oneCount > 1 && React.createElement("span", {
+                style: {
+                    fontSize: 11,
+                    opacity: 0.6
+                }
+            }, "×" + oneCount)),
+            !hasOnes && del.length === 0 && React.createElement("span", {
+                style: {
+                    fontSize: 11,
+                    color: "rgba(255,215,0,.4)",
+                    fontFamily: FF,
+                    textAlign: "center"
+                }
+            }, "整数を作って納品"),
+            del.length > 0 && React.createElement("div", {
+                style: {
+                    display: "flex",
+                    gap: 4,
+                    flexWrap: "wrap",
+                    justifyContent: "center"
+                }
+            },
+            del.map(function(d, i) {
+                return React.createElement("div", {
+                    key: i,
+                    style: {
+                        width: 22,
+                        height: 22,
+                        borderRadius: 5,
+                        background: "linear-gradient(135deg,#FFD700,#FF8C00)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "0 1px 4px rgba(255,215,0,.3)",
+                        flexShrink: 0
+                    }
+                },
+                React.createElement("span", {
+                    style: {
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: "#1a1a2e",
+                        fontFamily: FF
+                    }
+                }, d.n || 1));
+            }))),
+            React.createElement("button", {
+                onClick: finish,
+                style: {
+                    borderRadius: 14,
+                    border: "none",
+                    padding: "10px 0",
+                    background: finishActive ? "linear-gradient(135deg,#667eea,#764ba2)" : "rgba(255,255,255,.05)",
+                    color: finishActive ? "#fff" : "rgba(255,255,255,.25)",
+                    fontFamily: FF,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    flexShrink: 0,
+                    boxShadow: finishActive ? "0 3px 12px rgba(102,126,234,.4)" : "none"
+                }
+            },
+            React.createElement("span", {
+                style: { fontSize: 20 }
+            }, cards.length === 1 ? "🏆" : "✨"),
+            React.createElement("span", null, del.length > 0 || cards.length === 1 ? "結果を見る" : "終了")))),
+            formula && React.createElement(FormulaOverlay, {
+                a: formula.a,
+                b: formula.b,
+                onConfirm: onFormulaConfirm
+            }),
+            spOp && React.createElement(SpOpChooser, {
+                spNum: spOp.spNum,
+                target: spOp.target,
+                onChoose: onSpChoose,
+                onCancel: function() { setSpOp(null); }
+            }),
+            cMenu && React.createElement("div", {
+                style: {
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 500,
+                    background: "rgba(0,0,0,.4)",
+                    backdropFilter: "blur(4px)"
+                },
+                onClick: function() { setCMenu(null); }
+            },
+            React.createElement("div", {
+                onClick: function(e) { e.stopPropagation(); },
+                style: {
+                    position: "absolute",
+                    left: "50%",
+                    top: "50%",
+                    transform: "translate(-50%,-50%)",
+                    background: "linear-gradient(145deg,#1a1a2e,#16213e)",
+                    borderRadius: 20,
+                    padding: "18px",
+                    boxShadow: "0 20px 60px rgba(0,0,0,.6)",
+                    border: "1px solid rgba(255,255,255,.08)",
+                    animation: "popIn .25s cubic-bezier(.34,1.56,.64,1)",
+                    width: "calc(100% - 32px)",
+                    maxWidth: 300
+                }
+            },
+            React.createElement("div", {
+                style: {
+                    textAlign: "center",
+                    marginBottom: 14
+                }
+            },
+            React.createElement(Frac, {
+                n: cMenu.n,
+                d: cMenu.d,
+                size: 26,
+                color: "#fff"
+            })),
+            canSimplify(cMenu.n, cMenu.d) && React.createElement("div", {
+                style: { marginBottom: 12 }
+            },
+            React.createElement("button", {
+                onClick: doSimp,
+                style: {
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    border: "none",
+                    background: "linear-gradient(135deg,#FF6B6B,#ee5a24)",
+                    color: "#fff",
+                    fontFamily: FF,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8
+                }
+            },
+            React.createElement("span", null, "約分 →"),
+            React.createElement(Frac, {
+                n: doSimplify(cMenu.n, cMenu.d).n,
+                d: doSimplify(cMenu.n, cMenu.d).d,
+                size: 13,
+                color: "#fff"
+            }))),
+            (function() {
+                var tgts = [2, 3, 4, 5, 6, 8, 10, 12, 15, 16, 20, 24]
+                    .filter(function(d) {
+                        return d !== cMenu.d && d % cMenu.d === 0;
+                    })
+                    .slice(0, 6);
+                if (tgts.length === 0) return null;
+                return React.createElement("div", null,
+                React.createElement("div", {
+                    style: {
+                        fontSize: 11,
+                        color: "rgba(255,255,255,.35)",
+                        marginBottom: 6,
+                        fontFamily: FF
+                    }
+                }, "通分（分母を変える）"),
+                React.createElement("div", {
+                    style: {
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 6
+                    }
+                },
+                tgts.map(function(td) {
+                    return React.createElement("button", {
+                        key: td,
+                        onClick: function() { doConv(cMenu.n * (td / cMenu.d), td); },
+                        style: {
+                            padding: "7px 10px",
+                            borderRadius: 10,
+                            border: "none",
+                            background: "rgba(116,185,255,.15)",
+                            color: "#74B9FF",
+                            fontFamily: FF,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5
+                        }
+                    },
+                    React.createElement("span", null, "→"),
+                    React.createElement(Frac, {
+                        n: cMenu.n * (td / cMenu.d),
+                        d: td,
+                        size: 10,
+                        color: "#74B9FF"
+                    }));
+                }))
+                );
+            })())),
+            result && React.createElement(ResultScr, {
+                del: del,
+                cards: cards,
+                onRetry: retry,
+                diff: diff
+            }));
+        }
+
+        ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(FractionFusion));
+    </script>
+</body>
+</html>
