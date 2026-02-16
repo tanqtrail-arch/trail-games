@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>🌍 気候バトルカード</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Zen Maru Gothic', sans-serif; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+  </style>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+const storageAPI = {
+  get: async (key) => { try { const v = localStorage.getItem(key); return v ? { value: v } : null; } catch { return null; } },
+  set: async (key, value) => { try { localStorage.setItem(key, value); } catch {} }
+};
+
+
+
+/* ======= DATA (with lat/lng) ======= */
+const WORLD = [
+  // === アジア (7) ===
+  { id:1,name:"日本",capital:"東京",emoji:"🇯🇵",lat:35.7,lng:139.7,maxTemp:39,minTemp:-4,rainfall:1530,sunnyDays:210,green:3,trivia:"四季がはっきりしている温帯の代表！",zone:"温帯",color:"#E86B6B" },
+  { id:2,name:"中国",capital:"北京",emoji:"🇨🇳",lat:39.9,lng:116.4,maxTemp:39,minTemp:-15,rainfall:580,sunnyDays:200,green:2,trivia:"広大な国土で気候も様々！北京は乾燥！",zone:"温帯大陸性",color:"#e74c3c" },
+  { id:3,name:"インド",capital:"ニューデリー",emoji:"🇮🇳",lat:28.6,lng:77.2,maxTemp:45,minTemp:4,rainfall:800,sunnyDays:290,green:2,trivia:"夏は45℃以上！モンスーンで大雨！",zone:"熱帯モンスーン",color:"#E07B39" },
+  { id:4,name:"モンゴル",capital:"ウランバートル",emoji:"🇲🇳",lat:47.9,lng:106.9,maxTemp:35,minTemp:-40,rainfall:200,sunnyDays:260,green:2,trivia:"気温差70℃以上！遊牧民の国！",zone:"ステップ",color:"#C4A35A" },
+  { id:5,name:"タイ",capital:"バンコク",emoji:"🇹🇭",lat:13.8,lng:100.5,maxTemp:40,minTemp:15,rainfall:1500,sunnyDays:240,green:4,trivia:"年中暑い！雨季は毎日雨！",zone:"熱帯",color:"#FF9F43" },
+  { id:6,name:"シンガポール",capital:"シンガポール",emoji:"🇸🇬",lat:1.3,lng:103.8,maxTemp:34,minTemp:22,rainfall:2340,sunnyDays:170,green:4,trivia:"赤道直下で一年中夏！毎日スコール！",zone:"熱帯",color:"#FF6B6B" },
+  { id:7,name:"韓国",capital:"ソウル",emoji:"🇰🇷",lat:37.6,lng:127.0,maxTemp:36,minTemp:-18,rainfall:1400,sunnyDays:190,green:3,trivia:"四季がはっきり！冬はとても寒い！",zone:"温帯",color:"#3498db" },
+  // === ヨーロッパ (10) ===
+  { id:8,name:"イギリス",capital:"ロンドン",emoji:"🇬🇧",lat:51.5,lng:-0.1,maxTemp:30,minTemp:-5,rainfall:600,sunnyDays:160,green:3,trivia:"霧の都！一年中くもりが多い！",zone:"西岸海洋性",color:"#7B8FA1" },
+  { id:9,name:"フランス",capital:"パリ",emoji:"🇫🇷",lat:48.9,lng:2.3,maxTemp:35,minTemp:-5,rainfall:640,sunnyDays:170,green:3,trivia:"温暖で過ごしやすい！でも熱波も！",zone:"西岸海洋性",color:"#2c3e50" },
+  { id:10,name:"ノルウェー",capital:"オスロ",emoji:"🇳🇴",lat:59.9,lng:10.7,maxTemp:25,minTemp:-20,rainfall:800,sunnyDays:140,green:2,trivia:"冬はオーロラ！夏は白夜！",zone:"亜寒帯",color:"#4A7C59" },
+  { id:11,name:"ロシア",capital:"モスクワ",emoji:"🇷🇺",lat:55.8,lng:37.6,maxTemp:30,minTemp:-42,rainfall:700,sunnyDays:135,green:2,trivia:"世界一広い国！冬は-50℃にも！",zone:"亜寒帯",color:"#1B4965" },
+  { id:12,name:"スペイン",capital:"マドリード",emoji:"🇪🇸",lat:40.4,lng:-3.7,maxTemp:40,minTemp:-5,rainfall:440,sunnyDays:280,green:2,trivia:"ヨーロッパで一番日差しが強い！",zone:"地中海性",color:"#c0392b" },
+  { id:13,name:"アイスランド",capital:"レイキャビク",emoji:"🇮🇸",lat:64.1,lng:-21.9,maxTemp:15,minTemp:-10,rainfall:800,sunnyDays:100,green:1,trivia:"夏でも15℃！火山と氷河の島！",zone:"亜寒帯",color:"#74b9ff" },
+  { id:14,name:"ギリシャ",capital:"アテネ",emoji:"🇬🇷",lat:37.9,lng:23.7,maxTemp:40,minTemp:0,rainfall:400,sunnyDays:300,green:2,trivia:"地中海の太陽！年300日晴れ！",zone:"地中海性",color:"#0984e3" },
+  { id:15,name:"ドイツ",capital:"ベルリン",emoji:"🇩🇪",lat:52.5,lng:13.4,maxTemp:33,minTemp:-15,rainfall:570,sunnyDays:160,green:3,trivia:"冬は曇りが多く日照時間が短い！",zone:"西岸海洋性",color:"#f39c12" },
+  { id:16,name:"イタリア",capital:"ローマ",emoji:"🇮🇹",lat:41.9,lng:12.5,maxTemp:38,minTemp:-2,rainfall:800,sunnyDays:250,green:3,trivia:"地中海性気候で夏は乾燥！冬に雨！",zone:"地中海性",color:"#27ae60" },
+  { id:17,name:"フィンランド",capital:"ヘルシンキ",emoji:"🇫🇮",lat:60.2,lng:24.9,maxTemp:28,minTemp:-25,rainfall:650,sunnyDays:130,green:3,trivia:"サンタの国！冬は日がほとんど出ない！",zone:"亜寒帯",color:"#0984e3" },
+  // === 中東 (7) ===
+  { id:18,name:"サウジアラビア",capital:"リヤド",emoji:"🇸🇦",lat:24.7,lng:46.7,maxTemp:50,minTemp:3,rainfall:100,sunnyDays:345,green:1,trivia:"世界一暑い首都のひとつ！50℃超え！",zone:"砂漠気候",color:"#E8A735" },
+  { id:19,name:"アラブ首長国連邦",capital:"アブダビ",emoji:"🇦🇪",lat:24.5,lng:54.7,maxTemp:48,minTemp:8,rainfall:80,sunnyDays:350,green:1,trivia:"砂漠の超近代都市！夏は48℃！",zone:"砂漠気候",color:"#2c3e50" },
+  { id:20,name:"イラン",capital:"テヘラン",emoji:"🇮🇷",lat:35.7,lng:51.4,maxTemp:42,minTemp:-8,rainfall:230,sunnyDays:280,green:1,trivia:"砂漠と山の国！夏は40℃超え！",zone:"乾燥気候",color:"#e67e22" },
+  { id:21,name:"トルコ",capital:"アンカラ",emoji:"🇹🇷",lat:39.9,lng:32.9,maxTemp:36,minTemp:-12,rainfall:400,sunnyDays:230,green:2,trivia:"内陸の首都は夏暑く冬寒い大陸性！",zone:"大陸性",color:"#e74c3c" },
+  { id:22,name:"イスラエル",capital:"エルサレム",emoji:"🇮🇱",lat:31.8,lng:35.2,maxTemp:38,minTemp:2,rainfall:550,sunnyDays:310,green:2,trivia:"砂漠と地中海の間！夏は雨ゼロ！",zone:"地中海性",color:"#3498db" },
+  { id:23,name:"カタール",capital:"ドーハ",emoji:"🇶🇦",lat:25.3,lng:51.5,maxTemp:48,minTemp:8,rainfall:75,sunnyDays:350,green:1,trivia:"世界一暑い国のひとつ！夏は外出危険！",zone:"砂漠気候",color:"#6c3483" },
+  { id:24,name:"オマーン",capital:"マスカット",emoji:"🇴🇲",lat:23.6,lng:58.5,maxTemp:45,minTemp:12,rainfall:100,sunnyDays:340,green:1,trivia:"アラビア半島の東！砂漠と海の国！",zone:"砂漠気候",color:"#27ae60" },
+  // === アフリカ (7) ===
+  { id:25,name:"エジプト",capital:"カイロ",emoji:"🇪🇬",lat:30.0,lng:31.2,maxTemp:42,minTemp:5,rainfall:25,sunnyDays:340,green:1,trivia:"ピラミッドの国！雨はほぼ降らない！",zone:"砂漠気候",color:"#D4A76A" },
+  { id:26,name:"ケニア",capital:"ナイロビ",emoji:"🇰🇪",lat:-1.3,lng:36.8,maxTemp:28,minTemp:10,rainfall:900,sunnyDays:220,green:3,trivia:"赤道上なのに高地で涼しい！",zone:"高地気候",color:"#e17055" },
+  { id:27,name:"ナイジェリア",capital:"アブジャ",emoji:"🇳🇬",lat:9.1,lng:7.5,maxTemp:38,minTemp:18,rainfall:1200,sunnyDays:220,green:3,trivia:"アフリカ最大の人口！暑くて雨も多い！",zone:"熱帯",color:"#27ae60" },
+  { id:28,name:"エチオピア",capital:"アディスアベバ",emoji:"🇪🇹",lat:9.0,lng:38.7,maxTemp:25,minTemp:6,rainfall:1100,sunnyDays:220,green:3,trivia:"高地の首都で涼しい！コーヒー発祥！",zone:"高地気候",color:"#2ecc71" },
+  { id:29,name:"モロッコ",capital:"ラバト",emoji:"🇲🇦",lat:34.0,lng:-6.8,maxTemp:38,minTemp:5,rainfall:500,sunnyDays:270,green:2,trivia:"サハラ砂漠の入口！海沿いは温暖！",zone:"地中海性",color:"#e74c3c" },
+  { id:30,name:"南アフリカ",capital:"プレトリア",emoji:"🇿🇦",lat:-25.7,lng:28.2,maxTemp:35,minTemp:-2,rainfall:700,sunnyDays:260,green:3,trivia:"南半球！季節が逆で冬は6月！",zone:"温帯(南半球)",color:"#2ecc71" },
+  { id:31,name:"タンザニア",capital:"ドドマ",emoji:"🇹🇿",lat:-6.2,lng:35.7,maxTemp:33,minTemp:14,rainfall:600,sunnyDays:250,green:3,trivia:"キリマンジャロがある！サバンナの国！",zone:"熱帯",color:"#00b894" },
+  // === 北アメリカ (7) ===
+  { id:32,name:"アメリカ",capital:"ワシントンD.C.",emoji:"🇺🇸",lat:38.9,lng:-77.0,maxTemp:38,minTemp:-8,rainfall:1000,sunnyDays:200,green:3,trivia:"広すぎて砂漠も雪国もある国！",zone:"温帯",color:"#3B5998" },
+  { id:33,name:"カナダ",capital:"オタワ",emoji:"🇨🇦",lat:45.4,lng:-75.7,maxTemp:32,minTemp:-30,rainfall:940,sunnyDays:155,green:3,trivia:"冬は-30℃！でも夏は暑い！",zone:"亜寒帯",color:"#2ecc71" },
+  { id:34,name:"メキシコ",capital:"メキシコシティ",emoji:"🇲🇽",lat:19.4,lng:-99.1,maxTemp:30,minTemp:2,rainfall:800,sunnyDays:230,green:3,trivia:"高地の首都で意外と涼しい！",zone:"高地気候",color:"#00b894" },
+  { id:35,name:"キューバ",capital:"ハバナ",emoji:"🇨🇺",lat:23.1,lng:-82.4,maxTemp:35,minTemp:15,rainfall:1200,sunnyDays:250,green:4,trivia:"カリブ海の島国！ハリケーンが来る！",zone:"熱帯",color:"#0984e3" },
+  { id:36,name:"ジャマイカ",capital:"キングストン",emoji:"🇯🇲",lat:18.0,lng:-76.8,maxTemp:34,minTemp:20,rainfall:1300,sunnyDays:240,green:4,trivia:"カリブの楽園！レゲエの故郷！",zone:"熱帯",color:"#f1c40f" },
+  { id:37,name:"コスタリカ",capital:"サンホセ",emoji:"🇨🇷",lat:9.9,lng:-84.1,maxTemp:28,minTemp:14,rainfall:1800,sunnyDays:180,green:5,trivia:"自然の宝庫！高地で涼しい首都！",zone:"熱帯高地",color:"#27ae60" },
+  { id:38,name:"パナマ",capital:"パナマシティ",emoji:"🇵🇦",lat:9.0,lng:-79.5,maxTemp:34,minTemp:22,rainfall:1900,sunnyDays:160,green:5,trivia:"運河の国！一年中蒸し暑い！",zone:"熱帯",color:"#2c3e50" },
+  // === 南アメリカ (7) ===
+  { id:39,name:"ブラジル",capital:"ブラジリア",emoji:"🇧🇷",lat:-15.8,lng:-47.9,maxTemp:34,minTemp:20,rainfall:2500,sunnyDays:150,green:5,trivia:"アマゾンは世界の酸素の20%を作る！",zone:"熱帯雨林",color:"#2D8B46" },
+  { id:40,name:"アルゼンチン",capital:"ブエノスアイレス",emoji:"🇦🇷",lat:-34.6,lng:-58.4,maxTemp:36,minTemp:-2,rainfall:1100,sunnyDays:220,green:3,trivia:"南米のパリ！パタゴニアは極寒！",zone:"温帯(南半球)",color:"#3498db" },
+  { id:41,name:"ペルー",capital:"リマ",emoji:"🇵🇪",lat:-12.0,lng:-77.0,maxTemp:30,minTemp:14,rainfall:10,sunnyDays:150,green:1,trivia:"砂漠の首都！ほぼ雨が降らない！",zone:"砂漠気候",color:"#e67e22" },
+  { id:42,name:"コロンビア",capital:"ボゴタ",emoji:"🇨🇴",lat:4.7,lng:-74.1,maxTemp:20,minTemp:5,rainfall:1000,sunnyDays:160,green:4,trivia:"赤道近くなのに高地で涼しい！",zone:"高地気候",color:"#f1c40f" },
+  { id:43,name:"チリ",capital:"サンティアゴ",emoji:"🇨🇱",lat:-33.4,lng:-70.6,maxTemp:34,minTemp:-2,rainfall:340,sunnyDays:260,green:2,trivia:"南北に細長い！砂漠から氷河まで！",zone:"地中海性",color:"#e74c3c" },
+  { id:44,name:"エクアドル",capital:"キト",emoji:"🇪🇨",lat:-0.2,lng:-78.5,maxTemp:22,minTemp:7,rainfall:1200,sunnyDays:160,green:4,trivia:"赤道の国なのに高地で涼しい！",zone:"高地気候",color:"#f1c40f" },
+  { id:45,name:"ベネズエラ",capital:"カラカス",emoji:"🇻🇪",lat:10.5,lng:-66.9,maxTemp:32,minTemp:15,rainfall:900,sunnyDays:200,green:4,trivia:"カリブ海に面した常夏の国！",zone:"熱帯",color:"#e74c3c" },
+  // === オセアニア (7) ===
+  { id:46,name:"オーストラリア",capital:"キャンベラ",emoji:"🇦🇺",lat:-35.3,lng:149.1,maxTemp:42,minTemp:-8,rainfall:620,sunnyDays:250,green:2,trivia:"南半球で季節が逆！1月が真夏！",zone:"温帯(南半球)",color:"#F0932B" },
+  { id:47,name:"ニュージーランド",capital:"ウェリントン",emoji:"🇳🇿",lat:-41.3,lng:174.8,maxTemp:25,minTemp:-2,rainfall:1200,sunnyDays:180,green:4,trivia:"風がすごく強い首都！自然が豊か！",zone:"温帯(南半球)",color:"#2d3436" },
+  { id:48,name:"パプアニューギニア",capital:"ポートモレスビー",emoji:"🇵🇬",lat:-9.5,lng:147.2,maxTemp:33,minTemp:22,rainfall:1200,sunnyDays:200,green:5,trivia:"熱帯の島国！800以上の言語がある！",zone:"熱帯",color:"#e74c3c" },
+  { id:49,name:"フィジー",capital:"スバ",emoji:"🇫🇯",lat:-18.1,lng:178.4,maxTemp:32,minTemp:18,rainfall:3000,sunnyDays:170,green:5,trivia:"南太平洋の楽園！雨がとても多い！",zone:"熱帯",color:"#0984e3" },
+  { id:50,name:"サモア",capital:"アピア",emoji:"🇼🇸",lat:-13.8,lng:-171.8,maxTemp:32,minTemp:22,rainfall:2900,sunnyDays:170,green:5,trivia:"ポリネシアの島！一年中温暖！",zone:"熱帯",color:"#27ae60" },
+  { id:51,name:"トンガ",capital:"ヌクアロファ",emoji:"🇹🇴",lat:-21.2,lng:-175.2,maxTemp:31,minTemp:16,rainfall:1700,sunnyDays:190,green:4,trivia:"太平洋の王国！サイクロンが来る！",zone:"熱帯",color:"#e74c3c" },
+  { id:52,name:"パラオ",capital:"マルケオク",emoji:"🇵🇼",lat:7.5,lng:134.6,maxTemp:32,minTemp:24,rainfall:3800,sunnyDays:150,green:5,trivia:"世界一の透明度の海！雨も多い！",zone:"熱帯",color:"#00b4d8" },
+];
+
+const JAPAN = [
+  { id:1,name:"北海道",capital:"札幌",emoji:"🦀",lat:43.1,lng:141.3,maxTemp:31,minTemp:-25,rainfall:1100,sunnyDays:180,snow:5,trivia:"日本一寒い！-41℃の記録！",zone:"亜寒帯",color:"#1B9CFC" },
+  { id:2,name:"青森",capital:"青森市",emoji:"🍎",lat:40.8,lng:140.7,maxTemp:33,minTemp:-15,rainfall:1300,sunnyDays:160,snow:5,trivia:"りんご日本一！世界有数の豪雪！",zone:"日本海側",color:"#e74c3c" },
+  { id:3,name:"岩手",capital:"盛岡市",emoji:"🍡",lat:39.7,lng:141.2,maxTemp:33,minTemp:-16,rainfall:1300,sunnyDays:175,snow:4,trivia:"沿岸と内陸で気候が全然違う！",zone:"太平洋側",color:"#636e72" },
+  { id:4,name:"宮城",capital:"仙台市",emoji:"🌿",lat:38.3,lng:140.9,maxTemp:35,minTemp:-7,rainfall:1250,sunnyDays:190,snow:2,trivia:"杜の都！東北では比較的温暖！",zone:"太平洋側",color:"#2ecc71" },
+  { id:5,name:"秋田",capital:"秋田市",emoji:"🌾",lat:39.7,lng:140.1,maxTemp:34,minTemp:-14,rainfall:1700,sunnyDays:145,snow:5,trivia:"晴れの日が日本で最少レベル！",zone:"日本海側",color:"#6c5ce7" },
+  { id:6,name:"山形",capital:"山形市",emoji:"🍒",lat:38.3,lng:140.3,maxTemp:37,minTemp:-12,rainfall:1170,sunnyDays:170,snow:4,trivia:"さくらんぼ日本一！盆地で夏暑い！",zone:"日本海側",color:"#e74c3c" },
+  { id:7,name:"福島",capital:"福島市",emoji:"🍑",lat:37.8,lng:140.5,maxTemp:37,minTemp:-10,rainfall:1200,sunnyDays:185,snow:3,trivia:"盆地で夏は暑い！桃の名産地！",zone:"太平洋側",color:"#fd79a8" },
+  { id:8,name:"茨城",capital:"水戸市",emoji:"🌸",lat:36.3,lng:140.4,maxTemp:36,minTemp:-7,rainfall:1350,sunnyDays:200,snow:1,trivia:"偕楽園の梅が有名！太平洋側気候！",zone:"太平洋側",color:"#0984e3" },
+  { id:9,name:"栃木",capital:"宇都宮市",emoji:"🍓",lat:36.6,lng:139.9,maxTemp:36,minTemp:-8,rainfall:1500,sunnyDays:195,snow:1,trivia:"いちご日本一！雷が多い県！",zone:"内陸性",color:"#e74c3c" },
+  { id:10,name:"群馬",capital:"前橋市",emoji:"♨️",lat:36.4,lng:139.1,maxTemp:39,minTemp:-7,rainfall:1250,sunnyDays:210,snow:1,trivia:"からっ風が有名！夏は猛暑！",zone:"内陸性",color:"#27ae60" },
+  { id:11,name:"埼玉",capital:"さいたま市",emoji:"🏟️",lat:35.9,lng:139.6,maxTemp:39,minTemp:-6,rainfall:1300,sunnyDays:210,snow:1,trivia:"熊谷は日本最高気温41.1℃を記録！",zone:"太平洋側",color:"#0984e3" },
+  { id:12,name:"千葉",capital:"千葉市",emoji:"🥜",lat:35.6,lng:140.1,maxTemp:37,minTemp:-5,rainfall:1500,sunnyDays:200,snow:0,trivia:"三方を海に囲まれて温暖！",zone:"太平洋側",color:"#e67e22" },
+  { id:13,name:"東京",capital:"東京",emoji:"🗼",lat:35.7,lng:139.7,maxTemp:39,minTemp:-4,rainfall:1530,sunnyDays:210,snow:1,trivia:"ヒートアイランドで年々暑く！",zone:"太平洋側",color:"#e94560" },
+  { id:14,name:"神奈川",capital:"横浜市",emoji:"🚢",lat:35.4,lng:139.6,maxTemp:37,minTemp:-4,rainfall:1600,sunnyDays:200,snow:0,trivia:"海に面して温暖！箱根は雪も！",zone:"太平洋側",color:"#3498db" },
+  { id:15,name:"新潟",capital:"新潟市",emoji:"🍚",lat:37.9,lng:139.0,maxTemp:35,minTemp:-10,rainfall:1800,sunnyDays:150,snow:5,trivia:"米どころ日本一！冬は大雪！",zone:"日本海側",color:"#27ae60" },
+  { id:16,name:"富山",capital:"富山市",emoji:"🏔️",lat:36.7,lng:137.2,maxTemp:35,minTemp:-8,rainfall:2300,sunnyDays:150,snow:4,trivia:"雨も雪もすごい！立山の恵み！",zone:"日本海側",color:"#0984e3" },
+  { id:17,name:"石川",capital:"金沢市",emoji:"🏯",lat:36.6,lng:136.6,maxTemp:35,minTemp:-5,rainfall:2400,sunnyDays:155,snow:3,trivia:"弁当忘れても傘忘れるな！雨多い！",zone:"日本海側",color:"#6c5ce7" },
+  { id:18,name:"福井",capital:"福井市",emoji:"🦕",lat:36.1,lng:136.2,maxTemp:36,minTemp:-6,rainfall:2250,sunnyDays:155,snow:4,trivia:"恐竜の化石がたくさん！雪も多い！",zone:"日本海側",color:"#2ecc71" },
+  { id:19,name:"山梨",capital:"甲府市",emoji:"🍇",lat:35.7,lng:138.6,maxTemp:39,minTemp:-8,rainfall:1100,sunnyDays:220,snow:1,trivia:"盆地で夏は猛暑！ぶどう日本一！",zone:"内陸性",color:"#8e44ad" },
+  { id:20,name:"長野",capital:"長野市",emoji:"⛰️",lat:36.7,lng:138.2,maxTemp:34,minTemp:-15,rainfall:950,sunnyDays:210,snow:3,trivia:"山に囲まれて雨が少ない！",zone:"内陸性",color:"#8e44ad" },
+  { id:21,name:"岐阜",capital:"岐阜市",emoji:"🏞️",lat:35.4,lng:136.8,maxTemp:38,minTemp:-5,rainfall:1800,sunnyDays:200,snow:2,trivia:"飛騨は豪雪地帯！美濃は暑い！",zone:"内陸性",color:"#27ae60" },
+  { id:22,name:"静岡",capital:"静岡市",emoji:"🍵",lat:34.9,lng:138.4,maxTemp:37,minTemp:-2,rainfall:2325,sunnyDays:220,snow:0,trivia:"お茶の産地！晴れも雨も多い！",zone:"太平洋側",color:"#00cec9" },
+  { id:23,name:"愛知",capital:"名古屋市",emoji:"🏭",lat:35.2,lng:136.9,maxTemp:39,minTemp:-5,rainfall:1550,sunnyDays:210,snow:1,trivia:"夏は蒸し暑い！猛暑日が多い！",zone:"太平洋側",color:"#e74c3c" },
+  { id:24,name:"三重",capital:"津市",emoji:"🦞",lat:34.7,lng:136.5,maxTemp:37,minTemp:-3,rainfall:1600,sunnyDays:200,snow:0,trivia:"南部は雨がとても多い！伊勢えび！",zone:"太平洋側",color:"#e67e22" },
+  { id:25,name:"滋賀",capital:"大津市",emoji:"🛶",lat:35.0,lng:135.9,maxTemp:36,minTemp:-5,rainfall:1500,sunnyDays:190,snow:2,trivia:"琵琶湖が気候に影響！北部は雪！",zone:"日本海側",color:"#3498db" },
+  { id:26,name:"京都",capital:"京都市",emoji:"⛩️",lat:35.0,lng:135.8,maxTemp:39,minTemp:-5,rainfall:1490,sunnyDays:200,snow:1,trivia:"盆地で夏はめちゃくちゃ暑い！",zone:"盆地",color:"#c0392b" },
+  { id:27,name:"大阪",capital:"大阪市",emoji:"🏯",lat:34.7,lng:135.5,maxTemp:38,minTemp:-3,rainfall:1300,sunnyDays:210,snow:0,trivia:"瀬戸内気候で比較的温暖！",zone:"瀬戸内",color:"#f39c12" },
+  { id:28,name:"兵庫",capital:"神戸市",emoji:"🥩",lat:34.7,lng:135.2,maxTemp:36,minTemp:-4,rainfall:1200,sunnyDays:210,snow:1,trivia:"南は温暖！北は豪雪地帯！差が大きい！",zone:"瀬戸内",color:"#2c3e50" },
+  { id:29,name:"奈良",capital:"奈良市",emoji:"🦌",lat:34.7,lng:135.8,maxTemp:37,minTemp:-5,rainfall:1300,sunnyDays:200,snow:1,trivia:"盆地で寒暖差が大きい！鹿の県！",zone:"盆地",color:"#e17055" },
+  { id:30,name:"和歌山",capital:"和歌山市",emoji:"🍊",lat:34.2,lng:135.2,maxTemp:36,minTemp:-2,rainfall:1400,sunnyDays:210,snow:0,trivia:"みかんの名産地！黒潮で温暖！",zone:"太平洋側",color:"#e67e22" },
+  { id:31,name:"鳥取",capital:"鳥取市",emoji:"🐫",lat:35.5,lng:134.2,maxTemp:36,minTemp:-7,rainfall:1900,sunnyDays:165,snow:3,trivia:"砂丘なのに実は雨が多い！",zone:"日本海側",color:"#D4A76A" },
+  { id:32,name:"島根",capital:"松江市",emoji:"⛩️",lat:35.5,lng:133.1,maxTemp:35,minTemp:-5,rainfall:1800,sunnyDays:160,snow:2,trivia:"出雲大社の県！日本海側で雨雪多い！",zone:"日本海側",color:"#636e72" },
+  { id:33,name:"岡山",capital:"岡山市",emoji:"🍑",lat:34.7,lng:133.9,maxTemp:37,minTemp:-4,rainfall:1100,sunnyDays:230,snow:0,trivia:"晴れの国おかやま！日照時間が長い！",zone:"瀬戸内",color:"#fdcb6e" },
+  { id:34,name:"広島",capital:"広島市",emoji:"🌊",lat:34.4,lng:132.5,maxTemp:36,minTemp:-4,rainfall:1500,sunnyDays:205,snow:1,trivia:"瀬戸内海で温暖！晴れが多い！",zone:"瀬戸内",color:"#d63031" },
+  { id:35,name:"山口",capital:"山口市",emoji:"🐡",lat:34.2,lng:131.5,maxTemp:36,minTemp:-4,rainfall:1700,sunnyDays:195,snow:1,trivia:"日本海と瀬戸内の両方に面する！",zone:"瀬戸内",color:"#00b894" },
+  { id:36,name:"徳島",capital:"徳島市",emoji:"🌀",lat:34.1,lng:134.6,maxTemp:36,minTemp:-3,rainfall:1500,sunnyDays:210,snow:0,trivia:"台風の通り道！南部は雨がすごい！",zone:"太平洋側",color:"#6c5ce7" },
+  { id:37,name:"香川",capital:"高松市",emoji:"🍜",lat:34.3,lng:134.0,maxTemp:36,minTemp:-3,rainfall:1100,sunnyDays:230,snow:0,trivia:"日本で一番雨が少ない県！うどん県！",zone:"瀬戸内",color:"#fdcb6e" },
+  { id:38,name:"愛媛",capital:"松山市",emoji:"🍊",lat:33.8,lng:132.8,maxTemp:36,minTemp:-3,rainfall:1300,sunnyDays:215,snow:0,trivia:"みかんの産地！温暖で過ごしやすい！",zone:"瀬戸内",color:"#e67e22" },
+  { id:39,name:"高知",capital:"高知市",emoji:"🐟",lat:33.6,lng:133.5,maxTemp:37,minTemp:-3,rainfall:2550,sunnyDays:220,snow:0,trivia:"日本一雨が多い県！台風も！",zone:"太平洋側",color:"#00b894" },
+  { id:40,name:"福岡",capital:"福岡市",emoji:"🍜",lat:33.6,lng:130.4,maxTemp:37,minTemp:-3,rainfall:1600,sunnyDays:200,snow:1,trivia:"九州の入口！大陸に近い！",zone:"太平洋側",color:"#e17055" },
+  { id:41,name:"佐賀",capital:"佐賀市",emoji:"🎈",lat:33.3,lng:130.3,maxTemp:37,minTemp:-4,rainfall:1900,sunnyDays:195,snow:1,trivia:"有明海に面する！意外と雨が多い！",zone:"太平洋側",color:"#e74c3c" },
+  { id:42,name:"長崎",capital:"長崎市",emoji:"⛪",lat:32.8,lng:129.9,maxTemp:35,minTemp:-2,rainfall:1900,sunnyDays:190,snow:0,trivia:"海に囲まれた坂の街！雨が多い！",zone:"太平洋側",color:"#0984e3" },
+  { id:43,name:"熊本",capital:"熊本市",emoji:"🐻",lat:32.8,lng:130.7,maxTemp:37,minTemp:-4,rainfall:2000,sunnyDays:200,snow:0,trivia:"阿蘇山がある！夏は蒸し暑い！",zone:"太平洋側",color:"#e74c3c" },
+  { id:44,name:"大分",capital:"大分市",emoji:"♨️",lat:33.2,lng:131.6,maxTemp:36,minTemp:-3,rainfall:1600,sunnyDays:210,snow:0,trivia:"温泉県！別府は源泉数日本一！",zone:"太平洋側",color:"#e67e22" },
+  { id:45,name:"宮崎",capital:"宮崎市",emoji:"🌴",lat:31.9,lng:131.4,maxTemp:36,minTemp:-3,rainfall:2500,sunnyDays:220,snow:0,trivia:"日向の国！温暖で雨がすごく多い！",zone:"太平洋側",color:"#27ae60" },
+  { id:46,name:"鹿児島",capital:"鹿児島市",emoji:"🌋",lat:31.6,lng:130.6,maxTemp:36,minTemp:-3,rainfall:2300,sunnyDays:200,snow:0,trivia:"桜島の火山灰！温暖で雨が多い！",zone:"太平洋側",color:"#e74c3c" },
+  { id:47,name:"沖縄",capital:"那覇市",emoji:"🌺",lat:26.3,lng:127.7,maxTemp:35,minTemp:8,rainfall:2040,sunnyDays:190,snow:0,trivia:"一年中あったかい亜熱帯！",zone:"亜熱帯",color:"#00b4d8" },
+];
+const W_ST = [
+  { key:"maxTemp",label:"最高気温",unit:"℃",emoji:"🔥",color:"#E03131" },
+  { key:"minTemp",label:"最低気温",unit:"℃",emoji:"❄️",color:"#339AF0" },
+  { key:"rainfall",label:"年間降水量",unit:"mm",emoji:"🌧️",color:"#1C7ED6" },
+  { key:"sunnyDays",label:"晴れの日数",unit:"日",emoji:"☀️",color:"#F59F00" },
+  { key:"green",label:"緑の多さ",unit:"",emoji:"🌿",color:"#2F9E44" },
+];
+const J_ST = [
+  { key:"maxTemp",label:"最高気温",unit:"℃",emoji:"🔥",color:"#E03131" },
+  { key:"minTemp",label:"最低気温",unit:"℃",emoji:"❄️",color:"#339AF0" },
+  { key:"rainfall",label:"年間降水量",unit:"mm",emoji:"🌧️",color:"#1C7ED6" },
+  { key:"sunnyDays",label:"晴れの日数",unit:"日",emoji:"☀️",color:"#F59F00" },
+  { key:"snow",label:"雪の多さ",unit:"",emoji:"⛄",color:"#74C0FC" },
+];
+
+const LVN=["","ビギナー","ルーキー","チャレンジャー","エキスパート","マスター","レジェンド","気候王"];
+const LVC=["","#4CAF50","#2196F3","#FF9800","#E91E63","#9C27B0","#FF5722","#FFD700"];
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+// HIGH/LOW logic per stat
+// minTemp → always LOW ("どっちが寒い？")
+// sunnyDays, green, snow → always HIGH
+// maxTemp, rainfall → both OK (random at Lv6+)
+function getHiLo(statKey, lv) {
+  if (statKey === "minTemp") return false; // always LOW
+  if (statKey === "sunnyDays" || statKey === "green" || statKey === "snow") return true; // always HIGH
+  // maxTemp, rainfall → HIGH only until Lv5, mixed at Lv6+
+  if (lv <= 5) return true;
+  return Math.random() > 0.4;
+}
+
+/* ======= STORAGE ======= */
+const INIT={worldLv:1,japanLv:1,worldBest:0,japanBest:0,totalWins:0};
+function useData(){
+  const[d,setD]=useState({...INIT});
+  const[ok,setOk]=useState(false);
+  useEffect(()=>{let c=false;(async()=>{try{const r=await storageAPI.get("cb2");if(!c&&r&&r.value)setD(JSON.parse(r.value));}catch{}if(!c)setOk(true);})();return()=>{c=true;};},[]);
+  const up=useCallback(fn=>{setD(p=>{const n=fn(p);try{storageAPI.set("cb2",JSON.stringify(n));}catch{}return n;});},[]);
+  return{d,up,ok};
+}
+
+/* ======= ANIMATED NUMBER ======= */
+function ANum({stat,val,hide,spin}){
+  const[disp,setDisp]=useState("???");
+  const[done,setDone]=useState(false);
+  const t=useRef(null);
+  useEffect(()=>{setDisp("???");setDone(false);if(t.current)clearInterval(t.current);},[val,stat.key]);
+  useEffect(()=>{
+    if(t.current)clearInterval(t.current);
+    if(hide&&!spin){setDisp("???");setDone(false);return;}
+    if(!hide&&!spin){setDisp(val);setDone(true);return;}
+    if(spin){let c=0;const ic=stat.key==="green"||stat.key==="snow";
+      t.current=setInterval(()=>{c++;if(ic)setDisp(Math.floor(Math.random()*6));else{const r=Math.abs(val)+50;setDisp(Math.floor(Math.random()*r*2-r/2));}
+        if(c>=14){clearInterval(t.current);t.current=null;setDisp(val);setDone(true);}},55);}
+    return()=>{if(t.current)clearInterval(t.current);};
+  },[hide,spin,val,stat.key]);
+  const ic=stat.key==="green"||stat.key==="snow";
+  const sym=stat.key==="green"?"🌿":"⛄";
+  if(!done&&!spin)return <span style={{fontSize:13,fontWeight:800,color:"#666",letterSpacing:2}}>???</span>;
+  if(ic){const v=typeof disp==="number"?disp:0;return <span style={{fontSize:11}}>{[0,1,2,3,4].map(i=><span key={i} style={{opacity:i<v?1:0.2}}>{i<v?sym:"·"}</span>)}</span>;}
+  return <span style={{fontSize:13,fontWeight:800,color:stat.color,opacity:done?1:0.6,textShadow:done?"0 0 6px "+stat.color+"44":"none"}}>{disp}{stat.unit}</span>;
+}
+
+/* ======= CARD ======= */
+function Card({r,stats,hl,win,click,hide,spin,ed}){
+  if(!r||!r.name){
+    const ac=ed==="world"?"#e94560":"#ff6b6b";
+    return <div style={{width:136,height:200,borderRadius:14,background:"linear-gradient(135deg,#1a1a2e,#0f3460)",border:"3px solid "+ac,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:4}}><span style={{fontSize:26}}>{ed==="world"?"🌍":"🗾"}</span><span style={{color:ac,fontWeight:800,fontSize:9,letterSpacing:2}}>CLIMATE BATTLE</span></div>;
+  }
+  const isW=ed==="world";const st=stats||(isW?W_ST:J_ST);
+  return(
+    <div onClick={click} style={{width:136,height:200,borderRadius:14,background:"linear-gradient(160deg,"+r.color+"18,#fff 40%,#fff)",border:"3px solid "+(win?"#FFD700":r.color),boxShadow:win?"0 0 20px rgba(255,215,0,0.6)":"0 3px 10px rgba(0,0,0,0.1)",cursor:click?"pointer":"default",display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
+      {win&&<div style={{position:"absolute",top:-2,right:-2,background:"#FFD700",color:"#333",fontWeight:900,fontSize:9,padding:"2px 7px",borderRadius:"0 11px 0 8px",zIndex:2}}>WIN!</div>}
+      <div style={{background:"linear-gradient(135deg,"+r.color+","+r.color+"CC)",padding:"5px 8px",display:"flex",alignItems:"center",gap:5}}>
+        <span style={{fontSize:16}}>{r.emoji}</span>
+        <div><div style={{color:"#fff",fontWeight:900,fontSize:11,textShadow:"0 1px 2px rgba(0,0,0,0.3)"}}>{r.name}</div><div style={{color:"rgba(255,255,255,0.85)",fontSize:7,fontWeight:700}}>{isW?"首都:":"県庁:"} {r.capital}</div></div>
+      </div>
+      <div style={{padding:"2px 5px",flex:1,display:"flex",flexDirection:"column"}}>
+        {st.map(s=>{const a=hl===s.key;return(
+          <div key={s.key} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"1.5px 4px",borderRadius:6,background:a?s.color+"18":"transparent",border:a?"1.5px solid "+s.color:"1.5px solid transparent"}}>
+            <span style={{fontSize:9,display:"flex",alignItems:"center",gap:2}}><span>{s.emoji}</span><span style={{fontWeight:600,color:"#555"}}>{s.label}</span></span>
+            <ANum stat={s} val={r[s.key]} hide={hide} spin={spin}/>
+          </div>);})}
+      </div>
+    </div>);
+}
+
+/* ======= LOCATION POPUP ======= */
+function LocPopup({r,ed,onClose}){
+  if(!r)return null;
+  const isW=ed==="world";
+  const latDir=r.lat>=0?"北緯":"南緯";
+  const lngDir=r.lng>=0?"東経":"西経";
+  const latAbs=Math.abs(r.lat).toFixed(1);
+  const lngAbs=Math.abs(r.lng).toFixed(1);
+
+  // Simple position hint
+  let hint="";
+  if(isW){
+    if(Math.abs(r.lat)<10)hint="🌍 赤道に近い！→ 暑くて雨が多いかも";
+    else if(Math.abs(r.lat)<25)hint="🌍 熱帯〜亜熱帯ゾーン → 暑い地域！";
+    else if(Math.abs(r.lat)<40)hint="🌍 温帯ゾーン → 四季があるかも";
+    else if(Math.abs(r.lat)<55)hint="🌍 高緯度 → 寒い冬がありそう";
+    else hint="🌍 かなり北（南）→ すごく寒いかも！";
+  }else{
+    if(r.lat<30)hint="🗾 南の方！→ 暖かいはず";
+    else if(r.lat<35)hint="🗾 西日本あたり → 温暖な地域";
+    else if(r.lat<38)hint="🗾 関東〜中部あたり";
+    else if(r.lat<42)hint="🗾 東北あたり → 冬は寒いかも";
+    else hint="🗾 北海道！→ 日本で一番寒い";
+  }
+
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(135deg,#1a1a3e,#2d1b69)",borderRadius:20,padding:"20px 28px",maxWidth:320,color:"#fff",fontFamily:"'Zen Maru Gothic',sans-serif",boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <span style={{fontSize:28}}>{r.emoji}</span>
+          <div>
+            <div style={{fontSize:18,fontWeight:900}}>{r.name}</div>
+            <div style={{fontSize:11,opacity:0.7}}>{isW?"首都:":"県庁:"} {r.capital}</div>
+          </div>
+        </div>
+
+        <div style={{background:"rgba(255,255,255,0.08)",borderRadius:12,padding:"12px 16px",marginBottom:12}}>
+          <div style={{fontSize:11,opacity:0.5,marginBottom:4}}>📍 位置情報</div>
+          <div style={{display:"flex",gap:16}}>
+            <div>
+              <div style={{fontSize:10,opacity:0.6}}>{latDir}</div>
+              <div style={{fontSize:22,fontWeight:900,color:"#FFD700"}}>{latAbs}°</div>
+            </div>
+            <div>
+              <div style={{fontSize:10,opacity:0.6}}>{lngDir}</div>
+              <div style={{fontSize:22,fontWeight:900,color:"#74c0fc"}}>{lngAbs}°</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{background:"rgba(255,215,0,0.1)",border:"1px solid rgba(255,215,0,0.2)",borderRadius:10,padding:"8px 12px",fontSize:12,fontWeight:700,color:"#FFD700",marginBottom:14}}>
+          💡 {hint}
+        </div>
+
+        <button onClick={onClose} style={{width:"100%",padding:"10px",fontSize:14,fontWeight:800,background:"rgba(255,255,255,0.15)",color:"#fff",border:"none",borderRadius:10,cursor:"pointer"}}>とじる</button>
+      </div>
+    </div>
+  );
+}
+
+function HiLo({high}){
+  return <div style={{display:"inline-flex",alignItems:"center",gap:5,padding:"4px 14px",borderRadius:30,fontWeight:900,fontSize:14,background:high?"linear-gradient(135deg,#ff6b6b,#e03131)":"linear-gradient(135deg,#74c0fc,#1c7ed6)",color:"#fff"}}>{high?"🔺 HIGH 高い方が勝ち！":"🔻 LOW 低い方が勝ち！"}</div>;
+}
+
+function LvB({lv}){
+  const n=LVN[Math.min(lv,7)]||"???";const c=LVC[Math.min(lv,7)]||"#fff";
+  return <div style={{display:"flex",alignItems:"center",gap:4,background:c+"22",border:"2px solid "+c,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:800,color:c}}>Lv.{lv} {n}{lv>=6&&<span style={{fontSize:8,opacity:0.7}}>混合</span>}</div>;
+}
+
+/* ======= TITLE ======= */
+function Title({onStart,ed,setEd,d}){
+  const isW=ed==="world";const ac=isW?"#e94560":"#ff6b6b";const ac2=isW?"#00b4d8":"#48dbfb";
+  const lv=isW?d.worldLv:d.japanLv;const best=isW?d.worldBest:d.japanBest;
+  return(
+    <div style={{minHeight:"100vh",background:isW?"linear-gradient(135deg,#0f0c29,#302b63,#24243e)":"linear-gradient(135deg,#1a0a2e,#2d1b69,#1a1a3e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Zen Maru Gothic',sans-serif"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap');`}</style>
+      <div style={{display:"flex",background:"rgba(255,255,255,0.08)",borderRadius:14,padding:4,marginBottom:18}}>
+        {["world","japan"].map(k=><button key={k} onClick={()=>setEd(k)} style={{padding:"9px 22px",borderRadius:11,border:"none",cursor:"pointer",background:ed===k?(k==="world"?"linear-gradient(135deg,#e94560,#c23152)":"linear-gradient(135deg,#ff6b6b,#ee5a24)"):"transparent",color:"#fff",fontWeight:800,fontSize:14,opacity:ed===k?1:0.5}}>{k==="world"?"🌍 世界編":"🗾 日本編"}</button>)}
+      </div>
+      <div style={{fontSize:48,marginBottom:4}}>{isW?"🌍":"🗾"}</div>
+      <h1 style={{fontSize:28,fontWeight:900,color:"#fff",margin:0}}>気候バトルカード</h1>
+      <div style={{fontSize:16,color:ac,fontWeight:700,letterSpacing:4,marginTop:4}}>～{isW?"世界編":"都道府県編"}～</div>
+      <div style={{display:"flex",gap:10,marginTop:14,alignItems:"center"}}>
+        <LvB lv={lv}/>
+        <div style={{textAlign:"center",background:"rgba(255,255,255,0.06)",borderRadius:10,padding:"5px 12px"}}><div style={{fontSize:8,color:"rgba(255,255,255,0.5)"}}>🏆最高連勝</div><div style={{fontSize:18,fontWeight:900,color:"#FFD700"}}>{best}</div></div>
+        <div style={{textAlign:"center",background:"rgba(255,255,255,0.06)",borderRadius:10,padding:"5px 12px"}}><div style={{fontSize:8,color:"rgba(255,255,255,0.5)"}}>⭐通算勝利</div><div style={{fontSize:18,fontWeight:900,color:"#fff"}}>{d.totalWins}</div></div>
+      </div>
+      <div style={{marginTop:8,fontSize:11,color:"rgba(255,255,255,0.4)",textAlign:"center"}}>{lv<=5?"最高気温・降水量はHIGH固定":"最高気温・降水量はHIGH＆LOW混合！"}　|　先に4勝で勝ち！</div>
+      <div style={{display:"flex",gap:12,marginTop:18,flexWrap:"wrap",justifyContent:"center"}}>
+        <div style={{textAlign:"center"}}>
+          <button onClick={()=>onStart("quick")} style={{padding:"13px 28px",fontSize:15,fontWeight:800,background:"linear-gradient(135deg,"+ac+","+ac+"CC)",color:"#fff",border:"none",borderRadius:14,cursor:"pointer"}}>🎲 クイックバトル</button>
+          <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",marginTop:4}}>数値を見て選べる</div>
+        </div>
+        <div style={{textAlign:"center"}}>
+          <button onClick={()=>onStart("think")} style={{padding:"13px 28px",fontSize:15,fontWeight:800,background:"linear-gradient(135deg,"+ac2+","+ac2+"CC)",color:"#fff",border:"none",borderRadius:14,cursor:"pointer"}}>🧠 思考バトル</button>
+          <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",marginTop:4}}>数値は隠れる！知識で勝負</div>
+        </div>
+      </div>
+    </div>);
+}
+
+/* ======= BATTLE ======= */
+function Battle({mode,ed,lv,best,onBack,onEnd}){
+  const isW=ed==="world";const POOL=isW?WORLD:JAPAN;const STATS=isW?W_ST:J_ST;
+  const ac=isW?"#e94560":"#ff6b6b";const ac2=isW?"#00b4d8":"#48dbfb";
+
+  const[ph,setPh]=useState("init");
+  const[pH,setPH]=useState([]);
+  const[cH,setCH]=useState([]);
+  const[pC,setPC]=useState(null);
+  const[cC,setCC]=useState(null);
+  const[st,setSt]=useState(null);
+  const[hi,setHi]=useState(true);
+  const[pS,setPS]=useState(0);
+  const[cS,setCS]=useState(0);
+  const[rd,setRd]=useState(0);
+  const[msg,setMsg]=useState("");
+  const[tip,setTip]=useState("");
+  const[spin,setSpin]=useState(false);
+  const[streak,setStreak]=useState(0);
+  const[used,setUsed]=useState([]);
+  const[locTarget,setLocTarget]=useState(null);
+  const[bStep,setBStep]=useState(0);
+  const[pDeck,setPDeck]=useState([]); // player draw pile
+  const[cDeck,setCDeck]=useState([]); // cpu draw pile
+  const pend=useRef(null);
+  const stepTimer=useRef(null);
+
+  useEffect(()=>{
+    const all=shuffle(POOL);
+    const half=Math.floor(all.length/2);
+    const pAll=all.slice(0,half);
+    const cAll=all.slice(half);
+    setPH(pAll.slice(0,6));
+    setPDeck(pAll.slice(6));
+    setCH(cAll.slice(0,6));
+    setCDeck(cAll.slice(6));
+    setRd(1);
+    newCh([],true);
+  },[]);
+
+  function newCh(prev){
+    const av=STATS.filter(s=>!prev.includes(s.key));const p=av.length>0?av:STATS;
+    const s=p[Math.floor(Math.random()*p.length)];const h=getHiLo(s.key, lv);
+    setSt(s);setHi(h);setPC(null);setCC(null);setSpin(false);setTip("");
+    setUsed(u=>[...u,s.key]);setMsg(s.emoji+" "+s.label+"で勝負！");setPh("pickC");
+  }
+
+
+  function play(card){
+    if(ph!=="pickC")return;const cpu=cH[0];
+    // Remove played cards from hands
+    const newPH=pH.filter(c=>c.id!==card.id);
+    const newCH=cH.slice(1);
+    // Draw from deck if available
+    if(pDeck.length>0){
+      newPH.push(pDeck[0]);
+      setPDeck(d=>d.slice(1));
+    }
+    if(cDeck.length>0){
+      newCH.push(cDeck[0]);
+      setCDeck(d=>d.slice(1));
+    }
+    setPH(newPH);
+    setCH(newCH);
+    setPC(card);setCC(cpu);
+    pend.current={card,cpu};
+    setMsg("");setTip("");setSpin(false);
+    setPh("battle");
+    setBStep(1); // Step 1: show stat
+
+    // Clear any previous timers
+    if(stepTimer.current) clearTimeout(stepTimer.current);
+
+    stepTimer.current = setTimeout(()=>{
+      setBStep(2); // Step 2: player enters
+      stepTimer.current = setTimeout(()=>{
+        setBStep(3); // Step 3: cpu spin
+        setSpin(true);
+        stepTimer.current = setTimeout(()=>{
+          setSpin(false);
+          // Step 4: judge
+          const pV=card[st.key],cV=cpu[st.key];
+          const pw=hi?pV>cV:pV<cV;
+          if(pV===cV)setMsg("🤝 引き分け！");
+          else if(pw){setPS(s=>s+1);setStreak(s=>s+1);setMsg("🎉 キミの勝ち！");}
+          else{setCS(s=>s+1);setStreak(0);setMsg("😈 相手の勝ち...");}
+          const ns=[card.name,cpu.name];
+          if(isW){
+            if(st.key==="maxTemp"&&ns.includes("サウジアラビア"))setTip("🤯 リヤドは50℃超え！世界一暑い首都！");
+            else if(st.key==="minTemp"&&ns.includes("モンゴル"))setTip("🤯 ウランバートルは-40℃！世界一寒い首都！");
+            else if(st.key==="rainfall"&&ns.includes("エジプト"))setTip("🤯 カイロの雨は東京の60分の1！");
+          }else{
+            if(st.key==="rainfall"&&ns.includes("高知"))setTip("🤯 高知は日本一の雨量！東京の1.7倍！");
+            else if(st.key==="snow"&&ns.includes("沖縄"))setTip("🤯 沖縄はほぼ雪ゼロ！");
+            else if(st.key==="maxTemp"&&ns.includes("京都"))setTip("🤯 盆地の京都は猛暑！");
+          }
+          setBStep(4);
+          setPh("res");
+        },1200); // spin duration
+      },800); // after player shown
+    },800); // after stat shown
+  }
+
+
+  function next(){
+    if(stepTimer.current) clearTimeout(stepTimer.current);
+    setBStep(0);
+    if(pS>=4||cS>=4){onEnd(pS>=4,streak);setPh("end");return;}
+    setRd(r=>r+1);setSt(null);setSpin(false);
+    newCh(used);
+  }
+
+  if(ph==="end"){
+    const won=pS>=4;
+    return(
+      <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:won?"linear-gradient(135deg,#FFD700,#FFA500)":"linear-gradient(135deg,#4a6fa5,#2d3a4a)",fontFamily:"'Zen Maru Gothic',sans-serif"}}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap');`}</style>
+        <div style={{fontSize:56}}>{won?"🏆":"💪"}</div>
+        <h2 style={{color:"#fff",fontSize:24,fontWeight:900,margin:"10px 0"}}>{won?"キミの勝ち！":"残念...次こそ！"}</h2>
+        <div style={{color:"#fff",fontSize:20,fontWeight:700}}>{pS} - {cS}</div>
+        {won&&<div style={{marginTop:6}}><LvB lv={lv}/></div>}
+        {won&&<div style={{color:"#fff",fontSize:12,marginTop:4}}>→ 次は Lv.{Math.min(lv+1,7)}！</div>}
+        {streak>=2&&<div style={{color:"#fff",fontSize:12,marginTop:4}}>🔥 {streak}連勝！</div>}
+        <button onClick={onBack} style={{marginTop:18,padding:"11px 26px",fontSize:14,fontWeight:800,background:"#fff",color:"#333",border:"none",borderRadius:12,cursor:"pointer"}}>🏠 もどる</button>
+      </div>);
+  }
+
+  const cpuN=cH[0];const isRes=ph==="res";const isSpin=ph==="spin";
+
+  return(
+    <div style={{minHeight:"100vh",background:isW?"linear-gradient(180deg,#0f0c29,#1a1a3e)":"linear-gradient(180deg,#1a0a2e,#1a1a3e)",fontFamily:"'Zen Maru Gothic',sans-serif",color:"#fff",padding:"10px 6px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap');`}</style>
+
+      {/* Location popup */}
+      {locTarget&&<LocPopup r={locTarget} ed={ed} onClose={()=>setLocTarget(null)}/>}
+
+
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",maxWidth:500,marginBottom:4}}>
+        <button onClick={onBack} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",padding:"5px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:700}}>← もどる</button>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <LvB lv={lv}/>
+          {mode==="think"&&<span style={{fontSize:9,fontWeight:800,color:"#48dbfb",background:"rgba(72,219,251,0.15)",padding:"2px 8px",borderRadius:10}}>🧠思考</span>}
+        </div>
+        <div style={{fontSize:11,fontWeight:700}}>R{rd} 🃏{pDeck.length+pH.length}</div>
+      </div>
+
+      {/* Score */}
+      <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4,width:"100%",maxWidth:340}}>
+        <div style={{textAlign:"center",minWidth:36}}><div style={{fontSize:9,opacity:0.6}}>キミ</div><div style={{fontSize:20,fontWeight:900,color:ac}}>{pS}</div></div>
+        <div style={{flex:1,display:"flex",gap:3,justifyContent:"center"}}>
+          {[0,1,2,3,4,5,6].map(i=>{const pw=i<pS;const cw=i>=7-cS;
+            return <div key={i} style={{width:13,height:13,borderRadius:3,background:pw?ac:cw?ac2:"rgba(255,255,255,0.1)",border:"1.5px solid "+(pw?ac:cw?ac2:"rgba(255,255,255,0.15)")}}/>;
+          })}
+        </div>
+        <div style={{textAlign:"center",minWidth:36}}><div style={{fontSize:9,opacity:0.6}}>相手</div><div style={{fontSize:20,fontWeight:900,color:ac2}}>{cS}</div></div>
+      </div>
+      <div style={{fontSize:8,opacity:0.4,marginBottom:3}}>先に4勝した方が勝ち！</div>
+
+      {/* Streak */}
+      {streak>=2&&<div style={{marginBottom:3,background:streak>=5?"linear-gradient(135deg,#FFD700,#FFA500)":streak>=3?"linear-gradient(135deg,#ff6b6b,#e94560)":"rgba(255,255,255,0.1)",padding:"2px 10px",borderRadius:20,fontSize:10,fontWeight:800,color:streak>=3?"#fff":"#ccc"}}>🔥{streak}連勝！{streak>best&&streak>=3?" 🏅NEW!":""}</div>}
+
+      {/* Challenge banner */}
+      {/* Challenge banner - only before battle */}
+      {st&&ph==="pickC"&&(
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,background:"linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))",border:"2px solid rgba(255,255,255,0.12)",borderRadius:16,padding:"10px 24px",marginBottom:6,minWidth:280}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:32}}>{st.emoji}</span>
+            <span style={{fontSize:22,fontWeight:900,color:st.color,textShadow:"0 0 12px "+st.color+"44"}}>{st.label}</span>
+            <span style={{fontSize:14,fontWeight:700,color:"rgba(255,255,255,0.5)"}}>で勝負！</span>
+          </div>
+          <HiLo high={hi}/>
+        </div>
+      )}
+
+      {/* Battle area */}
+      {(
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:4}}>
+          {/* Cards row - only show when not in battle sequence or in pickC */}
+          {(ph==="pickC"||bStep===0)&&(
+            <div style={{display:"flex",gap:8,alignItems:"flex-start",justifyContent:"center",minHeight:210}}>
+              {pC? <Card r={pC} stats={STATS} hl={st?.key} ed={ed}/>
+                :<div style={{width:136,height:200,borderRadius:14,border:"2px dashed rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"rgba(255,255,255,0.3)"}}>カードを選ぼう</div>}
+              <div style={{display:"flex",alignItems:"center",height:200,fontSize:22,fontWeight:900}}>⚡</div>
+              {cpuN?<div style={{position:"relative"}}>
+                <Card r={cpuN} stats={STATS} hide={true} ed={ed}/>
+                <button onClick={()=>setLocTarget(cpuN)} style={{position:"absolute",bottom:4,left:"50%",transform:"translateX(-50%)",background:"rgba(255,255,255,0.15)",border:"1.5px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"3px 10px",fontSize:9,fontWeight:700,color:"#FFD700",cursor:"pointer",display:"flex",alignItems:"center",gap:3,whiteSpace:"nowrap"}}>📍ヒント</button>
+              </div>
+              :<Card ed={ed}/>}
+            </div>
+          )}
+
+          {/* === BATTLE SEQUENCE PANEL === */}
+          {bStep >= 1 && st && pC && cC && (
+            <div style={{
+              width:"100%",maxWidth:400,
+              background:"linear-gradient(180deg,rgba(0,0,0,0.4),rgba(0,0,0,0.2))",
+              border:"2px solid rgba(255,255,255,0.08)",
+              borderRadius:20,padding:"16px 20px",
+              minHeight:180,
+              display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+            }}>
+
+              {/* Step 1: Stat announcement */}
+              <div style={{
+                opacity:bStep>=1?1:0,
+                transform:bStep>=1?"scale(1)":"scale(0.5)",
+                transition:"all 0.4s cubic-bezier(0.34,1.56,0.64,1)",
+                display:"flex",flexDirection:"column",alignItems:"center",gap:6,marginBottom:bStep>=2?12:0,
+              }}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:36}}>{st.emoji}</span>
+                  <span style={{fontSize:24,fontWeight:900,color:st.color,textShadow:"0 0 16px "+st.color+"55"}}>{st.label}</span>
+                </div>
+                <HiLo high={hi}/>
+              </div>
+
+              {/* Step 2+: Player entry */}
+              {bStep >= 2 && (
+                <div style={{
+                  display:"flex",alignItems:"center",justifyContent:"center",width:"100%",gap:0,
+                }}>
+                  {/* Player side */}
+                  <div style={{
+                    flex:1,textAlign:"center",
+                    opacity:bStep>=2?1:0,
+                    transform:bStep>=2?"translateX(0)":"translateX(-40px)",
+                    transition:"all 0.5s cubic-bezier(0.34,1.56,0.64,1)",
+                  }}>
+                    <div style={{fontSize:24,marginBottom:2}}>{pC.emoji}</div>
+                    <div style={{fontSize:14,fontWeight:800,color:"#fff",marginBottom:4}}>{pC.name}</div>
+                    <div style={{
+                      fontSize: (st.key==="green"||st.key==="snow") ? 26 : 42,
+                      fontWeight:900,
+                      color: bStep===4 ? (msg.includes("キミ") ? "#FFD700" : msg.includes("引き分け") ? "#fff" : "rgba(255,255,255,0.3)") : st.color,
+                      textShadow: bStep===4 && msg.includes("キミ") ? "0 0 24px rgba(255,215,0,0.6)" : "none",
+                      transition:"all 0.4s",
+                      lineHeight:1,
+                    }}>
+                      {(st.key==="green"||st.key==="snow") ? (
+                        <span>{[0,1,2,3,4].map(i => <span key={i} style={{opacity:i<pC[st.key]?1:0.15,fontSize:24}}>{i<pC[st.key]?(st.key==="green"?"🌿":"⛄"):"·"}</span>)}</span>
+                      ) : (
+                        <span>{pC[st.key]}<span style={{fontSize:18,fontWeight:700}}>{st.unit}</span></span>
+                      )}
+                    </div>
+                    {bStep===4 && msg.includes("キミ") && <div style={{fontSize:14,fontWeight:900,color:"#FFD700",marginTop:4}}>👑 WIN!</div>}
+                    {bStep===4 && msg.includes("相手") && <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:4}}>LOSE</div>}
+                  </div>
+
+                  {/* VS divider */}
+                  <div style={{
+                    fontSize:22,fontWeight:900,color:"rgba(255,255,255,0.2)",
+                    padding:"0 8px",
+                    opacity:bStep>=3?1:0,
+                    transition:"all 0.3s",
+                  }}>VS</div>
+
+                  {/* CPU side */}
+                  <div style={{
+                    flex:1,textAlign:"center",
+                    opacity:bStep>=3?1:0,
+                    transform:bStep>=3?"translateX(0)":"translateX(40px)",
+                    transition:"all 0.5s cubic-bezier(0.34,1.56,0.64,1)",
+                  }}>
+                    <div style={{fontSize:24,marginBottom:2}}>{cC.emoji}</div>
+                    <div style={{fontSize:14,fontWeight:800,color:"#fff",marginBottom:4}}>{cC.name}</div>
+                    <div style={{
+                      fontSize: (st.key==="green"||st.key==="snow") ? 26 : 42,
+                      fontWeight:900,
+                      color: bStep===4 ? (msg.includes("相手") ? "#74c0fc" : msg.includes("引き分け") ? "#fff" : "rgba(255,255,255,0.3)") : "rgba(255,255,255,0.5)",
+                      textShadow: bStep===4 && msg.includes("相手") ? "0 0 24px rgba(116,192,252,0.6)" : "none",
+                      transition:"all 0.4s",
+                      lineHeight:1,
+                      fontFamily: bStep===3?"monospace":"inherit",
+                    }}>
+                      {bStep===3 ? (
+                        <ANum stat={st} val={cC[st.key]} hide={false} spin={true}/>
+                      ) : bStep===4 ? (
+                        (st.key==="green"||st.key==="snow") ? (
+                          <span>{[0,1,2,3,4].map(i => <span key={i} style={{opacity:i<cC[st.key]?1:0.15,fontSize:24}}>{i<cC[st.key]?(st.key==="green"?"🌿":"⛄"):"·"}</span>)}</span>
+                        ) : (
+                          <span>{cC[st.key]}<span style={{fontSize:18,fontWeight:700}}>{st.unit}</span></span>
+                        )
+                      ) : <span style={{letterSpacing:4,color:"rgba(255,255,255,0.2)"}}>???</span>}
+                    </div>
+                    {bStep===4 && msg.includes("相手") && <div style={{fontSize:14,fontWeight:900,color:"#74c0fc",marginTop:4}}>👑 WIN!</div>}
+                    {bStep===4 && msg.includes("キミ") && <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:4}}>LOSE</div>}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Result message */}
+              {bStep===4 && (
+                <div style={{
+                  marginTop:12,fontSize:20,fontWeight:900,
+                  color:msg.includes("キミ")?"#FFD700":msg.includes("相手")?"#74c0fc":"#fff",
+                  textShadow:msg.includes("キミ")?"0 0 16px rgba(255,215,0,0.4)":msg.includes("相手")?"0 0 16px rgba(116,192,252,0.4)":"none",
+                }}>{msg}</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tip */}
+      {tip&&<div style={{background:"rgba(255,215,0,0.15)",border:"1px solid rgba(255,215,0,0.3)",borderRadius:12,padding:"5px 12px",fontSize:11,fontWeight:700,maxWidth:360,textAlign:"center",marginBottom:4,color:"#FFD700"}}>{tip}</div>}
+
+      {/* Next */}
+      {isRes&&<button onClick={next} style={{padding:"9px 22px",fontSize:14,fontWeight:800,background:"linear-gradient(135deg,"+ac+","+ac+"CC)",color:"#fff",border:"none",borderRadius:12,cursor:"pointer",marginBottom:6}}>{pS>=4||cS>=4?"結果を見る →":"次のラウンド →"}</button>}
+
+      {/* Player hand */}
+      {pH.length>0&&(
+        <div style={{marginTop:2,width:"100%"}}>
+          <div style={{fontSize:11,opacity:0.6,marginBottom:4,textAlign:"center"}}>
+            {ph==="pickC"?"↓ 相手は「"+(cpuN?.emoji||"")+" "+(cpuN?.name||"")+"」！タップ！"
+              :"手札（残り"+pH.length+"枚）"}
+          </div>
+          <div style={{display:"flex",gap:6,padding:"2px 4px",justifyContent:"center",flexWrap:"wrap"}}>
+            {pH.map(c=>(
+              <div key={c.id} style={{cursor:ph==="pickC"?"pointer":"default",opacity:ph==="pickC"?1:0.8,transition:"transform 0.2s"}}
+                onMouseEnter={e=>{if(ph==="pickC")e.currentTarget.style.transform="translateY(-5px)";}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";}}>
+                <Card r={c} stats={STATS} hl={st?.key} click={ph==="pickC"?()=>play(c):undefined} ed={ed} hide={mode==="think"}/>
+              </div>))}
+          </div>
+        </div>)}
+    </div>);
+}
+
+/* ======= MAIN ======= */
+function App(){
+  const{d,up,ok}=useData();
+  const[scr,setScr]=useState("title");
+  const[mode,setMode]=useState("quick");
+  const[ed,setEd]=useState("world");
+
+  function handleEnd(won,fs){
+    if(won){up(d=>{const n={...d,totalWins:d.totalWins+1};const lk=ed==="world"?"worldLv":"japanLv";const bk=ed==="world"?"worldBest":"japanBest";n[lk]=Math.min(d[lk]+1,7);if(fs>d[bk])n[bk]=fs;return n;});}
+  }
+
+  if(!ok)return <div style={{minHeight:"100vh",background:"#0f0c29",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:16}}>読み込み中...</div>;
+
+  const lv=ed==="world"?d.worldLv:d.japanLv;
+  const best=ed==="world"?d.worldBest:d.japanBest;
+
+  if(scr==="title")return <Title ed={ed} setEd={setEd} d={d} onStart={m=>{setMode(m);setScr("battle");}}/>;
+  return <Battle key={ed+mode+Date.now()} mode={mode} ed={ed} lv={lv} best={best} onBack={()=>setScr("title")} onEnd={handleEnd}/>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+  </script>
+</body>
+</html>
