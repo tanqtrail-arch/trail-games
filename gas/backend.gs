@@ -58,9 +58,10 @@ function doPost(e) {
   var action = body.action;
   try {
     switch (action) {
-      case 'login':      return createResponse(login(body));
-      case 'saveScore':  return createResponse(saveScore(body));
-      default:           return createResponse({ error: 'Unknown action: ' + action });
+      case 'login':         return createResponse(login(body));
+      case 'registerUser':  return createResponse(registerUser(body));
+      case 'saveScore':     return createResponse(saveScore(body));
+      default:              return createResponse({ error: 'Unknown action: ' + action });
     }
   } catch (err) {
     return createResponse({ error: err.message });
@@ -80,7 +81,7 @@ function getClasses() {
   return { classes: classes };
 }
 
-// === Login / Register ===
+// === Login (registered users only) ===
 function login(body) {
   var name = (body.name || '').trim();
   var className = (body.className || '').trim();
@@ -105,16 +106,40 @@ function login(body) {
     }
   }
 
-  // Create new user
+  // User not registered — reject login
+  return { error: 'NOT_REGISTERED', message: 'このなまえは登録されていません' };
+}
+
+// === Register (admin use: add users via spreadsheet or this function) ===
+function registerUser(body) {
+  var name = (body.name || '').trim();
+  var className = (body.className || '').trim();
+  var adminKey = (body.adminKey || '');
+  if (!name || !className) return { error: 'name and className are required' };
+
+  // Simple admin protection — set ADMIN_KEY in Script Properties
+  var props = PropertiesService.getScriptProperties();
+  var expectedKey = props.getProperty('ADMIN_KEY') || '';
+  if (!expectedKey || adminKey !== expectedKey) {
+    return { error: 'UNAUTHORIZED', message: 'Admin key required' };
+  }
+
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_USERS);
+  if (!sheet) return { error: 'Users sheet not found' };
+  var data = sheet.getDataRange().getValues();
+
+  // Check if already exists
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][1] === name && data[i][2] === className) {
+      return { error: 'ALREADY_EXISTS', message: 'This user already exists' };
+    }
+  }
+
+  var now = new Date().toISOString();
   var userId = 'u_' + Utilities.getUuid().replace(/-/g, '').substring(0, 12);
   sheet.appendRow([userId, name, className, now, now, 0]);
 
-  return {
-    userId: userId,
-    name: name,
-    className: className,
-    totalAlt: 0
-  };
+  return { userId: userId, name: name, className: className, totalAlt: 0 };
 }
 
 // === Get User ===

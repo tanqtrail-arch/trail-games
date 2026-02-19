@@ -579,20 +579,27 @@ function setupLoginHandlers() {
     var name = document.getElementById('nameInput').value.trim();
     if (!selectedClass || !name) return;
     var btn = document.getElementById('loginBtn');
+    var errEl = document.getElementById('loginError');
     btn.disabled = true;
     btn.textContent = 'ログイン中...';
+    errEl.classList.add('hidden');
 
     if (TrailAPI.isConfigured()) {
       TrailAPI.login(name, selectedClass.name).then(function(user) {
         enterApp(user);
-      }).catch(function() {
-        // Fallback to local
-        enterApp({ userId: 'local_' + Date.now(), name: name, className: selectedClass.name, totalAlt: 0 });
+      }).catch(function(err) {
+        if (err.code === 'NOT_REGISTERED') {
+          errEl.textContent = 'このなまえは登録されていません。先生にかくにんしてね。';
+        } else {
+          errEl.textContent = 'ログインできませんでした。もういちどためしてね。';
+        }
+        errEl.classList.remove('hidden');
+        btn.textContent = 'にゅうしつする';
+        btn.disabled = false;
       });
     } else {
-      // Local mode
+      // Local/demo mode — allow without server
       var user = { userId: 'local_' + Date.now(), name: name, className: selectedClass.name, totalAlt: 0 };
-      // Save session locally
       try {
         localStorage.setItem('trail:session', JSON.stringify(user));
         sessionStorage.setItem('trail:session', JSON.stringify(user));

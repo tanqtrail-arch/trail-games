@@ -28,11 +28,15 @@
 
     // === Auth ===
 
-    /** Login or register */
+    /** Login (registered users only) */
     login: function(name, className) {
       return _post({ action: 'login', name: name, className: className })
         .then(function(res) {
-          if (res.error) throw new Error(res.error);
+          if (res.error) {
+            var err = new Error(res.message || res.error);
+            err.code = res.error;
+            throw err;
+          }
           _user = res;
           _saveSession(res);
           return res;
