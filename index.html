@@ -2,1057 +2,1033 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TRAIL 探究ゲームランド</title>
-<meta name="description" content="探究教室TRAILの学習ゲームポータル。思考力・理科・社会・算数・創造力を遊びながら学べるゲームが集まっています。">
-<meta property="og:title" content="TRAIL 探究ゲームランド">
-<meta property="og:description" content="あそんで まなんで 発見しよう！探究教室TRAILの学習ゲームポータル。">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="ja_JP">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TRAIL Game Pro 3</title>
+<meta name="description" content="探究教室TRAILの学習ゲームポータル">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌲</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-cream: #fef9ef;
-    --trail-green: #2d9a4e;
-    --trail-green-light: #5ec97a;
-    --trail-green-dark: #1d7a3a;
-    --sun-yellow: #ffd23f;
-    --berry-pink: #ff6b8a;
-    --text-dark: #2c3e2d;
-    --text-mid: #5a6b5c;
-    --text-light: #8a9b8c;
-    --card-white: #ffffff;
-    --sidebar-width: 280px;
-    --header-height: 56px;
+    --bg: #f0f4ff;
+    --primary: #4a7cff;
+    --primary-dark: #3a5fd9;
+    --accent: #ff6b9d;
+    --green: #4CAF50;
+    --yellow: #FFB300;
+    --text: #333;
+    --text-light: #888;
+    --card-bg: #fff;
+    --radius: 16px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: 'Zen Maru Gothic', sans-serif;
-    background: var(--bg-cream);
-    color: var(--text-dark);
+    font-family: 'M PLUS Rounded 1c', 'Zen Maru Gothic', sans-serif;
+    background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
-    overflow: hidden;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
-  /* === App Layout === */
-  .app-shell { display: flex; height: 100vh; width: 100vw; }
-
-  /* === Sidebar === */
-  .sidebar {
-    width: var(--sidebar-width);
-    height: 100vh;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fdf9 100%);
-    border-right: 1px solid rgba(45,154,78,0.12);
-    display: flex; flex-direction: column;
-    flex-shrink: 0;
-    z-index: 50;
-    transition: transform 0.3s ease;
+  /* === Login Screen === */
+  .login-screen {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #e8f0fe 0%, #f0f4ff 30%, #fff0f5 70%, #fce4ec 100%);
+    padding: 24px;
   }
-  .sidebar-header {
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid rgba(45,154,78,0.08);
+  .login-box {
+    background: white; border-radius: 24px; padding: 32px 28px;
+    max-width: 400px; width: 100%;
+    box-shadow: 0 8px 40px rgba(74,124,255,0.12), 0 2px 8px rgba(0,0,0,0.04);
     text-align: center;
-    cursor: pointer;
   }
-  .sidebar-header:hover { background: rgba(45,154,78,0.03); }
-  .sidebar-logo-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .sidebar-logo-icon { font-size: 24px; }
-  .sidebar-logo-text { font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; color: var(--trail-green); letter-spacing: 3px; }
-  .sidebar-subtitle { font-size: 11px; color: var(--text-mid); font-weight: 700; margin-top: 2px; }
+  .login-logo { font-size: 40px; margin-bottom: 4px; }
+  .login-title {
+    font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700;
+    color: var(--primary); letter-spacing: 1px;
+  }
+  .login-subtitle {
+    font-size: 11px; color: var(--text-light); margin-bottom: 24px;
+    font-weight: 700;
+  }
+  .login-section-label {
+    font-size: 13px; font-weight: 800; color: var(--text);
+    margin-bottom: 10px; text-align: left;
+  }
+  .class-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-bottom: 20px;
+  }
+  .class-btn {
+    padding: 12px 8px; border-radius: 12px; border: 2px solid #e8ecf4;
+    background: #f8faff; font-family: inherit; font-size: 12px; font-weight: 800;
+    color: var(--text); cursor: pointer; transition: all 0.2s;
+  }
+  .class-btn:hover { border-color: var(--primary); background: #eef3ff; }
+  .class-btn.selected { border-color: var(--primary); background: var(--primary); color: white; }
+  .login-input {
+    width: 100%; padding: 14px 16px; border-radius: 12px;
+    border: 2px solid #e8ecf4; font-family: inherit; font-size: 15px;
+    font-weight: 700; outline: none; transition: border 0.2s;
+    margin-bottom: 16px;
+  }
+  .login-input:focus { border-color: var(--primary); }
+  .login-input::placeholder { color: #bbb; }
+  .login-submit {
+    width: 100%; padding: 14px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg, var(--primary), #6b8fff);
+    color: white; font-family: inherit; font-size: 16px; font-weight: 800;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(74,124,255,0.3);
+  }
+  .login-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(74,124,255,0.4); }
+  .login-submit:active { transform: scale(0.98); }
+  .login-submit:disabled { opacity: 0.5; cursor: default; transform: none; }
+  .login-guest {
+    display: inline-block; margin-top: 14px; padding: 8px 16px;
+    border-radius: 10px; border: none; background: #f0f2f5;
+    font-family: inherit; font-size: 12px; font-weight: 700;
+    color: var(--text-light); cursor: pointer; transition: all 0.2s;
+  }
+  .login-guest:hover { background: #e4e8ee; color: var(--text); }
+  .login-error { color: var(--accent); font-size: 12px; font-weight: 700; margin-top: 8px; }
 
-  .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 12px; }
-  .sidebar-nav::-webkit-scrollbar { width: 4px; }
-  .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(45,154,78,0.2); border-radius: 4px; }
+  /* === Main App === */
+  .app { display: none; min-height: 100vh; padding-bottom: 70px; }
+  .app.active { display: block; }
 
-  .nav-section { margin-bottom: 18px; }
-  .nav-section-title {
-    font-size: 10px; font-weight: 900; color: var(--text-light);
-    text-transform: uppercase; letter-spacing: 2px;
-    padding: 0 10px; margin-bottom: 6px;
-  }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 12px;
-    cursor: pointer; transition: all 0.2s ease;
-    border: none; background: none; width: 100%;
-    font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 13px; font-weight: 700; color: var(--text-mid);
-    text-align: left;
-  }
-  .nav-item:hover { background: rgba(45,154,78,0.06); color: var(--text-dark); }
-  .nav-item.active { background: rgba(45,154,78,0.1); color: var(--trail-green); }
-  .nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
-  .nav-item .nav-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .nav-item .nav-badge {
-    font-size: 10px; padding: 2px 8px; border-radius: 10px;
-    background: var(--berry-pink); color: white;
-    font-family: 'Fredoka', sans-serif; font-weight: 600;
-  }
-
-  /* Category filter items */
-  .cat-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 12px; border-radius: 10px;
-    cursor: pointer; transition: all 0.2s ease;
-    border: none; background: none; width: 100%;
-    font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 12px; font-weight: 700; color: var(--text-mid);
-    text-align: left;
-  }
-  .cat-item:hover { background: rgba(45,154,78,0.06); }
-  .cat-item.active { background: var(--trail-green); color: white; border-radius: 10px; }
-  .cat-item .cat-count {
-    margin-left: auto; font-size: 11px; opacity: 0.6;
-    font-family: 'Fredoka', sans-serif;
-  }
-
-  .sidebar-footer {
-    padding: 14px 16px; border-top: 1px solid rgba(45,154,78,0.08);
-    text-align: center; font-size: 10px; color: var(--text-light);
-  }
-  .sidebar-footer .brand { color: var(--trail-green); font-weight: 900; }
-
-  /* === Main Content Area === */
-  .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-
-  /* === Top Bar === */
-  .top-bar {
-    height: var(--header-height);
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(45,154,78,0.1);
-    display: flex; align-items: center; padding: 0 20px;
-    flex-shrink: 0; z-index: 40;
-  }
-  .menu-toggle {
-    display: none; border: none; background: none; cursor: pointer;
-    font-size: 22px; padding: 6px; margin-right: 10px; border-radius: 8px;
-    color: var(--text-dark);
-  }
-  .menu-toggle:hover { background: rgba(45,154,78,0.08); }
-  .breadcrumb { display: flex; align-items: center; gap: 6px; flex: 1; }
-  .breadcrumb-item {
-    font-size: 13px; font-weight: 700; color: var(--text-mid);
-    cursor: pointer; border: none; background: none;
-    font-family: 'Zen Maru Gothic', sans-serif;
-    padding: 4px 8px; border-radius: 8px; transition: all 0.2s;
-  }
-  .breadcrumb-item:hover { background: rgba(45,154,78,0.08); color: var(--trail-green); }
-  .breadcrumb-item.current { color: var(--text-dark); cursor: default; }
-  .breadcrumb-item.current:hover { background: none; color: var(--text-dark); }
-  .breadcrumb-sep { font-size: 11px; color: var(--text-light); }
-  .top-bar-actions { display: flex; gap: 8px; align-items: center; }
-  .top-bar-btn {
-    border: none; background: rgba(45,154,78,0.08); cursor: pointer;
-    font-size: 16px; padding: 8px 12px; border-radius: 10px;
-    color: var(--text-dark); transition: all 0.2s;
-    font-family: 'Zen Maru Gothic', sans-serif; font-weight: 700; font-size: 12px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .top-bar-btn:hover { background: rgba(45,154,78,0.15); }
-  .top-bar-btn.active { background: var(--trail-green); color: white; }
-
-  /* === Content Views === */
-  .content-area { flex: 1; overflow: hidden; position: relative; }
-
-  /* --- Game List View --- */
-  .view-game-list {
-    height: 100%; overflow-y: auto;
-    padding: 0;
-  }
-  .view-game-list::-webkit-scrollbar { width: 6px; }
-  .view-game-list::-webkit-scrollbar-thumb { background: rgba(45,154,78,0.15); border-radius: 4px; }
-
-  .game-list-header {
-    padding: 28px 32px 16px;
-    background: linear-gradient(135deg, rgba(45,154,78,0.06), rgba(255,210,63,0.04));
-  }
-  .game-list-header h2 { font-size: 22px; font-weight: 900; color: var(--text-dark); }
-  .game-list-header h2 span { color: var(--trail-green); }
-  .game-list-header p { font-size: 13px; color: var(--text-mid); margin-top: 4px; }
-  .game-count-bar {
-    display: flex; align-items: center; gap: 12px; margin-top: 14px;
-    padding: 10px 16px; background: white; border-radius: 12px;
+  /* === Top Header === */
+  .top-header {
+    background: white;
+    padding: 14px 18px; display: flex; align-items: center; gap: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    position: sticky; top: 0; z-index: 50;
   }
-  .game-count-bar .count-num {
-    font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700;
-    color: var(--trail-green);
+  .user-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #6b8fff);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; font-weight: 800;
+    flex-shrink: 0;
   }
-  .game-count-bar .count-label { font-size: 12px; color: var(--text-mid); font-weight: 700; }
-
-  .game-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 18px; padding: 20px 32px 60px;
-  }
-
-  /* === Game Card === */
-  .game-card {
-    position: relative; border-radius: 18px; overflow: hidden;
-    background: var(--card-white);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
-    cursor: pointer; transition: transform 0.25s ease, box-shadow 0.25s ease;
-    animation: cardPop 0.4s ease both;
-    outline: none;
-  }
-  .game-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.10); }
-  .game-card:active { transform: scale(0.98); }
-  .game-card:focus-visible { outline: 3px solid var(--trail-green); outline-offset: 2px; }
-  @keyframes cardPop { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-  .card-visual { position: relative; height: 110px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  .card-visual .emoji-icon { font-size: 46px; position: relative; z-index: 2; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15)); animation: iconFloat 3s ease-in-out infinite; }
-  @keyframes iconFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-  .card-visual .bg-deco { position: absolute; inset: 0; }
-  .deco-wave { position: absolute; bottom: -2px; left: 0; right: 0; height: 16px; background: var(--card-white); border-radius: 16px 16px 0 0; }
-  .deco-trees { position: absolute; bottom: 0; left: 0; right: 0; font-size: 18px; text-align: center; opacity: 0.2; letter-spacing: 6px; line-height: 1; padding-bottom: 5px; }
-  .deco-dots { position: absolute; width: 100%; height: 100%; opacity: 0.3; }
-  .deco-dots::before { content: '\00B7 \00B7 \00B7 \00B7 \00B7'; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 12px; letter-spacing: 4px; color: rgba(255,255,255,0.5); white-space: nowrap; }
-
-  .card-body { padding: 12px 16px 14px; }
-  .card-tags { display: flex; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; }
-  .tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; letter-spacing: 0.3px; }
-  .card-title { font-size: 16px; font-weight: 900; margin-bottom: 4px; line-height: 1.3; }
-  .card-desc { font-size: 11.5px; color: var(--text-mid); line-height: 1.6; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .card-footer { display: flex; align-items: center; justify-content: space-between; }
-  .card-difficulty { display: flex; gap: 3px; align-items: center; }
-  .card-difficulty .label { font-size: 10px; color: var(--text-mid); margin-right: 3px; font-weight: 700; }
-  .trail-marker { width: 10px; height: 10px; border-radius: 3px; background: #e8ede9; }
-  .trail-marker.filled { background: var(--sun-yellow); box-shadow: 0 1px 3px rgba(255,210,63,0.4); }
-  .play-btn {
-    display: flex; align-items: center; gap: 4px; padding: 7px 16px;
-    border-radius: 12px; border: none; font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 12px; font-weight: 900; color: white; cursor: pointer;
-    transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.10); letter-spacing: 0.5px;
-  }
-  .play-btn:active { transform: scale(0.93); }
-  .card-best-score {
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-class { font-size: 10px; color: var(--text-light); font-weight: 700; }
+  .alt-display {
     display: flex; align-items: center; gap: 4px;
-    font-size: 10px; color: var(--sun-yellow); font-weight: 700;
-    margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f2f0;
+    background: linear-gradient(135deg, #fff8e1, #fff3c4);
+    padding: 6px 14px; border-radius: 20px;
+    font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 700;
+    color: #e6a000;
+    box-shadow: 0 1px 4px rgba(255,179,0,0.2);
+  }
+  .alt-display .alt-icon { font-size: 14px; }
+  .logout-btn {
+    border: none; background: #f5f5f5; cursor: pointer;
+    padding: 8px 12px; border-radius: 10px;
+    font-family: inherit; font-size: 11px; font-weight: 700;
+    color: var(--text-light); transition: all 0.2s;
+  }
+  .logout-btn:hover { background: #eee; color: var(--text); }
+
+  /* === Tab Bar (bottom) === */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    background: white; display: flex;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+    border-top: 1px solid #f0f0f0;
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 8px 0 10px; border: none; background: none;
+    font-family: inherit; font-size: 10px; font-weight: 700;
+    color: var(--text-light); cursor: pointer; transition: all 0.2s;
+    gap: 2px;
+  }
+  .tab-item .tab-icon { font-size: 20px; }
+  .tab-item.active { color: var(--primary); }
+  .tab-item.active .tab-icon { transform: scale(1.1); }
+
+  /* === Tab Content === */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* === Home Tab === */
+  .home-banner {
+    margin: 16px 16px 12px; padding: 20px;
+    background: linear-gradient(135deg, var(--primary), #6b8fff, #8b9fff);
+    border-radius: 18px; color: white; position: relative; overflow: hidden;
+  }
+  .home-banner::after {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+  }
+  .home-banner h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .home-banner p { font-size: 12px; opacity: 0.85; }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 18px 10px;
+  }
+  .section-header h3 { font-size: 16px; font-weight: 800; }
+  .section-header .badge {
+    font-size: 10px; font-weight: 700; padding: 3px 10px;
+    border-radius: 10px; background: var(--accent); color: white;
   }
 
-  /* Badges */
-  .badge-new {
-    position: absolute; top: 8px; right: 8px; z-index: 5;
-    font-family: 'Fredoka', sans-serif; font-size: 10px; font-weight: 700;
-    padding: 3px 10px; border-radius: 8px; background: var(--berry-pink); color: white;
-    box-shadow: 0 2px 6px rgba(255,107,138,0.3);
+  /* === Game Grid === */
+  .game-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; padding: 0 16px 20px;
   }
-  .coming-soon-badge {
-    position: absolute; top: 8px; right: 8px; z-index: 5;
-    font-family: 'Fredoka', sans-serif; font-size: 10px; font-weight: 700;
-    padding: 3px 10px; border-radius: 8px; background: #a0a8a2; color: white;
-  }
-
-  /* Themes */
-  .theme-forest .card-visual { background: linear-gradient(135deg, #c8f0d4, #a8e6b8, #8dd99c); }
-  .theme-forest .tag { background: #d4f5de; color: #1a7a3a; }
-  .theme-forest .play-btn { background: linear-gradient(135deg, #2d9a4e, #3ab85c); }
-  .theme-forest .card-title { color: #1a6b35; }
-  .theme-sunset .card-visual { background: linear-gradient(135deg, #ffe0c8, #ffc9a8, #ffb088); }
-  .theme-sunset .tag { background: #ffe8d6; color: #c45a10; }
-  .theme-sunset .play-btn { background: linear-gradient(135deg, #ff8c42, #ff6b3a); }
-  .theme-sunset .card-title { color: #b34a0a; }
-  .theme-ocean .card-visual { background: linear-gradient(135deg, #c8e8ff, #a8d8f8, #88c8f0); }
-  .theme-ocean .tag { background: #d6eeff; color: #1a6da0; }
-  .theme-ocean .play-btn { background: linear-gradient(135deg, #3a9fd5, #5cb8e6); }
-  .theme-ocean .card-title { color: #185a85; }
-  .theme-berry .card-visual { background: linear-gradient(135deg, #ffd6e0, #ffc0cf, #ffaabe); }
-  .theme-berry .tag { background: #ffe0ea; color: #c4305a; }
-  .theme-berry .play-btn { background: linear-gradient(135deg, #ff4d78, #ff6b8a); }
-  .theme-berry .card-title { color: #a82850; }
-  .theme-lavender .card-visual { background: linear-gradient(135deg, #e4d8ff, #d0c0ff, #bca8f8); }
-  .theme-lavender .tag { background: #ece4ff; color: #6a4aaf; }
-  .theme-lavender .play-btn { background: linear-gradient(135deg, #8b6fc0, #a78bfa); }
-  .theme-lavender .card-title { color: #5a3a9a; }
-  .theme-earth .card-visual { background: linear-gradient(135deg, #f0e4c8, #e8d8a8, #dcc888); }
-  .theme-earth .tag { background: #f5ecd6; color: #8b6914; }
-  .theme-earth .play-btn { background: linear-gradient(135deg, #b08a30, #c4a35a); }
-  .theme-earth .card-title { color: #6a5010; }
-  .theme-gallery .card-visual { background: linear-gradient(135deg, #f5e6c8, #e8d4a8, #d4c090); }
-  .theme-gallery .tag { background: #f7ecd8; color: #8a6520; }
-  .theme-gallery .play-btn { background: linear-gradient(135deg, #b8860b, #d4a030); }
-  .theme-gallery .card-title { color: #6b4c0a; }
-
-  .game-card.coming-soon { opacity: 0.5; }
-  .game-card.coming-soon:hover { transform: translateY(-2px); opacity: 0.55; }
-  .game-card.coming-soon .play-btn { background: #bbb !important; box-shadow: none; }
-  .game-card.coming-soon .emoji-icon { animation: none !important; }
-  .game-card.hidden { display: none; }
-
-  /* --- Game Embed View --- */
-  .view-game-embed {
-    display: none; width: 100%; height: 100%;
+  .game-card {
+    background: white; border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow); cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: cardIn 0.35s ease both;
     position: relative;
   }
-  .view-game-embed.active { display: flex; flex-direction: column; }
-  .game-embed-bar {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 20px; background: white;
-    border-bottom: 1px solid rgba(45,154,78,0.08);
+  .game-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
+  .game-card:active { transform: scale(0.97); }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .card-top {
+    height: 6px; width: 100%;
+  }
+  .card-emoji {
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px 0 8px; font-size: 40px;
+  }
+  .card-info { padding: 0 12px 12px; text-align: center; }
+  .card-name { font-size: 13px; font-weight: 800; margin-bottom: 4px; line-height: 1.3; }
+  .card-cat {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    padding: 2px 8px; border-radius: 6px; margin-bottom: 6px;
+  }
+  .card-alt {
+    font-family: 'Fredoka', sans-serif; font-size: 11px;
+    color: var(--yellow); font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .card-play-btn {
+    width: 100%; padding: 8px; border: none; border-radius: 10px;
+    font-family: inherit; font-size: 11px; font-weight: 800;
+    color: white; cursor: pointer;
+  }
+  .game-card.coming-soon { opacity: 0.45; pointer-events: none; }
+  .game-card.coming-soon .card-play-btn { background: #ccc !important; }
+  .game-card .badge-new {
+    position: absolute; top: 10px; right: 8px;
+    font-size: 9px; font-weight: 700; padding: 2px 8px;
+    border-radius: 6px; background: var(--accent); color: white;
+  }
+  .game-card .badge-soon {
+    position: absolute; top: 10px; right: 8px;
+    font-size: 9px; font-weight: 700; padding: 2px 8px;
+    border-radius: 6px; background: #aaa; color: white;
+  }
+
+  /* === Ranking Tab === */
+  .ranking-header {
+    text-align: center; padding: 24px 16px 16px;
+  }
+  .ranking-header h2 { font-size: 20px; font-weight: 800; }
+  .ranking-header p { font-size: 12px; color: var(--text-light); }
+  .ranking-filters {
+    display: flex; gap: 6px; padding: 0 16px 12px;
+    overflow-x: auto; -webkit-mask-image: linear-gradient(to right, black 92%, transparent);
+  }
+  .ranking-filters::-webkit-scrollbar { display: none; }
+  .rank-filter-btn {
+    flex-shrink: 0; padding: 7px 14px; border-radius: 20px;
+    border: 2px solid #e8ecf4; background: white;
+    font-family: inherit; font-size: 11px; font-weight: 700;
+    color: var(--text-light); cursor: pointer; transition: all 0.2s;
+  }
+  .rank-filter-btn.active {
+    border-color: var(--primary); background: var(--primary); color: white;
+  }
+  .ranking-list { padding: 0 16px 20px; }
+  .rank-item {
+    display: flex; align-items: center; gap: 12px;
+    background: white; border-radius: 14px; padding: 12px 16px;
+    margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  }
+  .rank-num {
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
+    width: 32px; text-align: center; flex-shrink: 0;
+  }
+  .rank-num.gold { color: #FFB300; }
+  .rank-num.silver { color: #90A4AE; }
+  .rank-num.bronze { color: #A1887F; }
+  .rank-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #e8f0fe, #d0dcf8);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: var(--primary);
     flex-shrink: 0;
   }
-  .game-embed-bar .back-btn {
-    border: none; background: rgba(45,154,78,0.08); cursor: pointer;
-    padding: 7px 14px; border-radius: 10px;
-    font-family: 'Zen Maru Gothic', sans-serif; font-size: 12px; font-weight: 700;
-    color: var(--trail-green); transition: all 0.2s;
-    display: flex; align-items: center; gap: 4px;
-  }
-  .game-embed-bar .back-btn:hover { background: rgba(45,154,78,0.15); }
-  .game-embed-bar .game-title {
-    font-size: 15px; font-weight: 900; color: var(--text-dark);
-    flex: 1; display: flex; align-items: center; gap: 8px;
-  }
-  .game-embed-bar .game-title .game-emoji { font-size: 20px; }
-  .game-embed-bar .fullscreen-btn {
-    border: none; background: rgba(45,154,78,0.08); cursor: pointer;
-    padding: 7px 12px; border-radius: 10px;
-    font-size: 16px; transition: all 0.2s;
-  }
-  .game-embed-bar .fullscreen-btn:hover { background: rgba(45,154,78,0.15); }
-  .game-iframe-wrap { flex: 1; position: relative; overflow: hidden; }
-  .game-iframe-wrap iframe {
-    width: 100%; height: 100%; border: none;
-    background: var(--bg-cream);
-  }
-  .game-loading-overlay {
-    position: absolute; inset: 0; display: flex;
-    flex-direction: column; align-items: center; justify-content: center;
-    background: var(--bg-cream); z-index: 10;
-    transition: opacity 0.3s ease;
-  }
-  .game-loading-overlay.hidden { opacity: 0; pointer-events: none; }
-  .loading-spinner { font-size: 48px; animation: spin 1.5s ease-in-out infinite; }
-  @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
-  .loading-text { font-size: 14px; font-weight: 700; color: var(--text-mid); margin-top: 12px; }
-
-  /* --- Dashboard View --- */
-  .view-dashboard {
-    display: none; height: 100%; overflow-y: auto; padding: 28px 32px 60px;
-  }
-  .view-dashboard.active { display: block; }
-  .view-dashboard::-webkit-scrollbar { width: 6px; }
-  .view-dashboard::-webkit-scrollbar-thumb { background: rgba(45,154,78,0.15); border-radius: 4px; }
-
-  .dash-header { margin-bottom: 24px; }
-  .dash-header h2 { font-size: 22px; font-weight: 900; }
-  .dash-header h2 span { color: var(--trail-green); }
-  .dash-header p { font-size: 13px; color: var(--text-mid); margin-top: 4px; }
-
-  .dash-stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 14px; margin-bottom: 28px;
-  }
-  .stat-card {
-    background: white; border-radius: 14px; padding: 18px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
-    text-align: center;
-  }
-  .stat-card .stat-icon { font-size: 28px; margin-bottom: 6px; }
-  .stat-card .stat-value {
-    font-family: 'Fredoka', sans-serif; font-size: 30px; font-weight: 700;
-    color: var(--trail-green);
-  }
-  .stat-card .stat-label { font-size: 11px; color: var(--text-mid); font-weight: 700; margin-top: 2px; }
-
-  .dash-section { margin-bottom: 28px; }
-  .dash-section h3 {
-    font-size: 15px; font-weight: 900; color: var(--text-dark);
-    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
-  }
-  .history-list { display: flex; flex-direction: column; gap: 8px; }
-  .history-item {
-    display: flex; align-items: center; gap: 12px;
-    background: white; border-radius: 12px; padding: 12px 16px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-    cursor: pointer; transition: all 0.2s;
-  }
-  .history-item:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-  .history-item .h-emoji { font-size: 24px; }
-  .history-item .h-info { flex: 1; }
-  .history-item .h-title { font-size: 13px; font-weight: 900; }
-  .history-item .h-time { font-size: 10px; color: var(--text-light); }
-  .history-item .h-score {
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-name { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-class { font-size: 10px; color: var(--text-light); }
+  .rank-score {
     font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
-    color: var(--trail-green);
+    color: var(--primary); flex-shrink: 0;
   }
-  .empty-history {
-    text-align: center; padding: 30px; color: var(--text-light);
+  .ranking-empty {
+    text-align: center; padding: 40px; color: var(--text-light);
     font-size: 13px; font-weight: 700;
   }
-  .empty-history .empty-emoji { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+  .ranking-empty .empty-icon { font-size: 40px; margin-bottom: 8px; opacity: 0.4; }
 
-  /* === Empty State === */
-  .empty-state {
-    text-align: center; padding: 40px 20px;
-    color: var(--text-mid); font-size: 14px; font-weight: 700;
-    grid-column: 1 / -1;
+  /* === ALT History Tab === */
+  .history-header {
+    text-align: center; padding: 24px 16px 16px;
   }
-  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .history-header h2 { font-size: 20px; font-weight: 800; }
+  .history-total-alt {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 8px 0 16px;
+    font-family: 'Fredoka', sans-serif; font-size: 32px; font-weight: 700;
+    color: #e6a000;
+  }
+  .history-list { padding: 0 16px 20px; }
+  .history-item {
+    display: flex; align-items: center; gap: 12px;
+    background: white; border-radius: 14px; padding: 12px 16px;
+    margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  }
+  .hist-emoji { font-size: 24px; flex-shrink: 0; }
+  .hist-info { flex: 1; min-width: 0; }
+  .hist-title { font-size: 13px; font-weight: 800; }
+  .hist-time { font-size: 10px; color: var(--text-light); }
+  .hist-alt {
+    font-family: 'Fredoka', sans-serif; font-size: 16px; font-weight: 700;
+    color: var(--green); flex-shrink: 0;
+  }
+
+  /* === Game Embed View === */
+  .game-embed-view {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: white; flex-direction: column;
+  }
+  .game-embed-view.active { display: flex; }
+  .embed-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; background: white;
+    border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
+  }
+  .embed-back {
+    border: none; background: #f0f2f5; cursor: pointer;
+    padding: 8px 14px; border-radius: 10px;
+    font-family: inherit; font-size: 12px; font-weight: 700;
+    color: var(--text); transition: all 0.2s;
+  }
+  .embed-back:hover { background: #e4e8ee; }
+  .embed-title { font-size: 14px; font-weight: 800; flex: 1; display: flex; align-items: center; gap: 6px; }
+  .embed-fullscreen {
+    border: none; background: #f0f2f5; cursor: pointer;
+    padding: 8px 12px; border-radius: 10px; font-size: 16px;
+  }
+  .embed-iframe-wrap { flex: 1; position: relative; }
+  .embed-iframe-wrap iframe { width: 100%; height: 100%; border: none; }
+  .embed-loading {
+    position: absolute; inset: 0; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    background: var(--bg); z-index: 5; transition: opacity 0.3s;
+  }
+  .embed-loading.hidden { opacity: 0; pointer-events: none; }
+  .embed-loading .spinner { font-size: 48px; animation: spin 1.5s ease-in-out infinite; }
+  @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+  .embed-loading .loading-text { font-size: 13px; font-weight: 700; color: var(--text-light); margin-top: 10px; }
 
   /* === Toast === */
-  .toast-msg {
-    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-    background: white; color: var(--text-dark); padding: 14px 26px; border-radius: 18px;
-    font-size: 14px; font-weight: 700; z-index: 999;
-    border: 2px solid var(--trail-green-light);
-    box-shadow: 0 6px 24px rgba(45,154,78,0.15);
-    animation: toastUp 0.3s ease, toastDown 0.3s ease 2s forwards;
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: white; padding: 12px 24px; border-radius: 14px;
+    font-size: 13px; font-weight: 700; z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2s forwards;
   }
-  @keyframes toastUp { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-  @keyframes toastDown { from{opacity:1} to{opacity:0;transform:translateX(-50%) translateY(16px)} }
+  @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  @keyframes toastOut { to{opacity:0;transform:translateX(-50%) translateY(12px)} }
 
-  /* === Mobile Overlay === */
-  .sidebar-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.3); z-index: 45;
+  /* === ALT Popup === */
+  .alt-popup {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: white; border-radius: 24px; padding: 28px 32px;
+    text-align: center; z-index: 200;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+    animation: popIn 0.3s ease;
+  }
+  .alt-popup-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+    z-index: 199; animation: fadeIn 0.2s ease;
+  }
+  @keyframes popIn { from{opacity:0;transform:translate(-50%,-50%) scale(0.9)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .alt-popup .alt-earned {
+    font-family: 'Fredoka', sans-serif; font-size: 48px; font-weight: 700;
+    color: var(--green); margin: 12px 0;
+  }
+  .alt-popup .alt-label { font-size: 14px; font-weight: 800; color: var(--text); }
+  .alt-popup .alt-close {
+    margin-top: 16px; padding: 10px 32px; border-radius: 12px;
+    border: none; background: var(--primary); color: white;
+    font-family: inherit; font-size: 14px; font-weight: 800;
+    cursor: pointer;
   }
 
-  /* === Mobile Responsive === */
-  @media (max-width: 768px) {
-    :root { --sidebar-width: 260px; }
-    .sidebar {
-      position: fixed; left: 0; top: 0; bottom: 0;
-      transform: translateX(-100%); z-index: 50;
-      box-shadow: 4px 0 24px rgba(0,0,0,0.1);
-    }
-    .sidebar.open { transform: translateX(0); }
-    .sidebar-overlay.open { display: block; }
-    .menu-toggle { display: block; }
-    .game-grid { grid-template-columns: 1fr; padding: 16px; gap: 14px; }
-    .game-list-header { padding: 20px 16px 12px; }
-    .view-dashboard { padding: 20px 16px 60px; }
-    .dash-stats { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 480px) {
-    .game-embed-bar .game-title { font-size: 13px; }
-  }
+  /* Hidden helper */
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
 
-<div class="app-shell">
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header" onclick="showView('games')">
-      <div class="sidebar-logo-row">
-        <span class="sidebar-logo-icon">🌲</span>
-        <span class="sidebar-logo-text">TRAIL</span>
-        <span class="sidebar-logo-icon">🌲</span>
-      </div>
-      <div class="sidebar-subtitle">探究ゲームランド</div>
+<!-- ===== Login Screen ===== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🌲</div>
+    <div class="login-title">TRAIL Game Pro 3</div>
+    <div class="login-subtitle">探究教室 TRAIL ゲームポータル</div>
+
+    <div class="login-section-label">にゅうしつ クラスをえらんでね</div>
+    <div class="class-grid" id="classGrid"></div>
+
+    <div class="login-section-label">なまえ</div>
+    <input class="login-input" id="nameInput" type="text" placeholder="なまえを入力" maxlength="20" autocomplete="off">
+
+    <button class="login-submit" id="loginBtn" disabled>にゅうしつする</button>
+    <div class="login-error hidden" id="loginError"></div>
+
+    <button class="login-guest" id="guestBtn">なまえなしであそぶ</button>
+  </div>
+</div>
+
+<!-- ===== Main App ===== -->
+<div class="app" id="mainApp">
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="user-avatar" id="userAvatar"></div>
+    <div class="user-info">
+      <div class="user-name" id="userName"></div>
+      <div class="user-class" id="userClass"></div>
+    </div>
+    <div class="alt-display">
+      <span class="alt-icon">ALT</span>
+      <span id="altCount">0</span>
+    </div>
+    <button class="logout-btn" id="logoutBtn">ログアウト</button>
+  </div>
+
+  <!-- Tab Contents -->
+  <div class="tab-content active" id="tabHome">
+    <div class="home-banner">
+      <h2 id="bannerGreeting">ようこそ！</h2>
+      <p>ゲームであそんでALTをためよう！</p>
     </div>
 
-    <nav class="sidebar-nav" id="sidebarNav">
-      <div class="nav-section">
-        <div class="nav-section-title">メニュー</div>
-        <button class="nav-item active" data-view="games" onclick="showView('games')">
-          <span class="nav-icon">🎮</span>
-          <span class="nav-label">ゲーム一覧</span>
-        </button>
-        <button class="nav-item" data-view="dashboard" onclick="showView('dashboard')">
-          <span class="nav-icon">📊</span>
-          <span class="nav-label">ダッシュボード</span>
-        </button>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-section-title">カテゴリ</div>
-        <div id="categoryNav"></div>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-section-title">ゲーム</div>
-        <div id="gameNav"></div>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
-      <span class="brand">探究教室 TRAIL</span> &middot; あそんで まなんで 発見しよう！
+    <div class="section-header">
+      <h3>GAMES</h3>
+      <span class="badge" id="gameCountBadge">0</span>
     </div>
-  </aside>
+    <div class="game-grid" id="gameGrid"></div>
 
-  <!-- Sidebar mobile overlay -->
-  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <div class="section-header hidden" id="comingSoonHeader">
+      <h3>COMING SOON</h3>
+    </div>
+    <div class="game-grid" id="comingSoonGrid"></div>
+  </div>
 
-  <!-- Main Area -->
-  <div class="main-area">
-    <!-- Top Bar -->
-    <div class="top-bar">
-      <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
-      <div class="breadcrumb" id="breadcrumb">
-        <button class="breadcrumb-item current">🌲 ゲーム一覧</button>
-      </div>
-      <div class="top-bar-actions">
-        <button class="top-bar-btn" onclick="showView('dashboard')" title="ダッシュボード">📊 きろく</button>
+  <div class="tab-content" id="tabRanking">
+    <div class="ranking-header">
+      <h2>ランキング</h2>
+      <p>みんなのベストスコア</p>
+    </div>
+    <div class="ranking-filters" id="rankFilters"></div>
+    <div class="ranking-list" id="rankingList"></div>
+  </div>
+
+  <div class="tab-content" id="tabGames">
+    <div class="section-header">
+      <h3>すべてのゲーム</h3>
+    </div>
+    <div class="ranking-filters" id="catFilters"></div>
+    <div class="game-grid" id="allGamesGrid"></div>
+  </div>
+
+  <div class="tab-content" id="tabHistory">
+    <div class="history-header">
+      <h2>ALT りれき</h2>
+      <div class="history-total-alt">
+        <span>ALT</span>
+        <span id="historyTotalAlt">0</span>
       </div>
     </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
 
-    <!-- Content Area -->
-    <div class="content-area">
-      <!-- Game List View -->
-      <div class="view-game-list" id="viewGameList">
-        <div class="game-list-header">
-          <h2>🌲 <span>探究</span>ゲームランド</h2>
-          <p>あそんで まなんで 発見しよう！</p>
-          <div class="game-count-bar">
-            <div class="count-num" id="visibleCount">0</div>
-            <div class="count-label" id="countLabel"></div>
-          </div>
-        </div>
-        <div class="game-grid" id="gameGrid"></div>
-      </div>
+  <!-- Bottom Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-item active" data-tab="tabHome">
+      <span class="tab-icon">🏠</span> HOME
+    </button>
+    <button class="tab-item" data-tab="tabRanking">
+      <span class="tab-icon">🏆</span> ランキング
+    </button>
+    <button class="tab-item" data-tab="tabGames">
+      <span class="tab-icon">🎮</span> ゲーム
+    </button>
+    <button class="tab-item" data-tab="tabHistory">
+      <span class="tab-icon">📋</span> ALT履歴
+    </button>
+  </div>
+</div>
 
-      <!-- Game Embed View -->
-      <div class="view-game-embed" id="viewGameEmbed">
-        <div class="game-embed-bar">
-          <button class="back-btn" onclick="showView('games')">← もどる</button>
-          <div class="game-title">
-            <span class="game-emoji" id="embedGameEmoji"></span>
-            <span id="embedGameTitle"></span>
-          </div>
-          <button class="fullscreen-btn" onclick="toggleFullscreen()" title="フルスクリーン">⛶</button>
-        </div>
-        <div class="game-iframe-wrap">
-          <div class="game-loading-overlay" id="gameLoading">
-            <div class="loading-spinner">🌲</div>
-            <div class="loading-text">ゲームを読み込み中...</div>
-          </div>
-          <iframe id="gameIframe" sandbox="allow-scripts allow-same-origin allow-popups" title="ゲーム"></iframe>
-        </div>
-      </div>
-
-      <!-- Dashboard View -->
-      <div class="view-dashboard" id="viewDashboard">
-        <div class="dash-header">
-          <h2>📊 <span>きみの</span>きろく</h2>
-          <p>これまでのプレイ記録と成績をチェック！</p>
-        </div>
-        <div class="dash-stats" id="dashStats"></div>
-        <div class="dash-section">
-          <h3>🕐 さいきんのプレイ</h3>
-          <div class="history-list" id="historyList"></div>
-        </div>
-        <div class="dash-section">
-          <h3>🏆 ベストスコア</h3>
-          <div class="history-list" id="bestScoreList"></div>
-        </div>
-      </div>
+<!-- ===== Game Embed ===== -->
+<div class="game-embed-view" id="gameEmbed">
+  <div class="embed-header">
+    <button class="embed-back" id="embedBack">← もどる</button>
+    <div class="embed-title">
+      <span id="embedEmoji"></span>
+      <span id="embedTitle"></span>
     </div>
+    <button class="embed-fullscreen" id="embedFullscreen" title="フルスクリーン">⛶</button>
+  </div>
+  <div class="embed-iframe-wrap">
+    <div class="embed-loading" id="embedLoading">
+      <div class="spinner">🌲</div>
+      <div class="loading-text">よみこみ中...</div>
+    </div>
+    <iframe id="embedIframe" sandbox="allow-scripts allow-same-origin allow-popups" title="ゲーム"></iframe>
   </div>
 </div>
 
 <script src="shared/game-registry.js"></script>
+<script src="shared/trail-api.js"></script>
 <script>
-// =====================================================
-// TRAIL SaaS App Shell
-// =====================================================
+// =============================================================
+// TRAIL Game Pro 3 - Main Application
+// =============================================================
 
 var games = TRAIL_GAMES;
 var categories = TRAIL_CATEGORIES;
-var currentView = 'games';
-var currentCategory = 'all';
+var classes = TRAIL_CLASSES;
+var currentUser = null;
+var currentTab = 'tabHome';
 var currentGame = null;
+var rankingGameFilter = null;
+var catFilter = 'all';
 
-// === Init ===
+// =====================
+// GAS URL Configuration
+// =====================
+// Uncomment and set your GAS deployment URL:
+// TrailAPI.configure('https://script.google.com/macros/s/YOUR_ID/exec');
+
+// =====================
+// Init
+// =====================
 (function init() {
-  renderCategoryNav();
-  renderGameNav();
-  renderGameGrid();
-  filterCards('all');
-  renderDashboard();
+  renderClassGrid();
+  setupLoginHandlers();
+  setupTabBar();
+  setupEmbedHandlers();
   listenForGameMessages();
+
+  // Auto-login from session
+  var saved = TrailAPI.currentUser();
+  if (saved && saved.name) {
+    enterApp(saved);
+  }
 })();
 
-// === Sidebar Category Nav ===
-function renderCategoryNav() {
-  var container = document.getElementById('categoryNav');
-  var html = '';
-  categories.forEach(function(cat) {
-    var count = cat.id === 'all'
-      ? games.filter(function(g) { return !g.comingSoon; }).length
-      : games.filter(function(g) { return g.category === cat.id && !g.comingSoon; }).length;
-    html += '<button class="cat-item' + (cat.id === 'all' ? ' active' : '') + '" data-cat="' + cat.id + '" onclick="filterByCategory(\'' + cat.id + '\')">'
-          + cat.label
-          + '<span class="cat-count">' + count + '</span>'
-          + '</button>';
-  });
-  container.innerHTML = html;
-}
+// =====================
+// Login
+// =====================
+var selectedClass = null;
 
-// === Sidebar Game Quick Nav ===
-function renderGameNav() {
-  var container = document.getElementById('gameNav');
-  var playable = games.filter(function(g) { return !g.comingSoon && g.url; });
-  var html = '';
-  playable.forEach(function(game) {
-    html += '<button class="nav-item" data-game="' + game.id + '" onclick="launchGame(\'' + game.id + '\')">'
-          + '<span class="nav-icon">' + game.emoji + '</span>'
-          + '<span class="nav-label">' + game.title + '</span>'
-          + '</button>';
-  });
-  container.innerHTML = html;
-}
-
-// === Game Grid ===
-function renderGameGrid() {
-  var grid = document.getElementById('gameGrid');
+function renderClassGrid() {
+  var grid = document.getElementById('classGrid');
   grid.innerHTML = '';
-  games.forEach(function(game, idx) {
-    var card = document.createElement('div');
-    card.className = 'game-card theme-' + game.theme + (game.comingSoon ? ' coming-soon' : '');
-    card.dataset.cat = game.category;
-    card.dataset.id = game.id;
-    card.style.animationDelay = (idx * 0.04) + 's';
-    card.setAttribute('tabindex', '0');
-    card.setAttribute('role', 'link');
-    card.setAttribute('aria-label', game.title + (game.comingSoon ? '（準備中）' : ''));
-
-    var badge = '';
-    if (game.isNew && !game.comingSoon) badge = '<div class="badge-new">NEW!</div>';
-    else if (game.comingSoon) badge = '<div class="coming-soon-badge">準備中</div>';
-
-    var deco = game.decoType === 'trees'
-      ? '<div class="deco-trees">' + (game.decoContent || '') + '</div>'
-      : '<div class="deco-dots"></div>';
-
-    var markers = '';
-    for (var i = 1; i <= 5; i++) {
-      markers += '<div class="trail-marker' + (i <= game.difficulty ? ' filled' : '') + '"></div>';
-    }
-
-    var tagsHtml = game.tags.map(function(t) { return '<span class="tag">' + t + '</span>'; }).join('');
-    var btnText = game.comingSoon ? '🔒 準備中' : '▶ あそぶ！';
-
-    // Best score display
-    var bestHtml = '';
-    var best = getBestScore(game.id);
-    if (best) {
-      bestHtml = '<div class="card-best-score">🏆 ベスト: ' + best.score + '点</div>';
-    }
-
-    card.innerHTML =
-      badge +
-      '<div class="card-visual">' +
-        '<div class="bg-deco">' + deco + '</div>' +
-        '<div class="deco-wave"></div>' +
-        '<div class="emoji-icon">' + game.emoji + '</div>' +
-      '</div>' +
-      '<div class="card-body">' +
-        '<div class="card-tags">' + tagsHtml + '</div>' +
-        '<div class="card-title">' + game.title + '</div>' +
-        '<div class="card-desc">' + game.desc + '</div>' +
-        '<div class="card-footer">' +
-          '<div class="card-difficulty"><span class="label">むずかしさ</span>' + markers + '</div>' +
-          '<button class="play-btn">' + btnText + '</button>' +
-        '</div>' +
-        bestHtml +
-      '</div>';
-
-    card.addEventListener('click', function() { launchGame(game.id); });
-    card.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); launchGame(game.id); }
+  classes.forEach(function(cls) {
+    var btn = document.createElement('button');
+    btn.className = 'class-btn';
+    btn.textContent = cls.name;
+    btn.dataset.id = cls.id;
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.class-btn').forEach(function(b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      selectedClass = cls;
+      checkLoginReady();
     });
-
-    grid.appendChild(card);
+    grid.appendChild(btn);
   });
 }
 
-// === Filter ===
-function filterByCategory(cat) {
-  currentCategory = cat;
-
-  // Update sidebar active state
-  var catItems = document.querySelectorAll('.cat-item');
-  catItems.forEach(function(item) {
-    item.classList.toggle('active', item.dataset.cat === cat);
-  });
-
-  filterCards(cat);
-  if (currentView !== 'games') showView('games');
-  closeSidebar();
+function checkLoginReady() {
+  var name = document.getElementById('nameInput').value.trim();
+  document.getElementById('loginBtn').disabled = !(selectedClass && name.length > 0);
 }
 
-function filterCards(cat) {
-  var cards = document.querySelectorAll('.game-card');
-  var playable = 0, comingSoonCount = 0, totalVisible = 0;
+function setupLoginHandlers() {
+  document.getElementById('nameInput').addEventListener('input', checkLoginReady);
 
-  cards.forEach(function(card) {
-    if (cat === 'all' || card.dataset.cat === cat) {
-      card.classList.remove('hidden');
-      totalVisible++;
-      var game = games.find(function(g) { return g.id === card.dataset.id; });
-      if (game && !game.comingSoon) playable++;
-      else comingSoonCount++;
+  document.getElementById('loginBtn').addEventListener('click', function() {
+    var name = document.getElementById('nameInput').value.trim();
+    if (!selectedClass || !name) return;
+    var btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = 'ログイン中...';
+
+    if (TrailAPI.isConfigured()) {
+      TrailAPI.login(name, selectedClass.name).then(function(user) {
+        enterApp(user);
+      }).catch(function() {
+        // Fallback to local
+        enterApp({ userId: 'local_' + Date.now(), name: name, className: selectedClass.name, totalAlt: 0 });
+      });
     } else {
-      card.classList.add('hidden');
+      // Local mode
+      var user = { userId: 'local_' + Date.now(), name: name, className: selectedClass.name, totalAlt: 0 };
+      // Save session locally
+      try {
+        localStorage.setItem('trail:session', JSON.stringify(user));
+        sessionStorage.setItem('trail:session', JSON.stringify(user));
+      } catch(e) {}
+      enterApp(user);
     }
   });
 
-  document.getElementById('visibleCount').textContent = totalVisible;
-  var countLabel = document.getElementById('countLabel');
+  document.getElementById('guestBtn').addEventListener('click', function() {
+    enterApp({ userId: 'guest', name: 'ゲスト', className: '', totalAlt: 0 });
+  });
 
-  // Remove old empty state
-  var oldEmpty = document.getElementById('emptyState');
-  if (oldEmpty) oldEmpty.remove();
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    TrailAPI.logout();
+    currentUser = null;
+    document.getElementById('mainApp').classList.remove('active');
+    document.getElementById('loginScreen').style.display = '';
+    document.getElementById('loginBtn').textContent = 'にゅうしつする';
+    document.getElementById('loginBtn').disabled = true;
+    document.getElementById('nameInput').value = '';
+    selectedClass = null;
+    document.querySelectorAll('.class-btn').forEach(function(b) { b.classList.remove('selected'); });
+  });
+}
 
-  if (totalVisible === 0) {
-    countLabel.textContent = '';
-    var grid = document.getElementById('gameGrid');
-    var el = document.createElement('div');
-    el.className = 'empty-state'; el.id = 'emptyState';
-    el.innerHTML = '<div class="empty-icon">🌿</div><div>このカテゴリのゲームは<br>まだないよ。おたのしみに！</div>';
-    grid.appendChild(el);
-  } else if (comingSoonCount > 0 && playable > 0) {
-    countLabel.textContent = 'つのゲーム！（' + playable + 'つあそべる・' + comingSoonCount + 'つ準備中）';
-  } else if (playable === 0) {
-    countLabel.textContent = 'つのゲームが準備中 🚧';
+function enterApp(user) {
+  currentUser = user;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').classList.add('active');
+
+  // Set user info
+  document.getElementById('userAvatar').textContent = (user.name || '?')[0];
+  document.getElementById('userName').textContent = user.name;
+  document.getElementById('userClass').textContent = user.className || '';
+  document.getElementById('altCount').textContent = user.totalAlt || 0;
+  document.getElementById('bannerGreeting').textContent = user.name + 'さん、ようこそ！';
+
+  renderAllViews();
+}
+
+// =====================
+// Tab Bar
+// =====================
+function setupTabBar() {
+  document.querySelectorAll('.tab-item').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      switchTab(tab.dataset.tab);
+    });
+  });
+}
+
+function switchTab(tabId) {
+  currentTab = tabId;
+  document.querySelectorAll('.tab-item').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.tab === tabId);
+  });
+  document.querySelectorAll('.tab-content').forEach(function(c) {
+    c.classList.toggle('active', c.id === tabId);
+  });
+
+  if (tabId === 'tabRanking') renderRankings();
+  if (tabId === 'tabHistory') renderHistory();
+  if (tabId === 'tabGames') renderAllGames();
+}
+
+// =====================
+// Render Views
+// =====================
+function renderAllViews() {
+  renderHomeGames();
+  renderRankingFilters();
+  renderCatFilters();
+}
+
+function renderHomeGames() {
+  var grid = document.getElementById('gameGrid');
+  var comingGrid = document.getElementById('comingSoonGrid');
+  var comingHeader = document.getElementById('comingSoonHeader');
+  grid.innerHTML = '';
+  comingGrid.innerHTML = '';
+
+  var playable = games.filter(function(g) { return !g.comingSoon && g.url; });
+  var coming = games.filter(function(g) { return g.comingSoon; });
+
+  document.getElementById('gameCountBadge').textContent = playable.length;
+
+  playable.forEach(function(game, idx) {
+    grid.appendChild(createGameCard(game, idx));
+  });
+
+  if (coming.length > 0) {
+    comingHeader.classList.remove('hidden');
+    coming.forEach(function(game, idx) {
+      comingGrid.appendChild(createGameCard(game, idx));
+    });
   } else {
-    countLabel.textContent = 'つのゲームであそべるよ！🚩';
+    comingHeader.classList.add('hidden');
   }
 }
 
-// === Launch Game ===
+function createGameCard(game, idx) {
+  var card = document.createElement('div');
+  card.className = 'game-card' + (game.comingSoon ? ' coming-soon' : '');
+  card.style.animationDelay = (idx * 0.04) + 's';
+
+  var catLabel = game.tags[0] || '';
+  var catColor = game.color || '#4a7cff';
+
+  var badge = '';
+  if (game.isNew && !game.comingSoon) badge = '<div class="badge-new">NEW</div>';
+  else if (game.comingSoon) badge = '<div class="badge-soon">準備中</div>';
+
+  card.innerHTML =
+    badge +
+    '<div class="card-top" style="background:' + catColor + '"></div>' +
+    '<div class="card-emoji">' + game.emoji + '</div>' +
+    '<div class="card-info">' +
+      '<div class="card-name">' + game.title + '</div>' +
+      '<div class="card-cat" style="background:' + catColor + '18;color:' + catColor + '">' + catLabel + '</div>' +
+      '<div class="card-alt">ALT +' + (game.altReward || 10) + '</div>' +
+      '<button class="card-play-btn" style="background:' + catColor + '">' +
+        (game.comingSoon ? '準備中' : 'タップでプレイ') +
+      '</button>' +
+    '</div>';
+
+  if (!game.comingSoon) {
+    card.addEventListener('click', function() { launchGame(game.id); });
+  }
+  return card;
+}
+
+// =====================
+// Game Launch
+// =====================
 function launchGame(gameId) {
   var game = games.find(function(g) { return g.id === gameId; });
-  if (!game) return;
+  if (!game || !game.url) return;
 
-  if (game.comingSoon) {
-    showToast('🌱 「' + game.title + '」は準備中だよ！おたのしみに！');
-    return;
-  }
-  if (!game.url) {
-    showToast('🌱 「' + game.title + '」はまもなく公開！');
-    return;
-  }
-
-  // External games open in new tab
   if (game.external) {
     window.open(game.url, '_blank');
     return;
   }
 
-  // Embed internal game
   currentGame = game;
-  document.getElementById('embedGameEmoji').textContent = game.emoji;
-  document.getElementById('embedGameTitle').textContent = game.title;
+  document.getElementById('embedEmoji').textContent = game.emoji;
+  document.getElementById('embedTitle').textContent = game.title;
 
-  var iframe = document.getElementById('gameIframe');
-  var loading = document.getElementById('gameLoading');
+  var iframe = document.getElementById('embedIframe');
+  var loading = document.getElementById('embedLoading');
   loading.classList.remove('hidden');
-
-  iframe.onload = function() {
-    loading.classList.add('hidden');
-  };
+  iframe.onload = function() { loading.classList.add('hidden'); };
   iframe.src = game.url;
 
-  showView('embed');
-  closeSidebar();
+  document.getElementById('gameEmbed').classList.add('active');
+}
 
-  // Update sidebar game nav active
-  document.querySelectorAll('[data-game]').forEach(function(item) {
-    item.classList.toggle('active', item.dataset.game === gameId);
+function closeEmbed() {
+  document.getElementById('gameEmbed').classList.remove('active');
+  var iframe = document.getElementById('embedIframe');
+  iframe.src = 'about:blank';
+  currentGame = null;
+}
+
+function setupEmbedHandlers() {
+  document.getElementById('embedBack').addEventListener('click', closeEmbed);
+  document.getElementById('embedFullscreen').addEventListener('click', function() {
+    var el = document.getElementById('gameEmbed');
+    if (document.fullscreenElement) document.exitFullscreen();
+    else el.requestFullscreen().catch(function(){});
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && currentGame) closeEmbed();
   });
 }
 
-// === View Management ===
-function showView(view) {
-  currentView = view;
-
-  // Hide all views
-  document.getElementById('viewGameList').style.display = 'none';
-  document.getElementById('viewGameEmbed').classList.remove('active');
-  document.getElementById('viewDashboard').classList.remove('active');
-
-  // Show target view
-  if (view === 'games') {
-    document.getElementById('viewGameList').style.display = '';
-    updateBreadcrumb([{ label: '🌲 ゲーム一覧', action: null }]);
-    // Unload iframe
-    var iframe = document.getElementById('gameIframe');
-    if (iframe.src && iframe.src !== 'about:blank') iframe.src = 'about:blank';
-    currentGame = null;
-    // Clear game nav active
-    document.querySelectorAll('[data-game]').forEach(function(item) { item.classList.remove('active'); });
-  } else if (view === 'embed') {
-    document.getElementById('viewGameEmbed').classList.add('active');
-    updateBreadcrumb([
-      { label: '🌲 ゲーム一覧', action: function() { showView('games'); } },
-      { label: currentGame ? currentGame.emoji + ' ' + currentGame.title : '' , action: null }
-    ]);
-  } else if (view === 'dashboard') {
-    document.getElementById('viewDashboard').classList.add('active');
-    renderDashboard();
-    updateBreadcrumb([{ label: '📊 ダッシュボード', action: null }]);
-  }
-
-  // Update nav active states
-  document.querySelectorAll('.nav-item[data-view]').forEach(function(item) {
-    item.classList.toggle('active', item.dataset.view === view || (view === 'embed' && item.dataset.view === 'games'));
-  });
-}
-
-// === Breadcrumb ===
-function updateBreadcrumb(items) {
-  var bc = document.getElementById('breadcrumb');
-  bc.innerHTML = '';
-  items.forEach(function(item, idx) {
-    if (idx > 0) {
-      var sep = document.createElement('span');
-      sep.className = 'breadcrumb-sep';
-      sep.textContent = '›';
-      bc.appendChild(sep);
-    }
-    var btn = document.createElement('button');
-    btn.className = 'breadcrumb-item' + (idx === items.length - 1 ? ' current' : '');
-    btn.textContent = item.label;
-    if (item.action) {
-      btn.addEventListener('click', item.action);
-    }
-    bc.appendChild(btn);
-  });
-}
-
-// === Sidebar Mobile ===
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebarOverlay').classList.toggle('open');
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('open');
-}
-
-// === Fullscreen ===
-function toggleFullscreen() {
-  var wrap = document.getElementById('viewGameEmbed');
-  if (document.fullscreenElement) {
-    document.exitFullscreen();
-  } else {
-    wrap.requestFullscreen().catch(function() {});
-  }
-}
-
-// === Dashboard ===
-function renderDashboard() {
-  renderDashStats();
-  renderHistory();
-  renderBestScores();
-}
-
-function renderDashStats() {
-  var container = document.getElementById('dashStats');
-  var totalPlays = 0;
-  var gamesPlayed = new Set();
-  var totalScore = 0;
-  var bestScore = 0;
-
-  games.forEach(function(game) {
-    var history = getHistory(game.id);
-    if (history.length > 0) {
-      gamesPlayed.add(game.id);
-      totalPlays += history.length;
-      history.forEach(function(h) {
-        totalScore += (h.score || 0);
-        if ((h.score || 0) > bestScore) bestScore = h.score;
-      });
-    }
-  });
-
-  var playableCount = games.filter(function(g) { return !g.comingSoon && g.url; }).length;
-
-  container.innerHTML =
-    '<div class="stat-card"><div class="stat-icon">🎮</div><div class="stat-value">' + totalPlays + '</div><div class="stat-label">トータルプレイ</div></div>' +
-    '<div class="stat-card"><div class="stat-icon">🗺️</div><div class="stat-value">' + gamesPlayed.size + '/' + playableCount + '</div><div class="stat-label">プレイしたゲーム</div></div>' +
-    '<div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value">' + totalScore + '</div><div class="stat-label">ごうけいスコア</div></div>' +
-    '<div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value">' + bestScore + '</div><div class="stat-label">ベストスコア</div></div>';
-}
-
-function renderHistory() {
-  var container = document.getElementById('historyList');
-  var allHistory = [];
-
-  games.forEach(function(game) {
-    var history = getHistory(game.id);
-    history.forEach(function(h) {
-      allHistory.push({ game: game, score: h.score, timestamp: h.timestamp });
-    });
-  });
-
-  allHistory.sort(function(a, b) { return b.timestamp - a.timestamp; });
-  allHistory = allHistory.slice(0, 20);
-
-  if (allHistory.length === 0) {
-    container.innerHTML = '<div class="empty-history"><div class="empty-emoji">🌱</div>まだプレイ記録がないよ。<br>ゲームであそんでみよう！</div>';
-    return;
-  }
-
-  container.innerHTML = allHistory.map(function(h) {
-    var timeStr = formatTime(h.timestamp);
-    return '<div class="history-item" onclick="launchGame(\'' + h.game.id + '\')">' +
-      '<span class="h-emoji">' + h.game.emoji + '</span>' +
-      '<div class="h-info"><div class="h-title">' + h.game.title + '</div><div class="h-time">' + timeStr + '</div></div>' +
-      '<div class="h-score">' + (h.score || 0) + '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function renderBestScores() {
-  var container = document.getElementById('bestScoreList');
-  var bestScores = [];
-
-  games.forEach(function(game) {
-    var best = getBestScore(game.id);
-    if (best) {
-      bestScores.push({ game: game, score: best.score, timestamp: best.timestamp });
-    }
-  });
-
-  bestScores.sort(function(a, b) { return b.score - a.score; });
-
-  if (bestScores.length === 0) {
-    container.innerHTML = '<div class="empty-history"><div class="empty-emoji">🏆</div>まだベストスコアがないよ。<br>ゲームに挑戦しよう！</div>';
-    return;
-  }
-
-  container.innerHTML = bestScores.map(function(h, idx) {
-    var medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '　';
-    return '<div class="history-item" onclick="launchGame(\'' + h.game.id + '\')">' +
-      '<span class="h-emoji">' + medal + '</span>' +
-      '<div class="h-info"><div class="h-title">' + h.game.emoji + ' ' + h.game.title + '</div></div>' +
-      '<div class="h-score">' + h.score + '</div>' +
-    '</div>';
-  }).join('');
-}
-
-// === postMessage Listener (Shell side) ===
+// =====================
+// postMessage from games
+// =====================
 function listenForGameMessages() {
   window.addEventListener('message', function(e) {
     var msg = e.data;
     if (!msg || typeof msg.type !== 'string') return;
 
-    switch (msg.type) {
-      case 'trail:ready':
-        // Game has loaded and initialized
-        break;
-
-      case 'trail:score':
-        // Mid-game score update (could show in top bar)
-        break;
-
-      case 'trail:gameOver':
-        // Game finished — save to history
-        if (msg.gameId && msg.data) {
-          saveHistory(msg.gameId, msg.data);
-          // Re-render dashboard data & card best scores
-          renderDashboard();
-          refreshCardBestScores();
-        }
-        break;
-
-      case 'trail:navigate':
-        if (msg.target === 'home') {
-          showView('games');
-        } else {
-          launchGame(msg.target);
-        }
-        break;
-
-      case 'trail:resize':
-        // Could auto-resize iframe if needed
-        break;
+    if (msg.type === 'trail:gameOver' && msg.gameId && msg.data) {
+      handleGameOver(msg.gameId, msg.data);
+    }
+    if (msg.type === 'trail:navigate') {
+      if (msg.target === 'home') closeEmbed();
     }
   });
 }
 
-// === LocalStorage Helpers ===
-function getHistory(gameId) {
-  try {
-    var raw = localStorage.getItem('trail:history:' + gameId);
-    return raw ? JSON.parse(raw) : [];
-  } catch(e) { return []; }
-}
+function handleGameOver(gameId, data) {
+  var score = data.score || 0;
+  var correct = data.correct || 0;
+  var total = data.total || 0;
 
-function getBestScore(gameId) {
-  var history = getHistory(gameId);
-  if (history.length === 0) return null;
-  var best = history[0];
-  for (var i = 1; i < history.length; i++) {
-    if ((history[i].score || 0) > (best.score || 0)) best = history[i];
-  }
-  return best;
-}
-
-function saveHistory(gameId, data) {
-  var key = 'trail:history:' + gameId;
-  try {
-    var history = JSON.parse(localStorage.getItem(key) || '[]');
-    history.unshift({
-      score: data.score || 0,
-      correct: data.correct,
-      total: data.total,
-      timestamp: Date.now()
+  if (TrailAPI.isConfigured() && currentUser && currentUser.userId !== 'guest') {
+    TrailAPI.saveScore(gameId, score, correct, total).then(function(res) {
+      if (res && !res.error && !res.guest) {
+        currentUser.totalAlt = res.totalAlt;
+        document.getElementById('altCount').textContent = res.totalAlt;
+        showAltPopup(res.altEarned);
+      }
     });
-    if (history.length > 50) history = history.slice(0, 50);
-    localStorage.setItem(key, JSON.stringify(history));
+  } else {
+    // Local mode ALT
+    var altEarned = calcLocalAlt(score, correct, total);
+    var localAlt = (currentUser.totalAlt || 0) + altEarned;
+    currentUser.totalAlt = localAlt;
+    document.getElementById('altCount').textContent = localAlt;
+    // Save locally
+    saveLocalHistory(gameId, score, correct, total, altEarned);
+    showAltPopup(altEarned);
+  }
+}
+
+function calcLocalAlt(score, correct, total) {
+  var alt = 10;
+  if (total > 0) {
+    var ratio = correct / total;
+    if (ratio >= 1.0) alt += 30;
+    else if (ratio >= 0.8) alt += 20;
+    else if (ratio >= 0.5) alt += 10;
+  }
+  alt += Math.floor(score / 100) * 5;
+  return alt;
+}
+
+function saveLocalHistory(gameId, score, correct, total, altEarned) {
+  try {
+    var key = 'trail:scores';
+    var h = JSON.parse(localStorage.getItem(key) || '[]');
+    h.unshift({ gameId: gameId, score: score, correct: correct, total: total, altEarned: altEarned, timestamp: Date.now() });
+    if (h.length > 100) h = h.slice(0, 100);
+    localStorage.setItem(key, JSON.stringify(h));
   } catch(e) {}
 }
 
-function refreshCardBestScores() {
-  document.querySelectorAll('.game-card').forEach(function(card) {
-    var gameId = card.dataset.id;
-    var existing = card.querySelector('.card-best-score');
-    var best = getBestScore(gameId);
-    if (best) {
-      if (existing) {
-        existing.innerHTML = '🏆 ベスト: ' + best.score + '点';
-      } else {
-        var div = document.createElement('div');
-        div.className = 'card-best-score';
-        div.innerHTML = '🏆 ベスト: ' + best.score + '点';
-        card.querySelector('.card-body').appendChild(div);
-      }
-    }
+function showAltPopup(earned) {
+  // Remove existing
+  var old = document.querySelector('.alt-popup');
+  var oldOv = document.querySelector('.alt-popup-overlay');
+  if (old) old.remove();
+  if (oldOv) oldOv.remove();
+
+  var overlay = document.createElement('div');
+  overlay.className = 'alt-popup-overlay';
+
+  var popup = document.createElement('div');
+  popup.className = 'alt-popup';
+  popup.innerHTML =
+    '<div style="font-size:48px">🎉</div>' +
+    '<div class="alt-label">ALT ゲット！</div>' +
+    '<div class="alt-earned">+' + earned + '</div>' +
+    '<button class="alt-close">OK</button>';
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  var close = function() { overlay.remove(); popup.remove(); };
+  popup.querySelector('.alt-close').addEventListener('click', close);
+  overlay.addEventListener('click', close);
+  setTimeout(close, 4000);
+}
+
+// =====================
+// Rankings
+// =====================
+function renderRankingFilters() {
+  var container = document.getElementById('rankFilters');
+  var html = '<button class="rank-filter-btn active" data-game="">🏆 総合</button>';
+  games.filter(function(g) { return !g.comingSoon && g.url && !g.external; }).forEach(function(g) {
+    html += '<button class="rank-filter-btn" data-game="' + g.id + '">' + g.emoji + ' ' + g.title + '</button>';
+  });
+  container.innerHTML = html;
+
+  container.querySelectorAll('.rank-filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      container.querySelectorAll('.rank-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      rankingGameFilter = btn.dataset.game || null;
+      renderRankings();
+    });
   });
 }
 
-// === Utilities ===
+function renderRankings() {
+  var container = document.getElementById('rankingList');
+
+  if (TrailAPI.isConfigured()) {
+    container.innerHTML = '<div class="ranking-empty"><div class="empty-icon">⏳</div>読み込み中...</div>';
+    TrailAPI.getRankings(rankingGameFilter, 20).then(function(rankings) {
+      renderRankingList(container, rankings);
+    });
+  } else {
+    // Local rankings from stored scores
+    var localScores = getLocalScores();
+    var filtered = rankingGameFilter
+      ? localScores.filter(function(s) { return s.gameId === rankingGameFilter; })
+      : localScores;
+    // Deduplicate: best per game
+    var best = {};
+    filtered.forEach(function(s) {
+      var key = s.gameId;
+      if (!best[key] || s.score > best[key].score) best[key] = s;
+    });
+    var rankings = Object.values(best).sort(function(a,b) { return b.score - a.score; }).slice(0, 20);
+    rankings.forEach(function(r, i) {
+      r.rank = i + 1;
+      r.name = currentUser ? currentUser.name : 'ゲスト';
+      r.className = currentUser ? currentUser.className : '';
+    });
+    renderRankingList(container, rankings);
+  }
+}
+
+function renderRankingList(container, rankings) {
+  if (!rankings || rankings.length === 0) {
+    container.innerHTML = '<div class="ranking-empty"><div class="empty-icon">🏆</div>まだランキングデータがないよ。<br>ゲームであそんでみよう！</div>';
+    return;
+  }
+  container.innerHTML = rankings.map(function(r) {
+    var numClass = r.rank === 1 ? 'gold' : r.rank === 2 ? 'silver' : r.rank === 3 ? 'bronze' : '';
+    var medal = r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : r.rank;
+    var game = games.find(function(g) { return g.id === r.gameId; });
+    var emoji = game ? game.emoji : '🎮';
+    return '<div class="rank-item">' +
+      '<div class="rank-num ' + numClass + '">' + medal + '</div>' +
+      '<div class="rank-avatar">' + (r.name || '?')[0] + '</div>' +
+      '<div class="rank-info"><div class="rank-name">' + (r.name || '???') + '</div><div class="rank-class">' + (r.className || '') + (game ? ' - ' + emoji + game.title : '') + '</div></div>' +
+      '<div class="rank-score">' + (r.score || 0) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function getLocalScores() {
+  try {
+    return JSON.parse(localStorage.getItem('trail:scores') || '[]');
+  } catch(e) { return []; }
+}
+
+// =====================
+// All Games Tab
+// =====================
+function renderCatFilters() {
+  var container = document.getElementById('catFilters');
+  var html = '';
+  categories.forEach(function(cat) {
+    html += '<button class="rank-filter-btn' + (cat.id === 'all' ? ' active' : '') + '" data-cat="' + cat.id + '">' + cat.emoji + ' ' + cat.label + '</button>';
+  });
+  container.innerHTML = html;
+
+  container.querySelectorAll('.rank-filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      container.querySelectorAll('.rank-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      catFilter = btn.dataset.cat;
+      renderAllGames();
+    });
+  });
+}
+
+function renderAllGames() {
+  var grid = document.getElementById('allGamesGrid');
+  grid.innerHTML = '';
+  var filtered = catFilter === 'all' ? games : games.filter(function(g) { return g.category === catFilter; });
+  filtered.forEach(function(game, idx) {
+    grid.appendChild(createGameCard(game, idx));
+  });
+}
+
+// =====================
+// ALT History
+// =====================
+function renderHistory() {
+  var totalEl = document.getElementById('historyTotalAlt');
+  var listEl = document.getElementById('historyList');
+  totalEl.textContent = currentUser ? (currentUser.totalAlt || 0) : 0;
+
+  if (TrailAPI.isConfigured() && currentUser && currentUser.userId !== 'guest') {
+    listEl.innerHTML = '<div class="ranking-empty"><div class="empty-icon">⏳</div>読み込み中...</div>';
+    TrailAPI.getHistory(30).then(function(history) {
+      renderHistoryList(listEl, history);
+    });
+  } else {
+    var local = getLocalScores();
+    renderHistoryList(listEl, local);
+  }
+}
+
+function renderHistoryList(container, history) {
+  if (!history || history.length === 0) {
+    container.innerHTML = '<div class="ranking-empty"><div class="empty-icon">📋</div>まだ記録がないよ。<br>ゲームであそんでALTをゲットしよう！</div>';
+    return;
+  }
+  container.innerHTML = history.map(function(h) {
+    var game = games.find(function(g) { return g.id === h.gameId; });
+    var emoji = game ? game.emoji : '🎮';
+    var title = game ? game.title : h.gameId;
+    var time = formatTime(h.timestamp);
+    var alt = h.altEarned || 0;
+    return '<div class="history-item">' +
+      '<span class="hist-emoji">' + emoji + '</span>' +
+      '<div class="hist-info"><div class="hist-title">' + title + '</div><div class="hist-time">' + time + ' - スコア: ' + (h.score || 0) + '</div></div>' +
+      '<div class="hist-alt">+' + alt + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// =====================
+// Utilities
+// =====================
 function formatTime(ts) {
-  var d = new Date(ts);
+  if (!ts) return '';
+  var d = new Date(typeof ts === 'string' ? ts : ts);
   var now = new Date();
-  var diffMs = now - d;
-  var diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return 'たったいま';
-  if (diffMin < 60) return diffMin + '分まえ';
-  var diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return diffHr + '時間まえ';
-  var diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 7) return diffDay + '日まえ';
+  var diff = Math.floor((now - d) / 60000);
+  if (diff < 1) return 'たったいま';
+  if (diff < 60) return diff + '分まえ';
+  var hr = Math.floor(diff / 60);
+  if (hr < 24) return hr + '時間まえ';
+  var day = Math.floor(hr / 24);
+  if (day < 7) return day + '日まえ';
   return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
 function showToast(msg) {
-  var old = document.querySelector('.toast-msg');
+  var old = document.querySelector('.toast');
   if (old) old.remove();
   var t = document.createElement('div');
-  t.className = 'toast-msg';
+  t.className = 'toast';
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(function() { t.remove(); }, 2500);
 }
-
-// === Keyboard Shortcuts ===
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    if (currentView === 'embed') showView('games');
-    else closeSidebar();
-  }
-});
 </script>
 </body>
 </html>
