@@ -82,6 +82,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic UI',Meiryo,sans-serif;
 </style>
 </head>
 <body>
+<script src="../shared/trail-sdk.js"></script>
 <div class="ctn">
   <div class="scr on" id="s0">
     <div class="tl">🗾 シルエットクイズ</div>
@@ -176,6 +177,7 @@ var D=[{id:1,n:"北海道",r:"ほっかいどう",g:"北海道",h:["でっかい
 var RG=[{n:"北海道",i:[1]},{n:"東北",i:[2,3,4,5,6,7]},{n:"関東",i:[8,9,10,11,12,13,14]},{n:"中部",i:[15,16,17,18,19,20,21,22,23]},{n:"近畿",i:[24,25,26,27,28,29,30]},{n:"中国",i:[31,32,33,34,35]},{n:"四国",i:[36,37,38,39]},{n:"九州・沖縄",i:[40,41,42,43,44,45,46,47]}];
 var EZ=[1,2,12,13,23,27,34,37,40,47],NM=[1,2,5,7,9,12,13,14,17,20,23,26,27,34,47];
 var cl={},G={},ranking={easy:[],normal:[],hard:[]};
+TrailSDK.ready({ gameId: 'silhouette-quiz' });
 function ss(id){var s=document.querySelectorAll('.scr');for(var i=0;i<s.length;i++)s[i].classList.remove('on');document.getElementById(id).classList.add('on')}
 function home(){ss('s0')}
 function sf(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}}
@@ -235,6 +237,7 @@ function yk(p){
   setTimeout(function(){o.classList.remove('sh');G.i++;if(G.i>=G.q.length)res();else lq()},3000);
 }
 function res(){
+  TrailSDK.gameOver({ score: G.s, correct: G.c, total: G.q.length });
   ss('s2');var t=G.q.length,pc=G.c/t;var e,ti;
   if(pc===1){e='👑';ti='パーフェクト！';cft(30)}else if(pc>=.8){e='🎉';ti='すばらしい！';cft(16)}else if(pc>=.5){e='😊';ti='いいかんじ！'}else{e='💪';ti='つぎはがんばろう！'}
   document.getElementById('rE').textContent=e;document.getElementById('rT').textContent=ti;

@@ -139,7 +139,9 @@ body{font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;background:lin
 
 <div id="resultScreen" class="screen"></div>
 
+<script src="../shared/trail-sdk.js"></script>
 <script>
+TrailSDK.ready({ gameId: 'tokusan-match' });
 // ===== Prefecture Data =====
 var REGIONS = [
   { id: 'tohoku', name: '北海道・東北', emoji: '❄️', color: '#4FC3F7', bg: 'linear-gradient(135deg,#1565C0,#0D47A1)' },
@@ -916,6 +918,7 @@ function endGame() {
 // ===== Result Screen =====
 function showResult() {
   var total = state.correctCount + state.wrongCount;
+  TrailSDK.gameOver({ score: state.score, correct: state.correctCount, total: total });
 
   // Deduplicate learned items
   var seen = {};

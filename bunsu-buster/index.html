@@ -426,8 +426,10 @@
   <div class="cards-area" id="cardsArea"></div>
 </div>
 <div class="result-popup" id="resultPopup"></div>
+<script src="../shared/trail-sdk.js"></script>
 <script src="../shared/math-utils.js"></script>
 <script>
+TrailSDK.ready({ gameId: 'bunsu-buster' });
 // ===================== STATE =====================
 const state = {
   score: 0, combo: 0, maxCombo: 0,
@@ -779,6 +781,7 @@ function endGame() {
                   state.totalCorrect >= 6 ? '✨ なかなか！' : '⏱ 終了！';
     document.getElementById('gameOverTitle').textContent = title;
     document.getElementById('gameOverScreen').classList.remove('hidden');
+    TrailSDK.gameOver({ score: state.score, correct: state.totalCorrect, total: state.totalAttempts });
   }, 500);
 }
 // ===================== BG =====================

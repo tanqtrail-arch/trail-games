@@ -16,8 +16,10 @@
 <body>
 <div id="root"></div>
 <div id="error"></div>
+<script src="../shared/trail-sdk.js"></script>
 <script type="text/babel" data-type="module" onerror="document.getElementById('error').textContent=event.message">
 const { useState, useEffect, useRef, useCallback } = React;
+TrailSDK.ready({ gameId: 'menseki-h-l' });
 
 const REAL_PATHS = {
   "三重": "M54.7 4.0L50.2 5.4L51.7 7.7L50.8 14.0L49.5 16.2L46.5 17.9L42.2 16.6L41.7 17.5L42.7 17.9L41.8 19.5L40.0 20.2L41.6 23.8L40.7 27.4L45.1 29.2L45.5 30.9L41.8 32.3L41.1 33.7L42.7 38.0L41.9 40.2L42.4 41.0L41.9 45.6L39.8 45.6L39.7 48.0L36.4 49.3L36.5 51.0L35.4 50.9L35.4 52.8L38.4 56.0L39.7 55.9L41.9 50.7L45.7 48.4L45.3 47.0L46.9 47.5L47.0 45.8L45.1 44.1L45.8 43.1L46.8 43.8L47.9 43.4L47.1 41.5L48.7 39.9L49.5 40.3L52.0 39.0L53.1 39.2L53.3 37.6L54.6 38.0L54.8 37.2L56.0 38.1L57.6 36.9L57.9 35.6L58.6 35.8L58.4 37.0L60.8 36.6L60.6 38.0L62.8 38.4L64.2 37.4L63.7 35.3L64.4 34.6L63.5 34.3L64.6 34.2L64.6 31.6L63.6 31.7L62.4 29.9L59.3 29.0L56.6 26.6L54.3 26.3L54.2 21.2L57.8 15.3L57.3 14.1L59.7 12.2L58.9 9.4L56.5 7.2Z",
@@ -255,6 +257,8 @@ function App() {
     }
     return ()=>clearInterval(tmr.current);
   },[mode,active,scr,res,qi]);
+
+  useEffect(()=>{if(scr==="done")TrailSDK.gameOver({score:score,correct:score,total:pairs.length});},[scr]);
 
   const go = useCallback((i)=>{
     setPairs(STAGES[i].gen()); setQi(0); setScore(0); setCombo(0); setMxCombo(0);

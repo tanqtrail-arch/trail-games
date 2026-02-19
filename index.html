@@ -10,17 +10,21 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ja_JP">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌲</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg-cream: #fef9ef;
     --trail-green: #2d9a4e;
     --trail-green-light: #5ec97a;
+    --trail-green-dark: #1d7a3a;
     --sun-yellow: #ffd23f;
     --berry-pink: #ff6b8a;
     --text-dark: #2c3e2d;
     --text-mid: #5a6b5c;
+    --text-light: #8a9b8c;
     --card-white: #ffffff;
+    --sidebar-width: 280px;
+    --header-height: 56px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -28,163 +32,223 @@
     background: var(--bg-cream);
     color: var(--text-dark);
     min-height: 100vh;
-    overflow-x: hidden;
+    overflow: hidden;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* === Sky & Decorations === */
-  .bg-sky {
-    position: fixed; top: 0; left: 0; right: 0; height: 300px;
-    background: linear-gradient(180deg, #b8e4f9 0%, #ddf2ff 40%, #fef9ef 100%);
-    z-index: 0; pointer-events: none;
-  }
-  .cloud { position: fixed; background: white; border-radius: 50px; opacity: 0.7; z-index: 0; pointer-events: none; }
-  .cloud::before, .cloud::after { content: ''; position: absolute; background: white; border-radius: 50%; }
-  .cloud-1 { width: 80px; height: 28px; top: 40px; left: 10%; animation: cloudDrift 30s linear infinite; }
-  .cloud-1::before { width: 36px; height: 36px; top: -18px; left: 14px; }
-  .cloud-1::after { width: 24px; height: 24px; top: -10px; left: 44px; }
-  .cloud-2 { width: 60px; height: 22px; top: 70px; right: 15%; animation: cloudDrift 40s linear infinite reverse; opacity: 0.5; }
-  .cloud-2::before { width: 28px; height: 28px; top: -14px; left: 10px; }
-  .cloud-2::after { width: 20px; height: 20px; top: -8px; left: 32px; }
-  .cloud-3 { width: 50px; height: 18px; top: 100px; left: 55%; animation: cloudDrift 35s linear infinite; opacity: 0.4; }
-  .cloud-3::before { width: 22px; height: 22px; top: -11px; left: 8px; }
-  .cloud-3::after { width: 16px; height: 16px; top: -6px; left: 26px; }
-  @keyframes cloudDrift { 0% { transform: translateX(-20vw); } 100% { transform: translateX(120vw); } }
-  .leaf-deco { position: fixed; pointer-events: none; z-index: 0; font-size: 24px; opacity: 0.2; }
-  .leaf-1 { top: 180px; left: 5%; transform: rotate(-30deg); }
-  .leaf-2 { top: 350px; right: 3%; transform: rotate(20deg); font-size: 20px; }
-  .leaf-3 { top: 600px; left: 8%; transform: rotate(45deg); font-size: 18px; }
-  .leaf-4 { top: 900px; right: 6%; transform: rotate(-15deg); }
+  /* === App Layout === */
+  .app-shell { display: flex; height: 100vh; width: 100vw; }
 
-  /* === Header === */
-  .header {
-    position: sticky; top: 0; z-index: 100;
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    background: rgba(255,255,255,0.88);
-    border-bottom: 2px solid rgba(45,154,78,0.12);
-    padding: 14px 20px; text-align: center;
+  /* === Sidebar === */
+  .sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fdf9 100%);
+    border-right: 1px solid rgba(45,154,78,0.12);
+    display: flex; flex-direction: column;
+    flex-shrink: 0;
+    z-index: 50;
+    transition: transform 0.3s ease;
   }
-  .header-top { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 2px; }
-  .header-icon { font-size: 26px; line-height: 1; }
-  .header-logo { font-family: 'Fredoka', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 3px; color: var(--trail-green); }
-  .header-title { font-size: 19px; font-weight: 900; color: var(--text-dark); }
-  .header-title span { color: var(--trail-green); }
-  .header-sub { font-size: 10px; color: var(--text-mid); letter-spacing: 1px; margin-top: 1px; }
-
-  /* === Category Bar === */
-  .category-bar-wrap {
-    position: sticky; top: 72px; z-index: 99;
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    background: rgba(255,255,255,0.8);
+  .sidebar-header {
+    padding: 18px 20px 14px;
     border-bottom: 1px solid rgba(45,154,78,0.08);
+    text-align: center;
+    cursor: pointer;
   }
-  .category-bar {
-    max-width: 480px; margin: 0 auto;
-    padding: 10px 14px; display: flex; gap: 7px;
-    overflow-x: auto; scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
-    mask-image: linear-gradient(to right, black 90%, transparent 100%);
-  }
-  .category-bar.scrolled-end {
-    -webkit-mask-image: linear-gradient(to left, black 90%, transparent 100%);
-    mask-image: linear-gradient(to left, black 90%, transparent 100%);
-  }
-  .category-bar.scrolled-mid {
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
-  }
-  .category-bar::-webkit-scrollbar { display: none; }
-  .cat-btn {
-    flex-shrink: 0; padding: 7px 14px; border-radius: 20px;
-    border: 2px solid transparent; background: #f0f7f1; color: var(--text-mid);
-    font-size: 13px; font-family: 'Zen Maru Gothic', sans-serif; font-weight: 700;
-    cursor: pointer; transition: all 0.25s ease; white-space: nowrap;
-  }
-  .cat-btn.active {
-    background: var(--trail-green); color: white;
-    border-color: var(--trail-green); box-shadow: 0 3px 12px rgba(45,154,78,0.3);
-  }
-  .cat-btn:not(.active):hover { background: #e0f0e3; }
-  .cat-btn:not(.active):active { transform: scale(0.95); }
+  .sidebar-header:hover { background: rgba(45,154,78,0.03); }
+  .sidebar-logo-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .sidebar-logo-icon { font-size: 24px; }
+  .sidebar-logo-text { font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; color: var(--trail-green); letter-spacing: 3px; }
+  .sidebar-subtitle { font-size: 11px; color: var(--text-mid); font-weight: 700; margin-top: 2px; }
 
-  /* === Game Count === */
-  .game-count { text-align: center; padding: 18px 16px 6px; position: relative; z-index: 1; }
-  .game-count .num { font-family: 'Fredoka', sans-serif; font-size: 40px; font-weight: 700; color: var(--trail-green); }
-  .game-count small { display: block; font-size: 12px; color: var(--text-mid); margin-top: -2px; font-weight: 700; }
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 12px; }
+  .sidebar-nav::-webkit-scrollbar { width: 4px; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(45,154,78,0.2); border-radius: 4px; }
 
-  /* === Game List === */
-  .game-list {
-    max-width: 480px; margin: 0 auto;
-    padding: 14px 16px 60px; display: flex; flex-direction: column; gap: 16px;
-    position: relative; z-index: 1;
+  .nav-section { margin-bottom: 18px; }
+  .nav-section-title {
+    font-size: 10px; font-weight: 900; color: var(--text-light);
+    text-transform: uppercase; letter-spacing: 2px;
+    padding: 0 10px; margin-bottom: 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 12px;
+    cursor: pointer; transition: all 0.2s ease;
+    border: none; background: none; width: 100%;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 13px; font-weight: 700; color: var(--text-mid);
+    text-align: left;
+  }
+  .nav-item:hover { background: rgba(45,154,78,0.06); color: var(--text-dark); }
+  .nav-item.active { background: rgba(45,154,78,0.1); color: var(--trail-green); }
+  .nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+  .nav-item .nav-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-item .nav-badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+    background: var(--berry-pink); color: white;
+    font-family: 'Fredoka', sans-serif; font-weight: 600;
   }
 
-  /* === Empty State === */
-  .empty-state {
-    text-align: center; padding: 40px 20px;
-    color: var(--text-mid); font-size: 14px; font-weight: 700;
+  /* Category filter items */
+  .cat-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 10px;
+    cursor: pointer; transition: all 0.2s ease;
+    border: none; background: none; width: 100%;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 12px; font-weight: 700; color: var(--text-mid);
+    text-align: left;
   }
-  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
-  .empty-state .empty-text { line-height: 1.8; }
+  .cat-item:hover { background: rgba(45,154,78,0.06); }
+  .cat-item.active { background: var(--trail-green); color: white; border-radius: 10px; }
+  .cat-item .cat-count {
+    margin-left: auto; font-size: 11px; opacity: 0.6;
+    font-family: 'Fredoka', sans-serif;
+  }
+
+  .sidebar-footer {
+    padding: 14px 16px; border-top: 1px solid rgba(45,154,78,0.08);
+    text-align: center; font-size: 10px; color: var(--text-light);
+  }
+  .sidebar-footer .brand { color: var(--trail-green); font-weight: 900; }
+
+  /* === Main Content Area === */
+  .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+  /* === Top Bar === */
+  .top-bar {
+    height: var(--header-height);
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(45,154,78,0.1);
+    display: flex; align-items: center; padding: 0 20px;
+    flex-shrink: 0; z-index: 40;
+  }
+  .menu-toggle {
+    display: none; border: none; background: none; cursor: pointer;
+    font-size: 22px; padding: 6px; margin-right: 10px; border-radius: 8px;
+    color: var(--text-dark);
+  }
+  .menu-toggle:hover { background: rgba(45,154,78,0.08); }
+  .breadcrumb { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .breadcrumb-item {
+    font-size: 13px; font-weight: 700; color: var(--text-mid);
+    cursor: pointer; border: none; background: none;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    padding: 4px 8px; border-radius: 8px; transition: all 0.2s;
+  }
+  .breadcrumb-item:hover { background: rgba(45,154,78,0.08); color: var(--trail-green); }
+  .breadcrumb-item.current { color: var(--text-dark); cursor: default; }
+  .breadcrumb-item.current:hover { background: none; color: var(--text-dark); }
+  .breadcrumb-sep { font-size: 11px; color: var(--text-light); }
+  .top-bar-actions { display: flex; gap: 8px; align-items: center; }
+  .top-bar-btn {
+    border: none; background: rgba(45,154,78,0.08); cursor: pointer;
+    font-size: 16px; padding: 8px 12px; border-radius: 10px;
+    color: var(--text-dark); transition: all 0.2s;
+    font-family: 'Zen Maru Gothic', sans-serif; font-weight: 700; font-size: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .top-bar-btn:hover { background: rgba(45,154,78,0.15); }
+  .top-bar-btn.active { background: var(--trail-green); color: white; }
+
+  /* === Content Views === */
+  .content-area { flex: 1; overflow: hidden; position: relative; }
+
+  /* --- Game List View --- */
+  .view-game-list {
+    height: 100%; overflow-y: auto;
+    padding: 0;
+  }
+  .view-game-list::-webkit-scrollbar { width: 6px; }
+  .view-game-list::-webkit-scrollbar-thumb { background: rgba(45,154,78,0.15); border-radius: 4px; }
+
+  .game-list-header {
+    padding: 28px 32px 16px;
+    background: linear-gradient(135deg, rgba(45,154,78,0.06), rgba(255,210,63,0.04));
+  }
+  .game-list-header h2 { font-size: 22px; font-weight: 900; color: var(--text-dark); }
+  .game-list-header h2 span { color: var(--trail-green); }
+  .game-list-header p { font-size: 13px; color: var(--text-mid); margin-top: 4px; }
+  .game-count-bar {
+    display: flex; align-items: center; gap: 12px; margin-top: 14px;
+    padding: 10px 16px; background: white; border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .game-count-bar .count-num {
+    font-family: 'Fredoka', sans-serif; font-size: 28px; font-weight: 700;
+    color: var(--trail-green);
+  }
+  .game-count-bar .count-label { font-size: 12px; color: var(--text-mid); font-weight: 700; }
+
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px; padding: 20px 32px 60px;
+  }
 
   /* === Game Card === */
   .game-card {
-    position: relative; border-radius: 22px; overflow: hidden;
+    position: relative; border-radius: 18px; overflow: hidden;
     background: var(--card-white);
-    box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
     cursor: pointer; transition: transform 0.25s ease, box-shadow 0.25s ease;
-    animation: cardPop 0.45s ease both;
+    animation: cardPop 0.4s ease both;
     outline: none;
   }
-  .game-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06); }
-  .game-card:active { transform: scale(0.97); box-shadow: 0 1px 8px rgba(0,0,0,0.08); }
+  .game-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.10); }
+  .game-card:active { transform: scale(0.98); }
   .game-card:focus-visible { outline: 3px solid var(--trail-green); outline-offset: 2px; }
-  @keyframes cardPop { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  .game-card:nth-child(1){animation-delay:.05s}.game-card:nth-child(2){animation-delay:.1s}.game-card:nth-child(3){animation-delay:.15s}.game-card:nth-child(4){animation-delay:.2s}.game-card:nth-child(5){animation-delay:.25s}.game-card:nth-child(6){animation-delay:.3s}
+  @keyframes cardPop { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-  .card-visual { position: relative; height: 130px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  .card-visual .emoji-icon { font-size: 54px; position: relative; z-index: 2; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.15)); animation: iconBounce 3s ease-in-out infinite; }
-  @keyframes iconBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .card-visual { position: relative; height: 110px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card-visual .emoji-icon { font-size: 46px; position: relative; z-index: 2; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15)); animation: iconFloat 3s ease-in-out infinite; }
+  @keyframes iconFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
   .card-visual .bg-deco { position: absolute; inset: 0; }
-  .deco-wave { position: absolute; bottom: -2px; left: 0; right: 0; height: 20px; background: var(--card-white); border-radius: 20px 20px 0 0; }
-  .deco-trees { position: absolute; bottom: 0; left: 0; right: 0; font-size: 20px; text-align: center; opacity: 0.2; letter-spacing: 8px; line-height: 1; padding-bottom: 6px; }
+  .deco-wave { position: absolute; bottom: -2px; left: 0; right: 0; height: 16px; background: var(--card-white); border-radius: 16px 16px 0 0; }
+  .deco-trees { position: absolute; bottom: 0; left: 0; right: 0; font-size: 18px; text-align: center; opacity: 0.2; letter-spacing: 6px; line-height: 1; padding-bottom: 5px; }
   .deco-dots { position: absolute; width: 100%; height: 100%; opacity: 0.3; }
-  .deco-dots::before { content: '\00B7 \00B7 \00B7 \00B7 \00B7 \00B7 \00B7 \00B7 \00B7'; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 14px; letter-spacing: 4px; color: rgba(255,255,255,0.6); white-space: nowrap; }
+  .deco-dots::before { content: '\00B7 \00B7 \00B7 \00B7 \00B7'; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 12px; letter-spacing: 4px; color: rgba(255,255,255,0.5); white-space: nowrap; }
 
-  .card-body { padding: 14px 16px 16px; }
-  .card-tags { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-  .tag { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 10px; letter-spacing: 0.3px; }
-  .card-title { font-size: 18px; font-weight: 900; margin-bottom: 5px; line-height: 1.3; }
-  .card-desc { font-size: 12.5px; color: var(--text-mid); line-height: 1.7; margin-bottom: 14px; }
+  .card-body { padding: 12px 16px 14px; }
+  .card-tags { display: flex; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; }
+  .tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; letter-spacing: 0.3px; }
+  .card-title { font-size: 16px; font-weight: 900; margin-bottom: 4px; line-height: 1.3; }
+  .card-desc { font-size: 11.5px; color: var(--text-mid); line-height: 1.6; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .card-footer { display: flex; align-items: center; justify-content: space-between; }
-  .card-difficulty { display: flex; gap: 4px; align-items: center; }
-  .card-difficulty .label { font-size: 10px; color: var(--text-mid); margin-right: 4px; font-weight: 700; }
-  .trail-marker { width: 12px; height: 12px; border-radius: 3px; background: #e8ede9; position: relative; }
-  .trail-marker.filled { background: var(--sun-yellow); box-shadow: 0 1px 4px rgba(255,210,63,0.4); }
-  .trail-marker.filled::after { content: '\2B50'; font-size: 8px; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+  .card-difficulty { display: flex; gap: 3px; align-items: center; }
+  .card-difficulty .label { font-size: 10px; color: var(--text-mid); margin-right: 3px; font-weight: 700; }
+  .trail-marker { width: 10px; height: 10px; border-radius: 3px; background: #e8ede9; }
+  .trail-marker.filled { background: var(--sun-yellow); box-shadow: 0 1px 3px rgba(255,210,63,0.4); }
   .play-btn {
-    display: flex; align-items: center; gap: 5px; padding: 9px 20px;
-    border-radius: 14px; border: none; font-family: 'Zen Maru Gothic', sans-serif;
-    font-size: 13px; font-weight: 900; color: white; cursor: pointer;
-    transition: all 0.2s ease; box-shadow: 0 3px 10px rgba(0,0,0,0.12); letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 4px; padding: 7px 16px;
+    border-radius: 12px; border: none; font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 12px; font-weight: 900; color: white; cursor: pointer;
+    transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.10); letter-spacing: 0.5px;
   }
   .play-btn:active { transform: scale(0.93); }
+  .card-best-score {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 10px; color: var(--sun-yellow); font-weight: 700;
+    margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f2f0;
+  }
 
-  /* === Badges === */
+  /* Badges */
   .badge-new {
-    position: absolute; top: 10px; right: 10px; z-index: 5;
-    font-family: 'Fredoka', sans-serif; font-size: 11px; font-weight: 700;
-    padding: 4px 12px; border-radius: 10px; background: var(--berry-pink); color: white;
-    box-shadow: 0 2px 8px rgba(255,107,138,0.4); animation: badgePop 2s ease-in-out infinite;
+    position: absolute; top: 8px; right: 8px; z-index: 5;
+    font-family: 'Fredoka', sans-serif; font-size: 10px; font-weight: 700;
+    padding: 3px 10px; border-radius: 8px; background: var(--berry-pink); color: white;
+    box-shadow: 0 2px 6px rgba(255,107,138,0.3);
   }
-  @keyframes badgePop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
   .coming-soon-badge {
-    position: absolute; top: 10px; right: 10px; z-index: 5;
-    font-family: 'Fredoka', sans-serif; font-size: 11px; font-weight: 700;
-    padding: 4px 12px; border-radius: 10px; background: #a0a8a2; color: white;
+    position: absolute; top: 8px; right: 8px; z-index: 5;
+    font-family: 'Fredoka', sans-serif; font-size: 10px; font-weight: 700;
+    padding: 3px 10px; border-radius: 8px; background: #a0a8a2; color: white;
   }
 
-  /* === Themes === */
+  /* Themes */
   .theme-forest .card-visual { background: linear-gradient(135deg, #c8f0d4, #a8e6b8, #8dd99c); }
   .theme-forest .tag { background: #d4f5de; color: #1a7a3a; }
   .theme-forest .play-btn { background: linear-gradient(135deg, #2d9a4e, #3ab85c); }
@@ -214,23 +278,122 @@
   .theme-gallery .play-btn { background: linear-gradient(135deg, #b8860b, #d4a030); }
   .theme-gallery .card-title { color: #6b4c0a; }
 
-  /* === Coming Soon State === */
   .game-card.coming-soon { opacity: 0.5; }
-  .game-card.coming-soon:hover { transform: translateY(-1px); opacity: 0.6; }
+  .game-card.coming-soon:hover { transform: translateY(-2px); opacity: 0.55; }
   .game-card.coming-soon .play-btn { background: #bbb !important; box-shadow: none; }
   .game-card.coming-soon .emoji-icon { animation: none !important; }
-
-  /* === Hidden === */
   .game-card.hidden { display: none; }
 
-  /* === Footer === */
-  .footer { text-align: center; padding: 30px 20px 50px; position: relative; z-index: 1; }
-  .footer-trail { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 14px; }
-  .footer-trail .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--trail-green); opacity: 0.3; }
-  .footer-trail .dot:nth-child(2){opacity:.5} .footer-trail .dot:nth-child(3){opacity:.7;width:8px;height:8px}
-  .footer p { font-size: 11px; color: var(--text-mid); line-height: 1.8; }
-  .footer .brand { font-weight: 900; color: var(--trail-green); }
-  .footer .motto { display: inline-block; margin-top: 6px; padding: 4px 14px; background: #edf7f0; border-radius: 12px; font-size: 11px; color: var(--trail-green); font-weight: 700; }
+  /* --- Game Embed View --- */
+  .view-game-embed {
+    display: none; width: 100%; height: 100%;
+    position: relative;
+  }
+  .view-game-embed.active { display: flex; flex-direction: column; }
+  .game-embed-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; background: white;
+    border-bottom: 1px solid rgba(45,154,78,0.08);
+    flex-shrink: 0;
+  }
+  .game-embed-bar .back-btn {
+    border: none; background: rgba(45,154,78,0.08); cursor: pointer;
+    padding: 7px 14px; border-radius: 10px;
+    font-family: 'Zen Maru Gothic', sans-serif; font-size: 12px; font-weight: 700;
+    color: var(--trail-green); transition: all 0.2s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .game-embed-bar .back-btn:hover { background: rgba(45,154,78,0.15); }
+  .game-embed-bar .game-title {
+    font-size: 15px; font-weight: 900; color: var(--text-dark);
+    flex: 1; display: flex; align-items: center; gap: 8px;
+  }
+  .game-embed-bar .game-title .game-emoji { font-size: 20px; }
+  .game-embed-bar .fullscreen-btn {
+    border: none; background: rgba(45,154,78,0.08); cursor: pointer;
+    padding: 7px 12px; border-radius: 10px;
+    font-size: 16px; transition: all 0.2s;
+  }
+  .game-embed-bar .fullscreen-btn:hover { background: rgba(45,154,78,0.15); }
+  .game-iframe-wrap { flex: 1; position: relative; overflow: hidden; }
+  .game-iframe-wrap iframe {
+    width: 100%; height: 100%; border: none;
+    background: var(--bg-cream);
+  }
+  .game-loading-overlay {
+    position: absolute; inset: 0; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    background: var(--bg-cream); z-index: 10;
+    transition: opacity 0.3s ease;
+  }
+  .game-loading-overlay.hidden { opacity: 0; pointer-events: none; }
+  .loading-spinner { font-size: 48px; animation: spin 1.5s ease-in-out infinite; }
+  @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+  .loading-text { font-size: 14px; font-weight: 700; color: var(--text-mid); margin-top: 12px; }
+
+  /* --- Dashboard View --- */
+  .view-dashboard {
+    display: none; height: 100%; overflow-y: auto; padding: 28px 32px 60px;
+  }
+  .view-dashboard.active { display: block; }
+  .view-dashboard::-webkit-scrollbar { width: 6px; }
+  .view-dashboard::-webkit-scrollbar-thumb { background: rgba(45,154,78,0.15); border-radius: 4px; }
+
+  .dash-header { margin-bottom: 24px; }
+  .dash-header h2 { font-size: 22px; font-weight: 900; }
+  .dash-header h2 span { color: var(--trail-green); }
+  .dash-header p { font-size: 13px; color: var(--text-mid); margin-top: 4px; }
+
+  .dash-stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: white; border-radius: 14px; padding: 18px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    text-align: center;
+  }
+  .stat-card .stat-icon { font-size: 28px; margin-bottom: 6px; }
+  .stat-card .stat-value {
+    font-family: 'Fredoka', sans-serif; font-size: 30px; font-weight: 700;
+    color: var(--trail-green);
+  }
+  .stat-card .stat-label { font-size: 11px; color: var(--text-mid); font-weight: 700; margin-top: 2px; }
+
+  .dash-section { margin-bottom: 28px; }
+  .dash-section h3 {
+    font-size: 15px; font-weight: 900; color: var(--text-dark);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item {
+    display: flex; align-items: center; gap: 12px;
+    background: white; border-radius: 12px; padding: 12px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .history-item:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .history-item .h-emoji { font-size: 24px; }
+  .history-item .h-info { flex: 1; }
+  .history-item .h-title { font-size: 13px; font-weight: 900; }
+  .history-item .h-time { font-size: 10px; color: var(--text-light); }
+  .history-item .h-score {
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
+    color: var(--trail-green);
+  }
+  .empty-history {
+    text-align: center; padding: 30px; color: var(--text-light);
+    font-size: 13px; font-weight: 700;
+  }
+  .empty-history .empty-emoji { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+
+  /* === Empty State === */
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    color: var(--text-mid); font-size: 14px; font-weight: 700;
+    grid-column: 1 / -1;
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
 
   /* === Toast === */
   .toast-msg {
@@ -244,497 +407,652 @@
   @keyframes toastUp { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
   @keyframes toastDown { from{opacity:1} to{opacity:0;transform:translateX(-50%) translateY(16px)} }
 
-  ::-webkit-scrollbar { width: 0; }
+  /* === Mobile Overlay === */
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3); z-index: 45;
+  }
+
+  /* === Mobile Responsive === */
+  @media (max-width: 768px) {
+    :root { --sidebar-width: 260px; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0;
+      transform: translateX(-100%); z-index: 50;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.open { display: block; }
+    .menu-toggle { display: block; }
+    .game-grid { grid-template-columns: 1fr; padding: 16px; gap: 14px; }
+    .game-list-header { padding: 20px 16px 12px; }
+    .view-dashboard { padding: 20px 16px 60px; }
+    .dash-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .game-embed-bar .game-title { font-size: 13px; }
+  }
 </style>
 </head>
 <body>
-<div class="bg-sky"></div>
-<div class="cloud cloud-1"></div>
-<div class="cloud cloud-2"></div>
-<div class="cloud cloud-3"></div>
-<div class="leaf-deco leaf-1">🌿</div>
-<div class="leaf-deco leaf-2">🍃</div>
-<div class="leaf-deco leaf-3">🌱</div>
-<div class="leaf-deco leaf-4">🍂</div>
 
-<header class="header">
-  <div class="header-top">
-    <div class="header-icon">🌲</div>
-    <div>
-      <div class="header-logo">TRAIL</div>
-      <div class="header-title"><span>探究</span>ゲームランド</div>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header" onclick="showView('games')">
+      <div class="sidebar-logo-row">
+        <span class="sidebar-logo-icon">🌲</span>
+        <span class="sidebar-logo-text">TRAIL</span>
+        <span class="sidebar-logo-icon">🌲</span>
+      </div>
+      <div class="sidebar-subtitle">探究ゲームランド</div>
     </div>
-    <div class="header-icon">🌲</div>
-  </div>
-  <div class="header-sub">あそんで まなんで 発見しよう！</div>
-</header>
 
-<div class="category-bar-wrap">
-  <nav class="category-bar" id="categoryBar" aria-label="ゲームカテゴリ">
-    <button class="cat-btn active" data-cat="all">🎮 すべて</button>
-    <button class="cat-btn" data-cat="thinking">🧠 思考力</button>
-    <button class="cat-btn" data-cat="science">🔬 理科</button>
-    <button class="cat-btn" data-cat="social">🌍 社会</button>
-    <button class="cat-btn" data-cat="math">🔢 算数</button>
-    <button class="cat-btn" data-cat="creative">🎨 創造力</button>
-    <button class="cat-btn" data-cat="art">🖼️ 美術</button>
-    <button class="cat-btn" data-cat="language">🔤 英語</button>
-  </nav>
+    <nav class="sidebar-nav" id="sidebarNav">
+      <div class="nav-section">
+        <div class="nav-section-title">メニュー</div>
+        <button class="nav-item active" data-view="games" onclick="showView('games')">
+          <span class="nav-icon">🎮</span>
+          <span class="nav-label">ゲーム一覧</span>
+        </button>
+        <button class="nav-item" data-view="dashboard" onclick="showView('dashboard')">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">ダッシュボード</span>
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">カテゴリ</div>
+        <div id="categoryNav"></div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">ゲーム</div>
+        <div id="gameNav"></div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span class="brand">探究教室 TRAIL</span> &middot; あそんで まなんで 発見しよう！
+    </div>
+  </aside>
+
+  <!-- Sidebar mobile overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Main Area -->
+  <div class="main-area">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
+      <div class="breadcrumb" id="breadcrumb">
+        <button class="breadcrumb-item current">🌲 ゲーム一覧</button>
+      </div>
+      <div class="top-bar-actions">
+        <button class="top-bar-btn" onclick="showView('dashboard')" title="ダッシュボード">📊 きろく</button>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Game List View -->
+      <div class="view-game-list" id="viewGameList">
+        <div class="game-list-header">
+          <h2>🌲 <span>探究</span>ゲームランド</h2>
+          <p>あそんで まなんで 発見しよう！</p>
+          <div class="game-count-bar">
+            <div class="count-num" id="visibleCount">0</div>
+            <div class="count-label" id="countLabel"></div>
+          </div>
+        </div>
+        <div class="game-grid" id="gameGrid"></div>
+      </div>
+
+      <!-- Game Embed View -->
+      <div class="view-game-embed" id="viewGameEmbed">
+        <div class="game-embed-bar">
+          <button class="back-btn" onclick="showView('games')">← もどる</button>
+          <div class="game-title">
+            <span class="game-emoji" id="embedGameEmoji"></span>
+            <span id="embedGameTitle"></span>
+          </div>
+          <button class="fullscreen-btn" onclick="toggleFullscreen()" title="フルスクリーン">⛶</button>
+        </div>
+        <div class="game-iframe-wrap">
+          <div class="game-loading-overlay" id="gameLoading">
+            <div class="loading-spinner">🌲</div>
+            <div class="loading-text">ゲームを読み込み中...</div>
+          </div>
+          <iframe id="gameIframe" sandbox="allow-scripts allow-same-origin allow-popups" title="ゲーム"></iframe>
+        </div>
+      </div>
+
+      <!-- Dashboard View -->
+      <div class="view-dashboard" id="viewDashboard">
+        <div class="dash-header">
+          <h2>📊 <span>きみの</span>きろく</h2>
+          <p>これまでのプレイ記録と成績をチェック！</p>
+        </div>
+        <div class="dash-stats" id="dashStats"></div>
+        <div class="dash-section">
+          <h3>🕐 さいきんのプレイ</h3>
+          <div class="history-list" id="historyList"></div>
+        </div>
+        <div class="dash-section">
+          <h3>🏆 ベストスコア</h3>
+          <div class="history-list" id="bestScoreList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="game-count">
-  <div class="num" id="visibleCount">0</div>
-  <small id="countLabel"></small>
-</div>
-
-<div class="game-list" id="gameList"></div>
-
-<footer class="footer">
-  <div class="footer-trail">
-    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-    <span>🌲</span>
-    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  </div>
-  <p>
-    <span class="brand">探究教室 TRAIL</span><br>
-    あたらしいゲームがどんどんふえるよ！<br>
-    <span class="motto">🌿 あそんで まなんで 発見しよう！ 🌿</span>
-  </p>
-</footer>
-
+<script src="shared/game-registry.js"></script>
 <script>
-  // === Game Data ===
-  var games = [
-    {
-      id: 'maze-attack',
-      title: '迷路アタック',
-      desc: 'AIと対決！カードのちからを使って迷路をクリアしよう。きみの作戦でゴールをめざせ！',
-      emoji: '🏰',
-      theme: 'forest',
-      category: 'thinking',
-      tags: ['🧠 思考力', '⚔️ 対戦'],
-      difficulty: 3,
-      isNew: true,
-      comingSoon: false,
-      url: 'https://tanqtrail-arch.github.io/Meiro-atakku/',
-      decoType: 'trees',
-      decoContent: '🌲🌳🌲🌳🌲'
-    },
-    {
-      id: 'bunsu-buster',
-      title: '分数バスター',
-      desc: '円グラフに合う分数カードを選んで壊そう！30秒のタイムアタック。速答＆コンボで時間が増えるよ！',
-      emoji: '🥧',
-      theme: 'berry',
-      category: 'math',
-      tags: ['🔢 算数', '💥 分数'],
-      difficulty: 2,
-      isNew: true,
-      comingSoon: false,
-      url: 'bunsu-buster/',
-      decoType: 'dots'
-    },
-    {
-      id: 'bunsu-yugo',
-      title: '分数融合',
-      desc: '15枚の分数カードを四則演算で融合して1を作ろう！約分・通分を駆使してパーフェクトを目指す戦略パズル！',
-      emoji: '🔬',
-      theme: 'ocean',
-      category: 'math',
-      tags: ['🔢 算数', '➕ 分数'],
-      difficulty: 3,
-      isNew: true,
-      comingSoon: false,
-      url: 'bunsu-yugo/',
-      decoType: 'dots'
-    },
-    {
-      id: 'fraction-fusion',
-      title: '分数融合 - Fraction Fusion',
-      desc: '分数カードをたし算で合体させて整数「1」を作ろう！スペシャルカード(2,3,5,7)で×÷もできる。約分・通分を駆使して納品せよ！',
-      emoji: '🧮',
-      theme: 'lavender',
-      category: 'math',
-      tags: ['🔢 算数', '➕ 分数'],
-      difficulty: 3,
-      isNew: true,
-      comingSoon: false,
-      url: 'fraction-fusion/',
-      decoType: 'dots'
-    },
-    {
-      id: 'yakubun-kobo',
-      title: '約分工房',
-      desc: 'サイコロで出た分数の注文を手札のカードで作ろう！ワイルドカードや特殊能力を駆使して約分マスターを目指せ！',
-      emoji: '🎲',
-      theme: 'sunset',
-      category: 'math',
-      tags: ['🔢 算数', '✂️ 約分'],
-      difficulty: 3,
-      isNew: true,
-      comingSoon: false,
-      url: 'yakubun-kobo/',
-      decoType: 'dots'
-    },
-    {
-      id: 'bunsu-puzzle',
-      title: '分数カードパズル',
-      desc: '手札から分数カードを選んで行に配置。合計ぴったり1を作ろう！通分で自動合体、ミッション＆パーフェクトボーナスも！',
-      emoji: '🃏',
-      theme: 'forest',
-      category: 'math',
-      tags: ['🔢 算数', '🧩 パズル'],
-      difficulty: 3,
-      isNew: true,
-      comingSoon: false,
-      url: 'bunsu-puzzle/',
-      decoType: 'dots'
-    },
-    {
-      id: 'menseki-h-l',
-      title: 'どっちがデカい？',
-      desc: '2つの都道府県や国のシルエットをくらべて、面積が大きいほうを当てよう！レベルが上がるとむずかしくなるよ。コンボをつなげてちりマスターをめざせ！',
-      emoji: '🌏',
-      theme: 'ocean',
-      category: 'social',
-      tags: ['🌍 社会', '🗾 地理'],
-      difficulty: 2,
-      isNew: true,
-      comingSoon: false,
-      url: 'menseki-h-l/',
-      decoType: 'trees',
-      decoContent: '🗾🌏🗾🌏🗾'
-    },
-    {
-      id: 'tokusan-match',
-      title: 'とくさんぶつマッチング',
-      desc: '落ちてくる特産品カードを正しい地方にドラッグしよう！都道府県と特産品をあそびながら覚えられる！コンボ＆フィーバーで高得点を目指せ！',
-      emoji: '🗾',
-      theme: 'earth',
-      category: 'social',
-      tags: ['🌍 社会', '🗾 地理'],
-      difficulty: 2,
-      isNew: true,
-      comingSoon: false,
-      url: 'tokusan-match/',
-      decoType: 'trees',
-      decoContent: '🏔️🌸🏔️🌸🏔️'
-    },
-    {
-      id: 'silhouette-quiz',
-      title: 'シルエットクイズ',
-      desc: '都道府県のシルエットを見て名前を当てよう！かたち・とくさん・ばしょの3つのヒントで47都道府県をマスター！コレクションちずを完成させよう！',
-      emoji: '🗾',
-      theme: 'ocean',
-      category: 'social',
-      tags: ['🌍 社会', '🗾 地理'],
-      difficulty: 2,
-      isNew: true,
-      comingSoon: false,
-      url: 'silhouette-quiz/',
-      decoType: 'trees',
-      decoContent: '🏔️🗻🏔️🗻🏔️'
-    },
-    {
-      id: 'eigo-only',
-      title: 'Eigo Only! - 英語なぞときクイズ',
-      desc: '3つの英語ヒントを読んで、答えを当てよう！小学4年・中学1年・中学3年の3つのレベルから選べるクイズ。英語の質問文を読み解く力が身につく！',
-      emoji: '🔤',
-      theme: 'ocean',
-      category: 'language',
-      tags: ['🔤 英語', '❓ クイズ'],
-      difficulty: 2,
-      isNew: true,
-      comingSoon: false,
-      url: 'https://tanqtrail-arch.github.io/eigo-only/',
-      decoType: 'trees',
-      decoContent: '📚✏️📚✏️📚'
-    },
-    {
-      id: 'climate-battle',
-      title: '気候バトルカード',
-      desc: '世界の国や日本の都道府県の気候データで対決！気温・降水量・晴れの日数などを比べて勝とう。知識と直感の勝負！',
-      emoji: '🌍',
-      theme: 'ocean',
-      category: 'social',
-      tags: ['🌍 社会', '⚔️ 対戦'],
-      difficulty: 2,
-      isNew: true,
-      comingSoon: false,
-      url: 'climate-battle/',
-      decoType: 'trees',
-      decoContent: '🌍🌡️🌍🌡️🌍'
-    },
-    {
-      id: 'shingan',
-      title: '真贋ShinGan',
-      desc: '本物の絵と偽物の絵をくらべて、どっちがホンモノか見ぬけ！きみの目はごまかせない？',
-      emoji: '🖼️',
-      theme: 'gallery',
-      category: 'art',
-      tags: ['🖼️ 美術', '👁️ 観察力'],
-      difficulty: 2,
-      isNew: false,
-      comingSoon: true,
-      url: null,
-      decoType: 'trees',
-      decoContent: '🎨🖼️🎨🖼️🎨'
-    },
-    {
-      id: 'element-quiz',
-      title: '元素クエスト',
-      desc: 'ヒントから元素をあてよう！周期表のひみつを冒険しながら、化学はかせをめざすクイズ。',
-      emoji: '⚗️',
-      theme: 'ocean',
-      category: 'science',
-      tags: ['🔬 理科', '❓ クイズ'],
-      difficulty: 2,
-      isNew: false,
-      comingSoon: true,
-      url: null,
-      decoType: 'dots'
-    },
-    {
-      id: 'number-puzzle',
-      title: 'ナンバーブレイク',
-      desc: '数のルールを見つけてパズルをとこう！パターンを見ぬく力がためされるゲーム。',
-      emoji: '🔓',
-      theme: 'sunset',
-      category: 'math',
-      tags: ['🔢 算数', '🧩 パズル'],
-      difficulty: 4,
-      isNew: false,
-      comingSoon: true,
-      url: null,
-      decoType: 'dots'
-    },
-    {
-      id: 'map-explorer',
-      title: 'マップ探検隊',
-      desc: 'ヒントをたよりに世界の都市をあてよう！地理と文化のものしりになれる探検クイズ。',
-      emoji: '🗺️',
-      theme: 'earth',
-      category: 'social',
-      tags: ['🌍 社会', '🧭 探検'],
-      difficulty: 2,
-      isNew: false,
-      comingSoon: true,
-      url: null,
-      decoType: 'trees',
-      decoContent: '🏔️🌄🏔️🌄🏔️'
-    },
-    {
-      id: 'story-builder',
-      title: 'ストーリービルダー',
-      desc: 'ランダムなキーワードからお話をつくろう！きみだけのオリジナルストーリーに挑戦。',
-      emoji: '📖',
-      theme: 'lavender',
-      category: 'creative',
-      tags: ['🎨 創造力', '📝 物語'],
-      difficulty: 3,
-      isNew: false,
-      comingSoon: true,
-      url: null,
-      decoType: 'dots'
-    },
-    {
-      id: 'logic-tower',
-      title: 'ロジックタワー',
-      desc: 'ぜんぶの条件をみたす答えを見つけろ！レベルが上がるほどむずかしくなる頭のたいそう。',
-      emoji: '🗼',
-      theme: 'berry',
-      category: 'thinking',
-      tags: ['🧠 思考力', '🔍 論理'],
-      difficulty: 5,
-      isNew: false,
-      comingSoon: true,
-      url: null,
-      decoType: 'dots'
+// =====================================================
+// TRAIL SaaS App Shell
+// =====================================================
+
+var games = TRAIL_GAMES;
+var categories = TRAIL_CATEGORIES;
+var currentView = 'games';
+var currentCategory = 'all';
+var currentGame = null;
+
+// === Init ===
+(function init() {
+  renderCategoryNav();
+  renderGameNav();
+  renderGameGrid();
+  filterCards('all');
+  renderDashboard();
+  listenForGameMessages();
+})();
+
+// === Sidebar Category Nav ===
+function renderCategoryNav() {
+  var container = document.getElementById('categoryNav');
+  var html = '';
+  categories.forEach(function(cat) {
+    var count = cat.id === 'all'
+      ? games.filter(function(g) { return !g.comingSoon; }).length
+      : games.filter(function(g) { return g.category === cat.id && !g.comingSoon; }).length;
+    html += '<button class="cat-item' + (cat.id === 'all' ? ' active' : '') + '" data-cat="' + cat.id + '" onclick="filterByCategory(\'' + cat.id + '\')">'
+          + cat.label
+          + '<span class="cat-count">' + count + '</span>'
+          + '</button>';
+  });
+  container.innerHTML = html;
+}
+
+// === Sidebar Game Quick Nav ===
+function renderGameNav() {
+  var container = document.getElementById('gameNav');
+  var playable = games.filter(function(g) { return !g.comingSoon && g.url; });
+  var html = '';
+  playable.forEach(function(game) {
+    html += '<button class="nav-item" data-game="' + game.id + '" onclick="launchGame(\'' + game.id + '\')">'
+          + '<span class="nav-icon">' + game.emoji + '</span>'
+          + '<span class="nav-label">' + game.title + '</span>'
+          + '</button>';
+  });
+  container.innerHTML = html;
+}
+
+// === Game Grid ===
+function renderGameGrid() {
+  var grid = document.getElementById('gameGrid');
+  grid.innerHTML = '';
+  games.forEach(function(game, idx) {
+    var card = document.createElement('div');
+    card.className = 'game-card theme-' + game.theme + (game.comingSoon ? ' coming-soon' : '');
+    card.dataset.cat = game.category;
+    card.dataset.id = game.id;
+    card.style.animationDelay = (idx * 0.04) + 's';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'link');
+    card.setAttribute('aria-label', game.title + (game.comingSoon ? '（準備中）' : ''));
+
+    var badge = '';
+    if (game.isNew && !game.comingSoon) badge = '<div class="badge-new">NEW!</div>';
+    else if (game.comingSoon) badge = '<div class="coming-soon-badge">準備中</div>';
+
+    var deco = game.decoType === 'trees'
+      ? '<div class="deco-trees">' + (game.decoContent || '') + '</div>'
+      : '<div class="deco-dots"></div>';
+
+    var markers = '';
+    for (var i = 1; i <= 5; i++) {
+      markers += '<div class="trail-marker' + (i <= game.difficulty ? ' filled' : '') + '"></div>';
     }
-  ];
 
-  // === DOM References ===
-  var gameList = document.getElementById('gameList');
-  var countEl = document.getElementById('visibleCount');
-  var countLabel = document.getElementById('countLabel');
-  var categoryBar = document.getElementById('categoryBar');
-  var catBtns = document.querySelectorAll('.cat-btn');
+    var tagsHtml = game.tags.map(function(t) { return '<span class="tag">' + t + '</span>'; }).join('');
+    var btnText = game.comingSoon ? '🔒 準備中' : '▶ あそぶ！';
 
-  // === Render Cards ===
-  function renderCards() {
-    gameList.innerHTML = '';
-    games.forEach(function(game) {
-      var card = document.createElement('div');
-      card.className = 'game-card theme-' + game.theme + (game.comingSoon ? ' coming-soon' : '');
-      card.dataset.cat = game.category;
-      card.dataset.id = game.id;
-      card.setAttribute('tabindex', '0');
-      card.setAttribute('role', 'link');
-      card.setAttribute('aria-label', game.title + (game.comingSoon ? '（準備中）' : ''));
+    // Best score display
+    var bestHtml = '';
+    var best = getBestScore(game.id);
+    if (best) {
+      bestHtml = '<div class="card-best-score">🏆 ベスト: ' + best.score + '点</div>';
+    }
 
-      // Badge
-      var badge = '';
-      if (game.isNew && !game.comingSoon) {
-        badge = '<div class="badge-new">NEW!</div>';
-      } else if (game.comingSoon) {
-        badge = '<div class="coming-soon-badge">準備中</div>';
-      }
-
-      // Deco
-      var deco = '';
-      if (game.decoType === 'trees') {
-        deco = '<div class="deco-trees">' + (game.decoContent || '') + '</div>';
-      } else {
-        deco = '<div class="deco-dots"></div>';
-      }
-
-      // Difficulty markers
-      var markers = '';
-      for (var i = 1; i <= 5; i++) {
-        markers += '<div class="trail-marker' + (i <= game.difficulty ? ' filled' : '') + '"></div>';
-      }
-
-      // Tags
-      var tagsHtml = game.tags.map(function(t) { return '<span class="tag">' + t + '</span>'; }).join('');
-
-      // Play button
-      var btnText = game.comingSoon ? '🔒 準備中' : '▶ あそぶ！';
-
-      card.innerHTML =
-        badge +
-        '<div class="card-visual">' +
-          '<div class="bg-deco">' + deco + '</div>' +
-          '<div class="deco-wave"></div>' +
-          '<div class="emoji-icon">' + game.emoji + '</div>' +
+    card.innerHTML =
+      badge +
+      '<div class="card-visual">' +
+        '<div class="bg-deco">' + deco + '</div>' +
+        '<div class="deco-wave"></div>' +
+        '<div class="emoji-icon">' + game.emoji + '</div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-tags">' + tagsHtml + '</div>' +
+        '<div class="card-title">' + game.title + '</div>' +
+        '<div class="card-desc">' + game.desc + '</div>' +
+        '<div class="card-footer">' +
+          '<div class="card-difficulty"><span class="label">むずかしさ</span>' + markers + '</div>' +
+          '<button class="play-btn">' + btnText + '</button>' +
         '</div>' +
-        '<div class="card-body">' +
-          '<div class="card-tags">' + tagsHtml + '</div>' +
-          '<div class="card-title">' + game.title + '</div>' +
-          '<div class="card-desc">' + game.desc + '</div>' +
-          '<div class="card-footer">' +
-            '<div class="card-difficulty"><span class="label">むずかしさ</span>' + markers + '</div>' +
-            '<button class="play-btn">' + btnText + '</button>' +
-          '</div>' +
-        '</div>';
+        bestHtml +
+      '</div>';
 
-      // Click handler
-      card.addEventListener('click', function() { launchGame(game); });
-      card.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          launchGame(game);
-        }
-      });
-
-      gameList.appendChild(card);
-    });
-  }
-
-  // === Launch Game ===
-  function launchGame(game) {
-    if (game.url) {
-      window.location.href = game.url;
-    } else if (game.comingSoon) {
-      showToast('🌱 「' + game.title + '」は準備中だよ！おたのしみに！');
-    } else {
-      showToast('🌱 「' + game.title + '」はまもなく公開！');
-    }
-  }
-
-  // === Filter ===
-  function filterCards(cat) {
-    var cards = document.querySelectorAll('.game-card');
-    var playable = 0;
-    var comingSoonCount = 0;
-    var totalVisible = 0;
-
-    cards.forEach(function(card) {
-      if (cat === 'all' || card.dataset.cat === cat) {
-        card.classList.remove('hidden');
-        totalVisible++;
-        var game = games.find(function(g) { return g.id === card.dataset.id; });
-        if (game && !game.comingSoon) { playable++; }
-        else { comingSoonCount++; }
-      } else {
-        card.classList.add('hidden');
-      }
+    card.addEventListener('click', function() { launchGame(game.id); });
+    card.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); launchGame(game.id); }
     });
 
-    countEl.textContent = totalVisible;
+    grid.appendChild(card);
+  });
+}
 
-    if (totalVisible === 0) {
-      countLabel.textContent = '';
-      showEmptyState(cat);
+// === Filter ===
+function filterByCategory(cat) {
+  currentCategory = cat;
+
+  // Update sidebar active state
+  var catItems = document.querySelectorAll('.cat-item');
+  catItems.forEach(function(item) {
+    item.classList.toggle('active', item.dataset.cat === cat);
+  });
+
+  filterCards(cat);
+  if (currentView !== 'games') showView('games');
+  closeSidebar();
+}
+
+function filterCards(cat) {
+  var cards = document.querySelectorAll('.game-card');
+  var playable = 0, comingSoonCount = 0, totalVisible = 0;
+
+  cards.forEach(function(card) {
+    if (cat === 'all' || card.dataset.cat === cat) {
+      card.classList.remove('hidden');
+      totalVisible++;
+      var game = games.find(function(g) { return g.id === card.dataset.id; });
+      if (game && !game.comingSoon) playable++;
+      else comingSoonCount++;
     } else {
-      removeEmptyState();
-      if (comingSoonCount > 0 && playable > 0) {
-        countLabel.textContent = 'つのゲーム！（' + playable + 'つあそべる・' + comingSoonCount + 'つ準備中）';
-      } else if (playable === 0) {
-        countLabel.textContent = 'つのゲームが準備中 🚧';
-      } else {
-        countLabel.textContent = 'つのゲームであそべるよ！🚩';
-      }
+      card.classList.add('hidden');
     }
-  }
+  });
 
-  // === Empty State ===
-  function showEmptyState(cat) {
-    removeEmptyState();
+  document.getElementById('visibleCount').textContent = totalVisible;
+  var countLabel = document.getElementById('countLabel');
+
+  // Remove old empty state
+  var oldEmpty = document.getElementById('emptyState');
+  if (oldEmpty) oldEmpty.remove();
+
+  if (totalVisible === 0) {
+    countLabel.textContent = '';
+    var grid = document.getElementById('gameGrid');
     var el = document.createElement('div');
-    el.className = 'empty-state';
-    el.id = 'emptyState';
-    el.innerHTML =
-      '<div class="empty-icon">🌿</div>' +
-      '<div class="empty-text">このカテゴリのゲームは<br>まだないよ。おたのしみに！</div>';
-    gameList.appendChild(el);
+    el.className = 'empty-state'; el.id = 'emptyState';
+    el.innerHTML = '<div class="empty-icon">🌿</div><div>このカテゴリのゲームは<br>まだないよ。おたのしみに！</div>';
+    grid.appendChild(el);
+  } else if (comingSoonCount > 0 && playable > 0) {
+    countLabel.textContent = 'つのゲーム！（' + playable + 'つあそべる・' + comingSoonCount + 'つ準備中）';
+  } else if (playable === 0) {
+    countLabel.textContent = 'つのゲームが準備中 🚧';
+  } else {
+    countLabel.textContent = 'つのゲームであそべるよ！🚩';
+  }
+}
+
+// === Launch Game ===
+function launchGame(gameId) {
+  var game = games.find(function(g) { return g.id === gameId; });
+  if (!game) return;
+
+  if (game.comingSoon) {
+    showToast('🌱 「' + game.title + '」は準備中だよ！おたのしみに！');
+    return;
+  }
+  if (!game.url) {
+    showToast('🌱 「' + game.title + '」はまもなく公開！');
+    return;
   }
 
-  function removeEmptyState() {
-    var el = document.getElementById('emptyState');
-    if (el) el.remove();
+  // External games open in new tab
+  if (game.external) {
+    window.open(game.url, '_blank');
+    return;
   }
 
-  // === Category Buttons ===
-  catBtns.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      catBtns.forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      filterCards(btn.dataset.cat);
+  // Embed internal game
+  currentGame = game;
+  document.getElementById('embedGameEmoji').textContent = game.emoji;
+  document.getElementById('embedGameTitle').textContent = game.title;
+
+  var iframe = document.getElementById('gameIframe');
+  var loading = document.getElementById('gameLoading');
+  loading.classList.remove('hidden');
+
+  iframe.onload = function() {
+    loading.classList.add('hidden');
+  };
+  iframe.src = game.url;
+
+  showView('embed');
+  closeSidebar();
+
+  // Update sidebar game nav active
+  document.querySelectorAll('[data-game]').forEach(function(item) {
+    item.classList.toggle('active', item.dataset.game === gameId);
+  });
+}
+
+// === View Management ===
+function showView(view) {
+  currentView = view;
+
+  // Hide all views
+  document.getElementById('viewGameList').style.display = 'none';
+  document.getElementById('viewGameEmbed').classList.remove('active');
+  document.getElementById('viewDashboard').classList.remove('active');
+
+  // Show target view
+  if (view === 'games') {
+    document.getElementById('viewGameList').style.display = '';
+    updateBreadcrumb([{ label: '🌲 ゲーム一覧', action: null }]);
+    // Unload iframe
+    var iframe = document.getElementById('gameIframe');
+    if (iframe.src && iframe.src !== 'about:blank') iframe.src = 'about:blank';
+    currentGame = null;
+    // Clear game nav active
+    document.querySelectorAll('[data-game]').forEach(function(item) { item.classList.remove('active'); });
+  } else if (view === 'embed') {
+    document.getElementById('viewGameEmbed').classList.add('active');
+    updateBreadcrumb([
+      { label: '🌲 ゲーム一覧', action: function() { showView('games'); } },
+      { label: currentGame ? currentGame.emoji + ' ' + currentGame.title : '' , action: null }
+    ]);
+  } else if (view === 'dashboard') {
+    document.getElementById('viewDashboard').classList.add('active');
+    renderDashboard();
+    updateBreadcrumb([{ label: '📊 ダッシュボード', action: null }]);
+  }
+
+  // Update nav active states
+  document.querySelectorAll('.nav-item[data-view]').forEach(function(item) {
+    item.classList.toggle('active', item.dataset.view === view || (view === 'embed' && item.dataset.view === 'games'));
+  });
+}
+
+// === Breadcrumb ===
+function updateBreadcrumb(items) {
+  var bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  items.forEach(function(item, idx) {
+    if (idx > 0) {
+      var sep = document.createElement('span');
+      sep.className = 'breadcrumb-sep';
+      sep.textContent = '›';
+      bc.appendChild(sep);
+    }
+    var btn = document.createElement('button');
+    btn.className = 'breadcrumb-item' + (idx === items.length - 1 ? ' current' : '');
+    btn.textContent = item.label;
+    if (item.action) {
+      btn.addEventListener('click', item.action);
+    }
+    bc.appendChild(btn);
+  });
+}
+
+// === Sidebar Mobile ===
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// === Fullscreen ===
+function toggleFullscreen() {
+  var wrap = document.getElementById('viewGameEmbed');
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else {
+    wrap.requestFullscreen().catch(function() {});
+  }
+}
+
+// === Dashboard ===
+function renderDashboard() {
+  renderDashStats();
+  renderHistory();
+  renderBestScores();
+}
+
+function renderDashStats() {
+  var container = document.getElementById('dashStats');
+  var totalPlays = 0;
+  var gamesPlayed = new Set();
+  var totalScore = 0;
+  var bestScore = 0;
+
+  games.forEach(function(game) {
+    var history = getHistory(game.id);
+    if (history.length > 0) {
+      gamesPlayed.add(game.id);
+      totalPlays += history.length;
+      history.forEach(function(h) {
+        totalScore += (h.score || 0);
+        if ((h.score || 0) > bestScore) bestScore = h.score;
+      });
+    }
+  });
+
+  var playableCount = games.filter(function(g) { return !g.comingSoon && g.url; }).length;
+
+  container.innerHTML =
+    '<div class="stat-card"><div class="stat-icon">🎮</div><div class="stat-value">' + totalPlays + '</div><div class="stat-label">トータルプレイ</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">🗺️</div><div class="stat-value">' + gamesPlayed.size + '/' + playableCount + '</div><div class="stat-label">プレイしたゲーム</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-value">' + totalScore + '</div><div class="stat-label">ごうけいスコア</div></div>' +
+    '<div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value">' + bestScore + '</div><div class="stat-label">ベストスコア</div></div>';
+}
+
+function renderHistory() {
+  var container = document.getElementById('historyList');
+  var allHistory = [];
+
+  games.forEach(function(game) {
+    var history = getHistory(game.id);
+    history.forEach(function(h) {
+      allHistory.push({ game: game, score: h.score, timestamp: h.timestamp });
     });
   });
 
-  // === Category Bar Scroll Hint ===
-  function updateScrollHint() {
-    var el = categoryBar;
-    var scrollLeft = el.scrollLeft;
-    var maxScroll = el.scrollWidth - el.clientWidth;
+  allHistory.sort(function(a, b) { return b.timestamp - a.timestamp; });
+  allHistory = allHistory.slice(0, 20);
 
-    el.classList.remove('scrolled-end', 'scrolled-mid');
-    if (maxScroll <= 2) return; // no scroll needed
-    if (scrollLeft <= 2) return; // at start, default mask
-    if (scrollLeft >= maxScroll - 2) {
-      el.classList.add('scrolled-end');
-    } else {
-      el.classList.add('scrolled-mid');
+  if (allHistory.length === 0) {
+    container.innerHTML = '<div class="empty-history"><div class="empty-emoji">🌱</div>まだプレイ記録がないよ。<br>ゲームであそんでみよう！</div>';
+    return;
+  }
+
+  container.innerHTML = allHistory.map(function(h) {
+    var timeStr = formatTime(h.timestamp);
+    return '<div class="history-item" onclick="launchGame(\'' + h.game.id + '\')">' +
+      '<span class="h-emoji">' + h.game.emoji + '</span>' +
+      '<div class="h-info"><div class="h-title">' + h.game.title + '</div><div class="h-time">' + timeStr + '</div></div>' +
+      '<div class="h-score">' + (h.score || 0) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderBestScores() {
+  var container = document.getElementById('bestScoreList');
+  var bestScores = [];
+
+  games.forEach(function(game) {
+    var best = getBestScore(game.id);
+    if (best) {
+      bestScores.push({ game: game, score: best.score, timestamp: best.timestamp });
     }
-  }
-  categoryBar.addEventListener('scroll', updateScrollHint);
+  });
 
-  // === Toast ===
-  function showToast(msg) {
-    var old = document.querySelector('.toast-msg');
-    if (old) old.remove();
-    var t = document.createElement('div');
-    t.className = 'toast-msg';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(function() { t.remove(); }, 2500);
+  bestScores.sort(function(a, b) { return b.score - a.score; });
+
+  if (bestScores.length === 0) {
+    container.innerHTML = '<div class="empty-history"><div class="empty-emoji">🏆</div>まだベストスコアがないよ。<br>ゲームに挑戦しよう！</div>';
+    return;
   }
 
-  // === Init ===
-  renderCards();
-  filterCards('all');
-  updateScrollHint();
+  container.innerHTML = bestScores.map(function(h, idx) {
+    var medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '　';
+    return '<div class="history-item" onclick="launchGame(\'' + h.game.id + '\')">' +
+      '<span class="h-emoji">' + medal + '</span>' +
+      '<div class="h-info"><div class="h-title">' + h.game.emoji + ' ' + h.game.title + '</div></div>' +
+      '<div class="h-score">' + h.score + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// === postMessage Listener (Shell side) ===
+function listenForGameMessages() {
+  window.addEventListener('message', function(e) {
+    var msg = e.data;
+    if (!msg || typeof msg.type !== 'string') return;
+
+    switch (msg.type) {
+      case 'trail:ready':
+        // Game has loaded and initialized
+        break;
+
+      case 'trail:score':
+        // Mid-game score update (could show in top bar)
+        break;
+
+      case 'trail:gameOver':
+        // Game finished — save to history
+        if (msg.gameId && msg.data) {
+          saveHistory(msg.gameId, msg.data);
+          // Re-render dashboard data & card best scores
+          renderDashboard();
+          refreshCardBestScores();
+        }
+        break;
+
+      case 'trail:navigate':
+        if (msg.target === 'home') {
+          showView('games');
+        } else {
+          launchGame(msg.target);
+        }
+        break;
+
+      case 'trail:resize':
+        // Could auto-resize iframe if needed
+        break;
+    }
+  });
+}
+
+// === LocalStorage Helpers ===
+function getHistory(gameId) {
+  try {
+    var raw = localStorage.getItem('trail:history:' + gameId);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function getBestScore(gameId) {
+  var history = getHistory(gameId);
+  if (history.length === 0) return null;
+  var best = history[0];
+  for (var i = 1; i < history.length; i++) {
+    if ((history[i].score || 0) > (best.score || 0)) best = history[i];
+  }
+  return best;
+}
+
+function saveHistory(gameId, data) {
+  var key = 'trail:history:' + gameId;
+  try {
+    var history = JSON.parse(localStorage.getItem(key) || '[]');
+    history.unshift({
+      score: data.score || 0,
+      correct: data.correct,
+      total: data.total,
+      timestamp: Date.now()
+    });
+    if (history.length > 50) history = history.slice(0, 50);
+    localStorage.setItem(key, JSON.stringify(history));
+  } catch(e) {}
+}
+
+function refreshCardBestScores() {
+  document.querySelectorAll('.game-card').forEach(function(card) {
+    var gameId = card.dataset.id;
+    var existing = card.querySelector('.card-best-score');
+    var best = getBestScore(gameId);
+    if (best) {
+      if (existing) {
+        existing.innerHTML = '🏆 ベスト: ' + best.score + '点';
+      } else {
+        var div = document.createElement('div');
+        div.className = 'card-best-score';
+        div.innerHTML = '🏆 ベスト: ' + best.score + '点';
+        card.querySelector('.card-body').appendChild(div);
+      }
+    }
+  });
+}
+
+// === Utilities ===
+function formatTime(ts) {
+  var d = new Date(ts);
+  var now = new Date();
+  var diffMs = now - d;
+  var diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'たったいま';
+  if (diffMin < 60) return diffMin + '分まえ';
+  var diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return diffHr + '時間まえ';
+  var diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return diffDay + '日まえ';
+  return (d.getMonth() + 1) + '/' + d.getDate();
+}
+
+function showToast(msg) {
+  var old = document.querySelector('.toast-msg');
+  if (old) old.remove();
+  var t = document.createElement('div');
+  t.className = 'toast-msg';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 2500);
+}
+
+// === Keyboard Shortcuts ===
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (currentView === 'embed') showView('games');
+    else closeSidebar();
+  }
+});
 </script>
 </body>
 </html>
