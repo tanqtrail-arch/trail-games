@@ -95,6 +95,28 @@
   .login-guest:hover { background: #e4e8ee; color: var(--text); }
   .login-error { color: var(--accent); font-size: 12px; font-weight: 700; margin-top: 8px; }
 
+  /* Not Registered Popup */
+  .popup-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.5); align-items: center; justify-content: center;
+  }
+  .popup-overlay.active { display: flex; }
+  .popup-box {
+    background: #fff; border-radius: 20px; padding: 32px 28px; text-align: center;
+    max-width: 320px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    animation: popupIn 0.3s ease;
+  }
+  @keyframes popupIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .popup-emoji { font-size: 48px; margin-bottom: 8px; }
+  .popup-title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
+  .popup-message { font-size: 15px; color: #555; line-height: 1.7; margin-bottom: 20px; }
+  .popup-message strong { color: var(--primary); font-size: 17px; }
+  .popup-close-btn {
+    background: var(--primary); color: #fff; border: none; border-radius: 12px;
+    padding: 10px 32px; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .popup-close-btn:hover { opacity: 0.9; }
+
   /* === Main App === */
   .app { display: none; min-height: 100vh; padding-bottom: 70px; }
   .app.active { display: block; }
@@ -589,11 +611,11 @@ function setupLoginHandlers() {
         enterApp(user);
       }).catch(function(err) {
         if (err.code === 'NOT_REGISTERED') {
-          errEl.textContent = 'このなまえは登録されていません。先生にかくにんしてね。';
+          showNotRegisteredPopup();
         } else {
           errEl.textContent = 'ログインできませんでした。もういちどためしてね。';
+          errEl.classList.remove('hidden');
         }
-        errEl.classList.remove('hidden');
         btn.textContent = 'にゅうしつする';
         btn.disabled = false;
       });
@@ -638,6 +660,12 @@ function enterApp(user) {
   document.getElementById('bannerGreeting').textContent = user.name + 'さん、ようこそ！';
 
   renderAllViews();
+
+  // Auto-launch game from URL parameter (?game=silhouette-quiz)
+  var urlGame = new URLSearchParams(window.location.search).get('game');
+  if (urlGame) {
+    launchGame(urlGame);
+  }
 }
 
 // =====================
@@ -754,6 +782,11 @@ function launchGame(gameId) {
   iframe.src = game.url;
 
   document.getElementById('gameEmbed').classList.add('active');
+
+  // Update URL with game parameter
+  var url = new URL(window.location);
+  url.searchParams.set('game', gameId);
+  history.replaceState(null, '', url);
 }
 
 function closeEmbed() {
@@ -761,6 +794,11 @@ function closeEmbed() {
   var iframe = document.getElementById('embedIframe');
   iframe.src = 'about:blank';
   currentGame = null;
+
+  // Remove game parameter from URL
+  var url = new URL(window.location);
+  url.searchParams.delete('game');
+  history.replaceState(null, '', url);
 }
 
 function setupEmbedHandlers() {
@@ -1036,6 +1074,31 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(function() { t.remove(); }, 2500);
 }
+
+// =====================
+// Not Registered Popup
+// =====================
+function showNotRegisteredPopup() {
+  var overlay = document.getElementById('notRegisteredPopup');
+  overlay.classList.add('active');
+}
+function closeNotRegisteredPopup() {
+  document.getElementById('notRegisteredPopup').classList.remove('active');
+}
 </script>
+
+<!-- ===== Not Registered Popup ===== -->
+<div class="popup-overlay" id="notRegisteredPopup">
+  <div class="popup-box">
+    <div class="popup-emoji">😢</div>
+    <div class="popup-title">登録されていません</div>
+    <div class="popup-message">
+      このなまえは まだ登録されていないよ。<br>
+      LINEで <strong>「登録希望」</strong> とメッセージしてね！
+    </div>
+    <button class="popup-close-btn" onclick="closeNotRegisteredPopup()">とじる</button>
+  </div>
+</div>
+
 </body>
 </html>
