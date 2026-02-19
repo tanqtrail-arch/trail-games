@@ -15,8 +15,10 @@
 </head>
 <body>
 <div id="root"></div>
+<script src="../shared/trail-sdk.js"></script>
 <script type="text/babel">
 const { useState, useCallback, useRef, useEffect } = React;
+TrailSDK.ready({ gameId: 'yakubun-kobo' });
 
 const HAND_MAX = 8;
 const DECK_SIZE = 36;
@@ -93,6 +95,10 @@ function YakubunKoubou() {
       return () => clearInterval(timerRef.current);
     } else { clearInterval(timerRef.current); }
   }, [phase, mode]);
+
+  useEffect(() => {
+    if (phase === "gameOver") TrailSDK.gameOver({ score: score, correct: totalUsed, total: round - 1 });
+  }, [phase]);
 
   useEffect(() => {
     if (timer === 0 && phase === "playing" && mode === "normal") {

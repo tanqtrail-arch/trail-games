@@ -7,6 +7,7 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../shared/trail-sdk.js"></script>
 <script src="../shared/math-utils.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
@@ -19,6 +20,7 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useCallback, useRef, useEffect } = React;
+TrailSDK.ready({ gameId: 'bunsu-puzzle' });
 
 const ROWS = 6, BOARD_W = 380, ROW_H = 56;
 const DIFF_FRACS = {
@@ -71,6 +73,7 @@ function App(){
   const hBlk=useCallback((r,bi)=>{if(spM){applySp(r,bi);return;}if(sel!==null)return;const b=rows[r][bi];if(!b||b.type)return;if(rT&&rT.row===r&&rT.idx===bi)sRT(null);else sRT({row:r,idx:bi});},[spM,sel,rows,rT,applySp]);
   function skip(){if(skp<=0||gs!=="playing")return;sSkp(s=>s-1);if(deck.length>=hSz){const{drawn,rest}=drw(deck,hSz);sHand(drawn);sDeck(rest);}else if(deck.length>0){sHand([...deck]);sDeck([]);}sSel(null);sTrn(t=>t+1);sExI(null);sSpM(null);}
   useEffect(()=>{if(gs!=="playing")return;if(hand.length===0&&deck.length===0)setTimeout(()=>sGs("gameover"),300);else if(hand.length>0&&!cAny(hand,rows)&&skp<=0&&deck.length===0)setTimeout(()=>sGs("gameover"),500);},[hand,deck,rows,gs,cAny,skp]);
+  useEffect(()=>{if(gs==="gameover")TrailSDK.gameOver({score:sc,correct:tc,total:trn});},[gs]);
   const bH=ROWS*ROW_H,ri=gRank(sc,trn,tc);
   return(<div style={{minHeight:"100vh",background:"linear-gradient(150deg,#0f172a,#1e1b4b 50%,#1a1333)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'Fredoka',sans-serif",color:"#fff",padding:10,userSelect:"none"}}>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet"/>

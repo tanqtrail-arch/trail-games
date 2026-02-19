@@ -16,8 +16,10 @@
 </head>
 <body>
   <div id="root"></div>
+  <script src="../shared/trail-sdk.js"></script>
   <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
+TrailSDK.ready({ gameId: 'climate-battle' });
 
 const storageAPI = {
   get: async (key) => { try { const v = localStorage.getItem(key); return v ? { value: v } : null; } catch { return null; } },
@@ -366,6 +368,8 @@ function Battle({mode,ed,lv,best,onBack,onEnd}){
     setRd(1);
     newCh([],true);
   },[]);
+
+  useEffect(()=>{if(ph==="end")TrailSDK.gameOver({score:pS,correct:pS,total:pS+cS});},[ph]);
 
   function newCh(prev){
     const av=STATS.filter(s=>!prev.includes(s.key));const p=av.length>0?av:STATS;

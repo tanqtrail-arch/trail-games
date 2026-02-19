@@ -7,6 +7,7 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="../shared/trail-sdk.js"></script>
 <script src="../shared/math-utils.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
@@ -19,6 +20,7 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useCallback, useEffect, useRef } = React;
+TrailSDK.ready({ gameId: 'bunsu-yugo' });
 /* ---- Mobile detect ---- */
 function useMobile(bp) {
   const b = bp || 600;
@@ -629,6 +631,7 @@ function CustInput({ onConfirm, onCancel }) {
 function ResultScr({ del, cards, onRetry }) {
   const sc = calcSc(del, cards);
   const rank = getRank(sc.total);
+  useEffect(() => { TrailSDK.gameOver({ score: sc.total, correct: del.length, total: 15 }); }, []);
   const maxD = del.length > 0 ? Math.max(...del.map(x => x.depth)) : 0;
   const last = sc.cl === 1 ? cards[0] : null;
   return (
