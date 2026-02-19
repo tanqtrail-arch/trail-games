@@ -3,23 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TRAIL Game Pro 3</title>
+<title>TRAIL GP4</title>
 <meta name="description" content="探究教室TRAILの学習ゲームポータル">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌲</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Fredoka:wght@400;600;700&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f0f4ff;
-    --primary: #4a7cff;
-    --primary-dark: #3a5fd9;
-    --accent: #ff6b9d;
-    --green: #4CAF50;
-    --yellow: #FFB300;
-    --text: #333;
-    --text-light: #888;
-    --card-bg: #fff;
+    --bg: #0a0e1a;
+    --bg-card: #141828;
+    --bg-surface: #1a1f35;
+    --bg-input: #1e2340;
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --accent: #f472b6;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --cyan: #22d3ee;
+    --text: #e8eaf6;
+    --text-dim: #8890b0;
+    --text-muted: #555c7a;
+    --border: #252a40;
     --radius: 16px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow: 0 2px 16px rgba(0,0,0,0.3);
+    --gradient-title: linear-gradient(135deg, #fbbf24, #f59e0b, #22d3ee, #06b6d4);
+    --gradient-btn: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -31,30 +38,79 @@
     overflow-x: hidden;
   }
 
+  /* === Loading Screen === */
+  .loading-screen {
+    position: fixed; inset: 0; z-index: 10000;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity 0.5s ease;
+  }
+  .loading-screen.fade-out { opacity: 0; pointer-events: none; }
+  .loading-title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 36px; font-weight: 700;
+    background: var(--gradient-title);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; color: transparent;
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+  .loading-bar-track {
+    width: 200px; height: 4px;
+    background: var(--border); border-radius: 2px;
+    overflow: hidden; margin-bottom: 16px;
+  }
+  .loading-bar-fill {
+    height: 100%; width: 0%;
+    background: var(--gradient-title); border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+  .loading-text {
+    font-size: 13px; font-weight: 700;
+    color: var(--text-dim);
+    animation: loadingPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes loadingPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
   /* === Login Screen === */
   .login-screen {
-    min-height: 100vh; display: flex; flex-direction: column;
+    min-height: 100vh; display: none; flex-direction: column;
     align-items: center; justify-content: center;
-    background: linear-gradient(160deg, #e8f0fe 0%, #f0f4ff 30%, #fff0f5 70%, #fce4ec 100%);
+    background: var(--bg);
     padding: 24px;
+    position: relative;
+  }
+  .login-screen::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 20%, rgba(99,102,241,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(34,211,238,0.06) 0%, transparent 60%);
+    pointer-events: none;
   }
   .login-box {
-    background: white; border-radius: 24px; padding: 32px 28px;
+    background: var(--bg-card); border-radius: 24px; padding: 36px 28px;
     max-width: 400px; width: 100%;
-    box-shadow: 0 8px 40px rgba(74,124,255,0.12), 0 2px 8px rgba(0,0,0,0.04);
-    text-align: center;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    text-align: center; position: relative; z-index: 1;
   }
-  .login-logo { font-size: 40px; margin-bottom: 4px; }
   .login-title {
-    font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700;
-    color: var(--primary); letter-spacing: 1px;
+    font-family: 'Fredoka', sans-serif; font-size: 32px; font-weight: 700;
+    background: var(--gradient-title);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; color: transparent;
+    letter-spacing: 2px; margin-bottom: 4px;
   }
   .login-subtitle {
-    font-size: 11px; color: var(--text-light); margin-bottom: 24px;
-    font-weight: 700;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 11px; color: var(--text-dim); margin-bottom: 28px;
+    font-weight: 600; letter-spacing: 3px;
   }
   .login-section-label {
-    font-size: 13px; font-weight: 800; color: var(--text);
+    font-size: 13px; font-weight: 800; color: var(--text-dim);
     margin-bottom: 10px; text-align: left;
   }
   .class-grid {
@@ -62,55 +118,61 @@
     gap: 8px; margin-bottom: 20px;
   }
   .class-btn {
-    padding: 12px 8px; border-radius: 12px; border: 2px solid #e8ecf4;
-    background: #f8faff; font-family: inherit; font-size: 12px; font-weight: 800;
-    color: var(--text); cursor: pointer; transition: all 0.2s;
+    padding: 12px 8px; border-radius: 12px; border: 2px solid var(--border);
+    background: var(--bg-surface); font-family: inherit; font-size: 12px; font-weight: 800;
+    color: var(--text-dim); cursor: pointer; transition: all 0.2s;
   }
-  .class-btn:hover { border-color: var(--primary); background: #eef3ff; }
-  .class-btn.selected { border-color: var(--primary); background: var(--primary); color: white; }
+  .class-btn:hover { border-color: var(--primary-light); color: var(--text); }
+  .class-btn.selected {
+    border-color: var(--primary); background: var(--primary); color: white;
+    box-shadow: 0 0 20px rgba(99,102,241,0.3);
+  }
   .login-input {
     width: 100%; padding: 14px 16px; border-radius: 12px;
-    border: 2px solid #e8ecf4; font-family: inherit; font-size: 15px;
-    font-weight: 700; outline: none; transition: border 0.2s;
+    border: 2px solid var(--border); background: var(--bg-input);
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    color: var(--text); outline: none; transition: border 0.2s;
     margin-bottom: 16px;
   }
   .login-input:focus { border-color: var(--primary); }
-  .login-input::placeholder { color: #bbb; }
+  .login-input::placeholder { color: var(--text-muted); }
   .login-submit {
     width: 100%; padding: 14px; border-radius: 14px; border: none;
-    background: linear-gradient(135deg, var(--primary), #6b8fff);
+    background: var(--gradient-btn);
     color: white; font-family: inherit; font-size: 16px; font-weight: 800;
     cursor: pointer; transition: all 0.2s;
-    box-shadow: 0 4px 16px rgba(74,124,255,0.3);
+    box-shadow: 0 4px 20px rgba(99,102,241,0.35);
   }
-  .login-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(74,124,255,0.4); }
+  .login-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(99,102,241,0.5); }
   .login-submit:active { transform: scale(0.98); }
-  .login-submit:disabled { opacity: 0.5; cursor: default; transform: none; }
+  .login-submit:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
   .login-guest {
     display: inline-block; margin-top: 14px; padding: 8px 16px;
-    border-radius: 10px; border: none; background: #f0f2f5;
+    border-radius: 10px; border: none; background: var(--bg-surface);
     font-family: inherit; font-size: 12px; font-weight: 700;
-    color: var(--text-light); cursor: pointer; transition: all 0.2s;
+    color: var(--text-muted); cursor: pointer; transition: all 0.2s;
   }
-  .login-guest:hover { background: #e4e8ee; color: var(--text); }
+  .login-guest:hover { background: var(--bg-input); color: var(--text-dim); }
   .login-error { color: var(--accent); font-size: 12px; font-weight: 700; margin-top: 8px; }
 
   /* Not Registered Popup */
   .popup-overlay {
     display: none; position: fixed; inset: 0; z-index: 9999;
-    background: rgba(0,0,0,0.5); align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
   }
   .popup-overlay.active { display: flex; }
   .popup-box {
-    background: #fff; border-radius: 20px; padding: 32px 28px; text-align: center;
-    max-width: 320px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    background: var(--bg-card); border-radius: 20px; padding: 32px 28px; text-align: center;
+    max-width: 320px; width: 90%;
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
     animation: popupIn 0.3s ease;
   }
   @keyframes popupIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .popup-emoji { font-size: 48px; margin-bottom: 8px; }
   .popup-title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
-  .popup-message { font-size: 15px; color: #555; line-height: 1.7; margin-bottom: 20px; }
-  .popup-message strong { color: var(--primary); font-size: 17px; }
+  .popup-message { font-size: 15px; color: var(--text-dim); line-height: 1.7; margin-bottom: 20px; }
+  .popup-message strong { color: var(--primary-light); font-size: 17px; }
   .popup-close-btn {
     background: var(--primary); color: #fff; border: none; border-radius: 12px;
     padding: 10px 32px; font-size: 15px; font-weight: 700; cursor: pointer;
@@ -123,55 +185,66 @@
 
   /* === Top Header === */
   .top-header {
-    background: white;
+    background: var(--bg-card);
     padding: 14px 18px; display: flex; align-items: center; gap: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    border-bottom: 1px solid var(--border);
     position: sticky; top: 0; z-index: 50;
   }
+  .header-logo {
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
+    background: var(--gradient-title);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; color: transparent;
+    letter-spacing: 1px; flex-shrink: 0;
+  }
   .user-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), #6b8fff);
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--gradient-btn);
     display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 16px; font-weight: 800;
+    color: white; font-size: 14px; font-weight: 800;
     flex-shrink: 0;
   }
   .user-info { flex: 1; min-width: 0; }
-  .user-name { font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .user-class { font-size: 10px; color: var(--text-light); font-weight: 700; }
+  .user-name { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .user-class { font-size: 10px; color: var(--text-muted); font-weight: 700; }
   .alt-display {
     display: flex; align-items: center; gap: 4px;
-    background: linear-gradient(135deg, #fff8e1, #fff3c4);
+    background: rgba(251,191,36,0.12);
     padding: 6px 14px; border-radius: 20px;
     font-family: 'Fredoka', sans-serif; font-size: 15px; font-weight: 700;
-    color: #e6a000;
-    box-shadow: 0 1px 4px rgba(255,179,0,0.2);
+    color: var(--yellow);
+    border: 1px solid rgba(251,191,36,0.2);
   }
   .alt-display .alt-icon { font-size: 14px; }
   .logout-btn {
-    border: none; background: #f5f5f5; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg-surface); cursor: pointer;
     padding: 8px 12px; border-radius: 10px;
     font-family: inherit; font-size: 11px; font-weight: 700;
-    color: var(--text-light); transition: all 0.2s;
+    color: var(--text-muted); transition: all 0.2s;
   }
-  .logout-btn:hover { background: #eee; color: var(--text); }
+  .logout-btn:hover { background: var(--bg-input); color: var(--text-dim); }
 
   /* === Tab Bar (bottom) === */
   .tab-bar {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-    background: white; display: flex;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
-    border-top: 1px solid #f0f0f0;
+    background: var(--bg-card); display: flex;
+    border-top: 1px solid var(--border);
   }
   .tab-item {
     flex: 1; display: flex; flex-direction: column; align-items: center;
     padding: 8px 0 10px; border: none; background: none;
     font-family: inherit; font-size: 10px; font-weight: 700;
-    color: var(--text-light); cursor: pointer; transition: all 0.2s;
-    gap: 2px;
+    color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+    gap: 2px; position: relative;
   }
   .tab-item .tab-icon { font-size: 20px; }
-  .tab-item.active { color: var(--primary); }
+  .tab-item.active { color: var(--cyan); }
   .tab-item.active .tab-icon { transform: scale(1.1); }
+  .tab-item.active::after {
+    content: ''; position: absolute; top: 0; left: 20%; right: 20%;
+    height: 3px; border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, var(--primary), var(--cyan));
+  }
 
   /* === Tab Content === */
   .tab-content { display: none; }
@@ -180,21 +253,21 @@
   /* === Home Tab === */
   .home-banner {
     margin: 16px 16px 12px; padding: 20px;
-    background: linear-gradient(135deg, var(--primary), #6b8fff, #8b9fff);
+    background: linear-gradient(135deg, var(--primary), #7c3aed, #a855f7);
     border-radius: 18px; color: white; position: relative; overflow: hidden;
   }
   .home-banner::after {
     content: ''; position: absolute; top: -30px; right: -30px;
     width: 120px; height: 120px; border-radius: 50%;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
   }
   .home-banner h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-  .home-banner p { font-size: 12px; opacity: 0.85; }
+  .home-banner p { font-size: 12px; opacity: 0.8; }
   .section-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 18px 10px;
   }
-  .section-header h3 { font-size: 16px; font-weight: 800; }
+  .section-header h3 { font-size: 16px; font-weight: 800; color: var(--text); }
   .section-header .badge {
     font-size: 10px; font-weight: 700; padding: 3px 10px;
     border-radius: 10px; background: var(--accent); color: white;
@@ -206,13 +279,18 @@
     gap: 12px; padding: 0 16px 20px;
   }
   .game-card {
-    background: white; border-radius: var(--radius); overflow: hidden;
-    box-shadow: var(--shadow); cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: var(--bg-card); border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     animation: cardIn 0.35s ease both;
     position: relative;
   }
-  .game-card:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
+  .game-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    border-color: var(--primary);
+  }
   .game-card:active { transform: scale(0.97); }
   @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   .card-top {
@@ -222,8 +300,8 @@
     display: flex; align-items: center; justify-content: center;
     padding: 16px 0 8px; font-size: 40px;
   }
-  .card-info { padding: 0 12px 12px; text-align: center; }
-  .card-name { font-size: 13px; font-weight: 800; margin-bottom: 4px; line-height: 1.3; }
+  .card-info { padding: 0 12px 14px; text-align: center; }
+  .card-name { font-size: 13px; font-weight: 800; margin-bottom: 6px; line-height: 1.3; color: var(--text); }
   .card-cat {
     display: inline-block; font-size: 9px; font-weight: 700;
     padding: 2px 8px; border-radius: 6px; margin-bottom: 6px;
@@ -231,15 +309,15 @@
   .card-alt {
     font-family: 'Fredoka', sans-serif; font-size: 11px;
     color: var(--yellow); font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
-  .card-play-btn {
-    width: 100%; padding: 8px; border: none; border-radius: 10px;
-    font-family: inherit; font-size: 11px; font-weight: 800;
-    color: white; cursor: pointer;
+  .card-play-link {
+    font-size: 11px; font-weight: 700;
+    color: var(--cyan); opacity: 0.8;
+    transition: opacity 0.2s;
   }
-  .game-card.coming-soon { opacity: 0.45; pointer-events: none; }
-  .game-card.coming-soon .card-play-btn { background: #ccc !important; }
+  .game-card:hover .card-play-link { opacity: 1; }
+  .game-card.coming-soon { opacity: 0.35; pointer-events: none; }
   .game-card .badge-new {
     position: absolute; top: 10px; right: 8px;
     font-size: 9px; font-weight: 700; padding: 2px 8px;
@@ -248,15 +326,15 @@
   .game-card .badge-soon {
     position: absolute; top: 10px; right: 8px;
     font-size: 9px; font-weight: 700; padding: 2px 8px;
-    border-radius: 6px; background: #aaa; color: white;
+    border-radius: 6px; background: var(--text-muted); color: var(--text-dim);
   }
 
   /* === Ranking Tab === */
   .ranking-header {
     text-align: center; padding: 24px 16px 16px;
   }
-  .ranking-header h2 { font-size: 20px; font-weight: 800; }
-  .ranking-header p { font-size: 12px; color: var(--text-light); }
+  .ranking-header h2 { font-size: 20px; font-weight: 800; color: var(--text); }
+  .ranking-header p { font-size: 12px; color: var(--text-muted); }
   .ranking-filters {
     display: flex; gap: 6px; padding: 0 16px 12px;
     overflow-x: auto; -webkit-mask-image: linear-gradient(to right, black 92%, transparent);
@@ -264,42 +342,44 @@
   .ranking-filters::-webkit-scrollbar { display: none; }
   .rank-filter-btn {
     flex-shrink: 0; padding: 7px 14px; border-radius: 20px;
-    border: 2px solid #e8ecf4; background: white;
+    border: 1px solid var(--border); background: var(--bg-surface);
     font-family: inherit; font-size: 11px; font-weight: 700;
-    color: var(--text-light); cursor: pointer; transition: all 0.2s;
+    color: var(--text-muted); cursor: pointer; transition: all 0.2s;
   }
+  .rank-filter-btn:hover { border-color: var(--primary-light); color: var(--text-dim); }
   .rank-filter-btn.active {
     border-color: var(--primary); background: var(--primary); color: white;
   }
   .ranking-list { padding: 0 16px 20px; }
   .rank-item {
     display: flex; align-items: center; gap: 12px;
-    background: white; border-radius: 14px; padding: 12px 16px;
-    margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    background: var(--bg-card); border-radius: 14px; padding: 12px 16px;
+    margin-bottom: 8px; border: 1px solid var(--border);
   }
   .rank-num {
     font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
     width: 32px; text-align: center; flex-shrink: 0;
+    color: var(--text-muted);
   }
   .rank-num.gold { color: #FFB300; }
   .rank-num.silver { color: #90A4AE; }
   .rank-num.bronze { color: #A1887F; }
   .rank-avatar {
     width: 36px; height: 36px; border-radius: 50%;
-    background: linear-gradient(135deg, #e8f0fe, #d0dcf8);
+    background: var(--bg-surface);
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 800; color: var(--primary);
-    flex-shrink: 0;
+    font-size: 14px; font-weight: 800; color: var(--primary-light);
+    flex-shrink: 0; border: 1px solid var(--border);
   }
   .rank-info { flex: 1; min-width: 0; }
-  .rank-name { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rank-class { font-size: 10px; color: var(--text-light); }
+  .rank-name { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .rank-class { font-size: 10px; color: var(--text-muted); }
   .rank-score {
     font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
-    color: var(--primary); flex-shrink: 0;
+    color: var(--cyan); flex-shrink: 0;
   }
   .ranking-empty {
-    text-align: center; padding: 40px; color: var(--text-light);
+    text-align: center; padding: 40px; color: var(--text-muted);
     font-size: 13px; font-weight: 700;
   }
   .ranking-empty .empty-icon { font-size: 40px; margin-bottom: 8px; opacity: 0.4; }
@@ -308,23 +388,23 @@
   .history-header {
     text-align: center; padding: 24px 16px 16px;
   }
-  .history-header h2 { font-size: 20px; font-weight: 800; }
+  .history-header h2 { font-size: 20px; font-weight: 800; color: var(--text); }
   .history-total-alt {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     margin: 8px 0 16px;
     font-family: 'Fredoka', sans-serif; font-size: 32px; font-weight: 700;
-    color: #e6a000;
+    color: var(--yellow);
   }
   .history-list { padding: 0 16px 20px; }
   .history-item {
     display: flex; align-items: center; gap: 12px;
-    background: white; border-radius: 14px; padding: 12px 16px;
-    margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    background: var(--bg-card); border-radius: 14px; padding: 12px 16px;
+    margin-bottom: 8px; border: 1px solid var(--border);
   }
   .hist-emoji { font-size: 24px; flex-shrink: 0; }
   .hist-info { flex: 1; min-width: 0; }
-  .hist-title { font-size: 13px; font-weight: 800; }
-  .hist-time { font-size: 10px; color: var(--text-light); }
+  .hist-title { font-size: 13px; font-weight: 800; color: var(--text); }
+  .hist-time { font-size: 10px; color: var(--text-muted); }
   .hist-alt {
     font-family: 'Fredoka', sans-serif; font-size: 16px; font-weight: 700;
     color: var(--green); flex-shrink: 0;
@@ -333,25 +413,25 @@
   /* === Game Embed View === */
   .game-embed-view {
     display: none; position: fixed; inset: 0; z-index: 100;
-    background: white; flex-direction: column;
+    background: var(--bg); flex-direction: column;
   }
   .game-embed-view.active { display: flex; }
   .embed-header {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 16px; background: white;
-    border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
+    padding: 10px 16px; background: var(--bg-card);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
   }
   .embed-back {
-    border: none; background: #f0f2f5; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg-surface); cursor: pointer;
     padding: 8px 14px; border-radius: 10px;
     font-family: inherit; font-size: 12px; font-weight: 700;
-    color: var(--text); transition: all 0.2s;
+    color: var(--text-dim); transition: all 0.2s;
   }
-  .embed-back:hover { background: #e4e8ee; }
-  .embed-title { font-size: 14px; font-weight: 800; flex: 1; display: flex; align-items: center; gap: 6px; }
+  .embed-back:hover { background: var(--bg-input); color: var(--text); }
+  .embed-title { font-size: 14px; font-weight: 800; flex: 1; display: flex; align-items: center; gap: 6px; color: var(--text); }
   .embed-fullscreen {
-    border: none; background: #f0f2f5; cursor: pointer;
-    padding: 8px 12px; border-radius: 10px; font-size: 16px;
+    border: 1px solid var(--border); background: var(--bg-surface); cursor: pointer;
+    padding: 8px 12px; border-radius: 10px; font-size: 16px; color: var(--text-dim);
   }
   .embed-iframe-wrap { flex: 1; position: relative; }
   .embed-iframe-wrap iframe { width: 100%; height: 100%; border: none; }
@@ -363,14 +443,15 @@
   .embed-loading.hidden { opacity: 0; pointer-events: none; }
   .embed-loading .spinner { font-size: 48px; animation: spin 1.5s ease-in-out infinite; }
   @keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
-  .embed-loading .loading-text { font-size: 13px; font-weight: 700; color: var(--text-light); margin-top: 10px; }
+  .embed-loading .loading-text { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 10px; }
 
   /* === Toast === */
   .toast {
     position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-    background: var(--text); color: white; padding: 12px 24px; border-radius: 14px;
+    background: var(--bg-surface); color: var(--text); padding: 12px 24px; border-radius: 14px;
     font-size: 13px; font-weight: 700; z-index: 999;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     animation: toastIn 0.3s ease, toastOut 0.3s ease 2s forwards;
   }
   @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
@@ -379,13 +460,14 @@
   /* === ALT Popup === */
   .alt-popup {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    background: white; border-radius: 24px; padding: 28px 32px;
+    background: var(--bg-card); border-radius: 24px; padding: 28px 32px;
     text-align: center; z-index: 200;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
     animation: popIn 0.3s ease;
   }
   .alt-popup-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
     z-index: 199; animation: fadeIn 0.2s ease;
   }
   @keyframes popIn { from{opacity:0;transform:translate(-50%,-50%) scale(0.9)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
@@ -408,12 +490,20 @@
 </head>
 <body>
 
+<!-- ===== Loading Screen ===== -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-title">TRAIL GP4</div>
+  <div class="loading-bar-track">
+    <div class="loading-bar-fill" id="loadingBarFill"></div>
+  </div>
+  <div class="loading-text">よみこみちゅう...</div>
+</div>
+
 <!-- ===== Login Screen ===== -->
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <div class="login-logo">🌲</div>
-    <div class="login-title">TRAIL Game Pro 3</div>
-    <div class="login-subtitle">探究教室 TRAIL ゲームポータル</div>
+    <div class="login-title">TRAIL GP4</div>
+    <div class="login-subtitle">EXPLORE &bull; PLAY &bull; GROW</div>
 
     <div class="login-section-label">にゅうしつ クラスをえらんでね</div>
     <div class="class-grid" id="classGrid"></div>
@@ -421,7 +511,7 @@
     <div class="login-section-label">なまえ</div>
     <input class="login-input" id="nameInput" type="text" placeholder="なまえを入力" maxlength="20" autocomplete="off">
 
-    <button class="login-submit" id="loginBtn" disabled>にゅうしつする</button>
+    <button class="login-submit" id="loginBtn" disabled>にゅうしつ</button>
     <div class="login-error hidden" id="loginError"></div>
 
     <button class="login-guest" id="guestBtn">なまえなしであそぶ</button>
@@ -432,6 +522,7 @@
 <div class="app" id="mainApp">
   <!-- Top Header -->
   <div class="top-header">
+    <div class="header-logo">TRAIL GP4</div>
     <div class="user-avatar" id="userAvatar"></div>
     <div class="user-info">
       <div class="user-name" id="userName"></div>
@@ -531,7 +622,7 @@
 <script src="shared/trail-api.js"></script>
 <script>
 // =============================================================
-// TRAIL Game Pro 3 - Main Application
+// TRAIL GP4 - Main Application
 // =============================================================
 
 var games = TRAIL_GAMES;
@@ -550,9 +641,34 @@ var catFilter = 'all';
 // TrailAPI.configure('https://script.google.com/macros/s/YOUR_ID/exec');
 
 // =====================
+// Loading Screen
+// =====================
+(function runLoadingScreen() {
+  var bar = document.getElementById('loadingBarFill');
+  var progress = 0;
+  var interval = setInterval(function() {
+    progress += Math.random() * 25 + 10;
+    if (progress > 100) progress = 100;
+    bar.style.width = progress + '%';
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(function() {
+        var screen = document.getElementById('loadingScreen');
+        screen.classList.add('fade-out');
+        setTimeout(function() {
+          screen.style.display = 'none';
+          document.getElementById('loginScreen').style.display = 'flex';
+          init();
+        }, 500);
+      }, 300);
+    }
+  }, 200);
+})();
+
+// =====================
 // Init
 // =====================
-(function init() {
+function init() {
   renderClassGrid();
   setupLoginHandlers();
   setupTabBar();
@@ -564,7 +680,7 @@ var catFilter = 'all';
   if (saved && saved.name) {
     enterApp(saved);
   }
-})();
+}
 
 // =====================
 // Login
@@ -616,11 +732,11 @@ function setupLoginHandlers() {
           errEl.textContent = 'ログインできませんでした。もういちどためしてね。';
           errEl.classList.remove('hidden');
         }
-        btn.textContent = 'にゅうしつする';
+        btn.textContent = 'にゅうしつ';
         btn.disabled = false;
       });
     } else {
-      // Local/demo mode — allow without server
+      // Local/demo mode
       var user = { userId: 'local_' + Date.now(), name: name, className: selectedClass.name, totalAlt: 0 };
       try {
         localStorage.setItem('trail:session', JSON.stringify(user));
@@ -638,8 +754,8 @@ function setupLoginHandlers() {
     TrailAPI.logout();
     currentUser = null;
     document.getElementById('mainApp').classList.remove('active');
-    document.getElementById('loginScreen').style.display = '';
-    document.getElementById('loginBtn').textContent = 'にゅうしつする';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('loginBtn').textContent = 'にゅうしつ';
     document.getElementById('loginBtn').disabled = true;
     document.getElementById('nameInput').value = '';
     selectedClass = null;
@@ -734,7 +850,7 @@ function createGameCard(game, idx) {
   card.style.animationDelay = (idx * 0.04) + 's';
 
   var catLabel = game.tags[0] || '';
-  var catColor = game.color || '#4a7cff';
+  var catColor = game.color || '#6366f1';
 
   var badge = '';
   if (game.isNew && !game.comingSoon) badge = '<div class="badge-new">NEW</div>';
@@ -746,11 +862,11 @@ function createGameCard(game, idx) {
     '<div class="card-emoji">' + game.emoji + '</div>' +
     '<div class="card-info">' +
       '<div class="card-name">' + game.title + '</div>' +
-      '<div class="card-cat" style="background:' + catColor + '18;color:' + catColor + '">' + catLabel + '</div>' +
+      '<div class="card-cat" style="background:' + catColor + '20;color:' + catColor + '">' + catLabel + '</div>' +
       '<div class="card-alt">ALT +' + (game.altReward || 10) + '</div>' +
-      '<button class="card-play-btn" style="background:' + catColor + '">' +
-        (game.comingSoon ? '準備中' : 'タップでプレイ') +
-      '</button>' +
+      '<div class="card-play-link">' +
+        (game.comingSoon ? '準備中' : 'タップでプレイ →') +
+      '</div>' +
     '</div>';
 
   if (!game.comingSoon) {
